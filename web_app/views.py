@@ -77,3 +77,22 @@ def remove_cow() :
         lg.error(f"Erreur pendant l’upload : {e}")
         error_message = f"Erreur : {str(e)}"
         return render_template("upload.html", error_message=error_message, error_message_Remove=error_message, anchor="Remove")
+
+@app.route("/add_prescription", methods=["POST"])
+def add_prescription() :
+    from .models import remove_cow as rmc
+    try:
+        # Récupération des données du formulaire
+        id = int(request.form["id"])
+
+        lg.info(f"supresion de {id}...")
+        
+        rmc(id=id)
+        
+        success_message = f"{id} a été supprimée."
+        return render_template("upload.html", success_message=success_message, success_message_Remove=success_message,anchor="Remove" )
+
+    except Exception as e:
+        lg.error(f"Erreur pendant l’upload : {e}")
+        error_message = f"Erreur : {str(e)}"
+        return render_template("upload.html", error_message=error_message, error_message_Remove=error_message, anchor="Remove")

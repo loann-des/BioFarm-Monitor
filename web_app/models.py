@@ -31,6 +31,18 @@ class Cow(db.Model):
         self.id = id
         self.traitement = traitement
 
+class Prescription(db.Model):
+    id = Column(Integer, primary_key=True) #id Prescription
+    date = Column(DATE) # date de la Prescription
+    traitement: List[Tuple[str, int]]#liste de (medicament, nb medicament)
+    traitement = Column(MutableList.as_mutable(PickleType),
+                        default=list,
+                        nullable=False
+                        )
+
+    
+
+
 
 def init_db():
     db.drop_all()

@@ -6,32 +6,25 @@
   "index-page"
 {% endblock %}
 {% block content %}
-{% if anchor %}
-<script>
-  window.location.hash = "{{ anchor }}";
-</script>
-{% endif %}
+  {% if anchor %}
+    <script>
+      window.location.hash = '{{ anchor }}'
+    </script>
+  {% endif %}
+
+  <!-- Hero Section -->
   <section class="hero section accent-background">
     <div class="container position-relative">
       <div class="row gy-5 justify-content-between">
         <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center">
           <h2><span class="accent">Update-Page</span></h2>
-          
-              {% if success_message %}
-              <h2><span class="accent">
-                <div class="alert alert-success" role="alert">
-                  {{ success_message }}
-                </div>
-                </span></h2>
-              {% endif %}
-              {% if error_message %}
-              <h2><span class="accent">
-                <div class="alert alert-danger" role="alert">
-                  {{ error_message }}
-                </div>
-                </span></h2>
-              {% endif %}
-              
+
+          {% if success_message %}
+            <h2><span class="accent"><div class="alert alert-success" role="alert">{{ success_message }}</div></span></h2>
+          {% endif %}
+          {% if error_message %}
+            <h2><span class="accent"><div class="alert alert-danger" role="alert">{{ error_message }}</div></span></h2>
+          {% endif %}
         </div>
         <div class="col-lg-5 order-1 order-lg-2">
           <img src="{{ url_for('static', filename='images/logo2.png') }}" class="img-fluid" alt="" />
@@ -39,170 +32,196 @@
       </div>
     </div>
   </section>
+  <!-- End Hero Section -->
 
-<!-- New Cow Section -->
-<section id="New_Cow" class="contact section">
-  <div class="container section-title">
-    <h2>New Cow</h2>
-    
-    {% if success_message_New_Cow %}
-    <h2>
-      <div class="alert alert-success" role="alert">
-        {{ success_message }}
-      </div>
-    </h2>
-    {% endif %}
-    {% if error_message_New_Cow %}
-    <h2>
-      <div class="alert alert-danger" role="alert">
-        {{ error_message }}
-      </div>
-    </h2>
-    {% endif %}
-    
-    <p>Ajouter ici les nouvelles Vaches</p>
-  </div>
+  <!-- New Cow Section -->
+  <section id="New_Cow" class="contact section">
+    <div class="container section-title">
+      <h2>New Cow</h2>
 
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <form action="{{ url_for('upload_cow') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
-          <div class="row gy-4">
+      {% if success_message_New_Cow %}
+        <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
+      {% endif %}
+      {% if error_message_New_Cow %}
+        <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
+      {% endif %}
 
-            <div class="col-md-6">
-              <label for="id" class="form-label">Numéro :</label>
-              <input type="number" name="id" id="id" class="form-control" required>
+      <p>Ajouter ici les nouvelles vaches</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form action="{{ url_for('upload_cow') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+            <div class="row gy-4">
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro :</label>
+                <input type="number" name="id" id="id" class="form-control" required />
+              </div>
+
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
             </div>
-
-            <div class="col-md-6">
-              <label for="race" class="form-label">Race :</label>
-              <select name="race" id="race" class="form-select" required>
-                <option value="Brune">Brune</option>
-                <option value="Holestine">Holestine</option>
-                <option value="Normande">Normande</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label for="date_naissance" class="form-label">Date de naissance :</label>
-              <input type="date" name="date_naissance" id="date_naissance" class="form-control" required>
-            </div>
-
-            <div class="col-md-12 text-center">
-              <button type="submit" class="btn btn-primary">Envoyer</button>
-            </div>
-
-          </div>
-        </form>
-
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-</section>
-<!-- End New Cow Section -->
+  </section>
+  <!-- End New Cow Section -->
 
-<!-- New Care Section -->
-<section id="Care" class="contact section">
-  <div class="container section-title">
-    <h2>New Care</h2>
-    {% if success_message_New_Care %}
-    <h2>
-      <div class="alert alert-success" role="alert">
-        {{ success_message }}
-      </div>
-    </h2>
-    {% endif %}
-    {% if error_message_New_Care %}
-    <h2>
-      <div class="alert alert-danger" role="alert">
-        {{ error_message }}
-      </div>
-    </h2>
-    {% endif %}
-    <p>Ajouter ici les nouveaux traitements</p>
-  </div>
+  <!-- New Care Section -->
+  <section id="Care" class="contact section">
+    <div class="container section-title">
+      <h2>Cow Care</h2>
+      {% if success_message_New_Care %}
+        <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
+      {% endif %}
+      {% if error_message_New_Care %}
+        <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
+      {% endif %}
+      <p>Ajouter ici les nouveaux traitements</p>
+    </div>
 
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <form action="{{ url_for('update_care') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
-          <div class="row gy-4">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form action="{{ url_for('update_care') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+            <div class="row gy-4">
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro :</label>
+                <input type="number" name="id" id="id" class="form-control" required />
+              </div>
 
-            <div class="col-md-6">
-              <label for="id" class="form-label">Numéro :</label>
-              <input type="number" name="id" id="id" class="form-control" required>
+              <div class="col-md-6">
+                <label for="care_medic" class="form-label">traitement :</label>
+                <input type="text" name="care_medic" class="form-control" id="care_medic" required="" />
+              </div>
+
+              <div class="col-md-6">
+                <label for="care_date" class="form-label">Date de traitement :</label>
+                <input type="date" name="care_date" id="care_date" class="form-control" required />
+              </div>
+
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+              </div>
             </div>
-
-            <div class="col-md-6">
-              <label for="care_medic" class="form-label">traitement :</label>
-                <input type="text" name="care_medic" class="form-control" id="care_medic" required="">
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label for="care_date" class="form-label">Date de traitement :</label>
-              <input type="date" name="care_date" id="care_date" class="form-control" required>
-            </div>
-
-            <div class="col-md-12 text-center">
-              <button type="submit" class="btn btn-primary">Envoyer</button>
-            </div>
-
-          </div>
-        </form>
-
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-</section>
-<!-- End New Care Section -->
+  </section>
+  <!-- End New Care Section -->
 
-<!-- Remove cow Section -->
-<section id="Remove" class="contact section">
-  <div class="container section-title">
-    <h2>Remove Cow</h2>
-    {% if success_message_Remove %}
-    <h2>
-      <div class="alert alert-success" role="alert">
-        {{ success_message }}
-      </div>
-    </h2>
-    {% endif %}
-    {% if error_message_Remove %}
-    <h2>
-      <div class="alert alert-danger" role="alert">
-        {{ error_message }}
-      </div>
-    </h2>
-    {% endif %}
-    <p>supprimer ici les Vaches</p>
-  </div>
+  <!-- Remove cow Section -->
+  <section id="Remove" class="contact section">
+    <div class="container section-title">
+      <h2>Remove Cow</h2>
+      {% if success_message_Remove %}
+        <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
+      {% endif %}
+      {% if error_message_Remove %}
+        <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
+      {% endif %}
+      <p>supprimer ici les Vaches</p>
+    </div>
 
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <form action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
-          <div class="row gy-4">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+            <div class="row gy-4">
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro :</label>
+                <input type="number" name="id" id="id" class="form-control" required />
+              </div>
 
-            <div class="col-md-6">
-              <label for="id" class="form-label">Numéro :</label>
-              <input type="number" name="id" id="id" class="form-control" required>
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">supprimer</button>
+              </div>
             </div>
-
-            <div class="col-md-12 text-center">
-              <button type="submit" class="btn btn-primary">supprimer</button>
-            </div>
-
-          </div>
-        </form>
-
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-</section>
-<!-- End Remove cow Section -->
+  </section>
+  <!-- End Remove cow Section -->
 
+  <!-- prescription Section -->
+  <section id="prescription" class="contact section">
+    <div class="container section-title">
+      <h2>New prescription</h2>
+      {% if success_message_prescription %}
+        <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
+      {% endif %}
+      {% if error_message_prescription %}
+        <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
+      {% endif %}
+      <p>Ajouter ici les nouvelles ordonnances vétérinaires</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form action="{{ url_for('add_prescription') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+            <div class="row gy-4">
+              <div class="col-md-6">
+                <label for="prescription_date" class="form-label">Date de l'ordonnances :</label>
+                <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+              </div>
+
+              <div class="col-12"><!--TODO automatiser en boucle imbriquer-->
+                <label for="medic_1" class="form-label">Médicament 1 :</label>
+                <div class="row g-2 align-items-center mb-3">
+                  <div class="col-md-6">
+                    <select name="medic_1" id="medic_1" class="form-select" required>
+                      <option value="Brune">Brune</option>
+                      <option value="Holestine">Holestine</option>
+                      <option value="Normande">Normande</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <input type="number" name="medic_1_nb" id="medic_1_nb" class="form-control" required placeholder="Nombre de doses" />
+                  </div>
+                </div>
+
+                <label for="medic_2" class="form-label">Médicament 2 :</label>
+                <div class="row g-2 align-items-center mb-3">
+                  <div class="col-md-6">
+                    <select name="medic_2" id="medic_2" class="form-select" required>
+                      <option value="Brune">Brune</option>
+                      <option value="Holestine">Holestine</option>
+                      <option value="Normande">Normande</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <input type="number" name="medic_2_nb" id="medic_2_nb" class="form-control" required placeholder="Nombre de doses" />
+                  </div>
+                </div>
+
+                <label for="medic_3" class="form-label">Médicament 3 :</label>
+                <div class="row g-2 align-items-center mb-3">
+                  <div class="col-md-6">
+                    <select name="medic_3" id="medic_3" class="form-select" required>
+                      <option value="Brune">Brune</option>
+                      <option value="Holestine">Holestine</option>
+                      <option value="Normande">Normande</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <input type="number" name="medic_3_nb" id="medic_3_nb" class="form-control" required placeholder="Nombre de doses" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End Remove cow Section -->
 {% endblock %}
 
 {% block JS %}
