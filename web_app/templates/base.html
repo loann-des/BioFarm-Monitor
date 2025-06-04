@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>{% block title %} {% endblock %}</title>
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+  
+    <!-- Favicons -->
+    <!-- <link href="{{ url_for('static', filename='images/favicon.png') }}" rel="icon">
+    <link href="{{ url_for('static', filename='images/apple-touch-icon.png') }}" rel="apple-touch-icon">
+    -->
+  
+    <!-- Vendor CSS Files 
+    <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/aos/aos.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/glightbox/css/glightbox.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
+  -->
+    <!-- Main CSS File -->
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  
+    <!-- =======================================================
+    * Template Name: Impact
+    * Template URL: https://bootstrapmade.com/impact-bootstrap-business-website-template/
+    * Updated: Aug 07 2024 with Bootstrap v5.3.3
+    * Author: BootstrapMade.com
+    * License: https://bootstrapmade.com/license/
+    ======================================================== -->
+  </head>
+  <body class='{% block body_class %} {% endblock %}'>
+    <header id="header" class="header fixed-top">
+    
+        <div class="branding d-flex align-items-cente">
+    
+          <div class="container position-relative d-flex align-items-center justify-content-between">
+            <a href="/" class="logo d-flex align-items-center">
+              <!-- Uncomment the line below if you also wish to use an image logo -->
+              <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
+              <h1 class="sitename">BioFarm-Monitor</h1>
+              <span>.</span>
+            </a>
+    
+            <nav id="navmenu" class="navmenu">
+              <ul>
+                <li><a href="/#hero" class="active">Accueil<br></a></li>
+                <!--
+                <li><a href="/#about">À propos</a></li>
+                <li><a href="/#services">Projets</a></li>
+                <li><a href="/#team">Équipe</a></li>
+                <li><a href="/blog">Articles</a></li>
+                <li><a href="/#contact">Contact</a></li>
+                -->
+              </ul>
+              <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+            </nav>
+    
+          </div>
+    
+        </div>
+
+    </header>
+
+    <main class="main">
+        {% block content %} 
+        
+        {% endblock %}
+    </main>
+  </body>
+</html>
