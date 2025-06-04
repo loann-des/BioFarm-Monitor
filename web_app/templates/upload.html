@@ -1,16 +1,37 @@
 {% extends 'base.html' %}
 {% block title %}
-  upload-Article
+  upload
 {% endblock %}
 {% block body_class %}
   "index-page"
 {% endblock %}
 {% block content %}
+{% if anchor %}
+<script>
+  window.location.hash = "{{ anchor }}";
+</script>
+{% endif %}
   <section class="hero section accent-background">
     <div class="container position-relative">
       <div class="row gy-5 justify-content-between">
         <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center">
-          <h2><span class="accent">Upload-Page</span></h2>
+          <h2><span class="accent">Update-Page</span></h2>
+          
+              {% if success_message %}
+              <h2><span class="accent">
+                <div class="alert alert-success" role="alert">
+                  {{ success_message }}
+                </div>
+                </span></h2>
+              {% endif %}
+              {% if error_message %}
+              <h2><span class="accent">
+                <div class="alert alert-danger" role="alert">
+                  {{ error_message }}
+                </div>
+                </span></h2>
+              {% endif %}
+              
         </div>
         <div class="col-lg-5 order-1 order-lg-2">
           <img src="{{ url_for('static', filename='images/logo2.png') }}" class="img-fluid" alt="" />
@@ -19,9 +40,26 @@
     </div>
   </section>
 
-<section class="contact section">
+<!-- New Cow Section -->
+<section id="New_Cow" class="contact section">
   <div class="container section-title">
     <h2>New Cow</h2>
+    
+    {% if success_message_New_Cow %}
+    <h2>
+      <div class="alert alert-success" role="alert">
+        {{ success_message }}
+      </div>
+    </h2>
+    {% endif %}
+    {% if error_message_New_Cow %}
+    <h2>
+      <div class="alert alert-danger" role="alert">
+        {{ error_message }}
+      </div>
+    </h2>
+    {% endif %}
+    
     <p>Ajouter ici les nouvelles Vaches</p>
   </div>
 
@@ -57,10 +95,113 @@
 
           </div>
         </form>
+
       </div>
     </div>
   </div>
 </section>
+<!-- End New Cow Section -->
+
+<!-- New Care Section -->
+<section id="Care" class="contact section">
+  <div class="container section-title">
+    <h2>New Care</h2>
+    {% if success_message_New_Care %}
+    <h2>
+      <div class="alert alert-success" role="alert">
+        {{ success_message }}
+      </div>
+    </h2>
+    {% endif %}
+    {% if error_message_New_Care %}
+    <h2>
+      <div class="alert alert-danger" role="alert">
+        {{ error_message }}
+      </div>
+    </h2>
+    {% endif %}
+    <p>Ajouter ici les nouveaux traitements</p>
+  </div>
+
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <form action="{{ url_for('update_care') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+          <div class="row gy-4">
+
+            <div class="col-md-6">
+              <label for="id" class="form-label">Numéro :</label>
+              <input type="number" name="id" id="id" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="care_medic" class="form-label">traitement :</label>
+                <input type="text" name="care_medic" class="form-control" id="care_medic" required="">
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label for="care_date" class="form-label">Date de traitement :</label>
+              <input type="date" name="care_date" id="care_date" class="form-control" required>
+            </div>
+
+            <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-primary">Envoyer</button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End New Care Section -->
+
+<!-- Remove cow Section -->
+<section id="Remove" class="contact section">
+  <div class="container section-title">
+    <h2>Remove Cow</h2>
+    {% if success_message_Remove %}
+    <h2>
+      <div class="alert alert-success" role="alert">
+        {{ success_message }}
+      </div>
+    </h2>
+    {% endif %}
+    {% if error_message_Remove %}
+    <h2>
+      <div class="alert alert-danger" role="alert">
+        {{ error_message }}
+      </div>
+    </h2>
+    {% endif %}
+    <p>supprimer ici les Vaches</p>
+  </div>
+
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <form action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+          <div class="row gy-4">
+
+            <div class="col-md-6">
+              <label for="id" class="form-label">Numéro :</label>
+              <input type="number" name="id" id="id" class="form-control" required>
+            </div>
+
+            <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-primary">supprimer</button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End Remove cow Section -->
 
 {% endblock %}
 
