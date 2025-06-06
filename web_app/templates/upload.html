@@ -8,7 +8,7 @@
 {% block content %}
   {% if anchor %}
     <script>
-      window.location.hash = '{{ anchor }}'
+      window.location.hash = '{{anchor}}'
     </script>
   {% endif %}
 
@@ -148,79 +148,96 @@
   </section>
   <!-- End Remove cow Section -->
 
-  <!-- prescription Section -->
-  <section id="prescription" class="contact section">
-    <div class="container section-title">
-      <h2>New prescription</h2>
-      {% if success_message_prescription %}
-        <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
-      {% endif %}
-      {% if error_message_prescription %}
-        <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
-      {% endif %}
-      <p>Ajouter ici les nouvelles ordonnances vétérinaires</p>
-    </div>
+  <!-- Pharma Liste Section -->
+    <section id="Pharma" class="contact section">
+      <div class="container section-title">
+        <h2>Add In Pharma Liste</h2>
+        {% if success_message_Pharma %}
+          <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
+        {% endif %}
+        {% if error_message_Pharma %}
+          <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
+        {% endif %}
+        <p>Ajouter ici les medicament que vous utiliserait</p>
+      </div>
 
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <form action="{{ url_for('add_prescription') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
-            <div class="row gy-4">
-              <div class="col-md-6">
-                <label for="prescription_date" class="form-label">Date de l'ordonnances :</label>
-                <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
-              </div>
-
-              <div class="col-12"><!--TODO automatiser en boucle imbriquer-->
-                <label for="medic_1" class="form-label">Médicament 1 :</label>
-                <div class="row g-2 align-items-center mb-3">
-                  <div class="col-md-6">
-                    <select name="medic_1" id="medic_1" class="form-select" required>
-                      <option value="Brune">Brune</option>
-                      <option value="Holestine">Holestine</option>
-                      <option value="Normande">Normande</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <input type="number" name="medic_1_nb" id="medic_1_nb" class="form-control" required placeholder="Nombre de doses" />
-                  </div>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <form action="{{ url_for('add_medic_in_pharma_liste') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+              <div class="row gy-4">
+                <div class="col-md-6">
+                  <label for="medic" class="form-label">medicament :</label>
+                  <input type="text" name="medic" id="medic" class="form-control" required />
                 </div>
 
-                <label for="medic_2" class="form-label">Médicament 2 :</label>
-                <div class="row g-2 align-items-center mb-3">
-                  <div class="col-md-6">
-                    <select name="medic_2" id="medic_2" class="form-select" required>
-                      <option value="Brune">Brune</option>
-                      <option value="Holestine">Holestine</option>
-                      <option value="Normande">Normande</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <input type="number" name="medic_2_nb" id="medic_2_nb" class="form-control" required placeholder="Nombre de doses" />
-                  </div>
-                </div>
-
-                <label for="medic_3" class="form-label">Médicament 3 :</label>
-                <div class="row g-2 align-items-center mb-3">
-                  <div class="col-md-6">
-                    <select name="medic_3" id="medic_3" class="form-select" required>
-                      <option value="Brune">Brune</option>
-                      <option value="Holestine">Holestine</option>
-                      <option value="Normande">Normande</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    <input type="number" name="medic_3_nb" id="medic_3_nb" class="form-control" required placeholder="Nombre de doses" />
-                  </div>
+                <div class="col-md-12 text-center">
+                  <button type="submit" class="btn btn-primary">Ajouter</button>
                 </div>
               </div>
-
-              <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">Ajouter</button>
-              </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  <!-- End Pharma Liste Section -->
+
+  <!-- prescription Section -->
+    <section id="prescription" class="contact section">
+      <div class="container section-title">
+        <h2>New prescription</h2>
+        {% if success_message_prescription %}
+          <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
+        {% endif %}
+        {% if error_message_prescription %}
+          <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
+        {% endif %}
+        <p>Ajouter ici les nouvelles ordonnances vétérinaires</p>
+      </div>
+
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <form action="{{ url_for('add_prescription') }}" method="POST" class="php-email-form">
+              <div class="row gy-4">
+                <div class="col-md-6">
+                  <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
+                  <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+                </div>
+
+                <div class="col-12">
+                  {% for nb_care in range(get_pharma_len()) %}
+                    <label for="medic_{{ nb_care+1 }}" class="form-label">Médicament {{ nb_care+1 }} :</label>
+                    <div class="row g-2 align-items-center mb-3">
+                      <div class="col-md-6">
+                        <select name="medic_{{ nb_care+1 }}" id="medic_{{ nb_care+1 }}" class="form-select">
+                          {% for care in get_pharma_liste() %}
+                            <option value="{{ care }}">{{ care }}</option>
+                          {% endfor %}
+                        </select>
+                        <input
+                          type="number"
+                          name="medic_{{ nb_care+1 }}_nb"
+                          id="medic_{{ nb_care+1 }}_nb"
+                          class="form-control"
+                          placeholder="Nombre de doses"
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+
+                <div class="col-md-12 text-center">
+                  <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </section>
   <!-- End Remove cow Section -->
 {% endblock %}
 
