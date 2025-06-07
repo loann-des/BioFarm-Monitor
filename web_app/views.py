@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import logging as lg
 
 app = Flask(__name__)
@@ -13,6 +13,7 @@ def index():
 
 @app.route("/upload_cow", methods=["POST"])
 def upload_cow():
+    #TODO js upload_cow
     from .models import upload_cow as upd
 
     try:
@@ -44,6 +45,8 @@ def upload_cow():
 
 @app.route("/update_care", methods=["POST"])
 def update_care():
+    #TODO js update_care
+    # TODO reajuster
     from .models import update_care as upc
 
     try:
@@ -83,6 +86,7 @@ def update_care():
 
 @app.route("/remove_cow", methods=["POST"])
 def remove_cow():
+    #TODO js remove_cow
     from .models import remove_cow as rmc
 
     try:
@@ -118,6 +122,7 @@ import logging
 
 @app.route("/add_prescription", methods=["POST"])
 def add_prescription():
+    #TODO add_prescription clean
     import logging
     from .fonction import get_pharma_len
     from .models import add_prescription as add_pres
@@ -148,14 +153,10 @@ def add_prescription():
 
         add_pres(date=date, care_items=cares)
 
-        success_message = "La prescription a bien été ajoutée."
-        return render_template("upload.html", success_message=success_message, anchor="Remove")
-
+        return jsonify({"success": True, "message": "Ordonnance ajoutée avec succès."})
     except Exception as e:
         logging.error(f"Erreur pendant l’upload : {e}")
-        error_message = f"Erreur : {str(e)}"
-        return render_template("upload.html", error_message=error_message, anchor="Remove")
-
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
 @app.route("/add_medic_in_pharma_liste", methods=["POST"])
@@ -170,19 +171,9 @@ def add_medic_in_pharma_liste():
         adm(medic=medic)
 
         success_message = f"{medic} a été ajout à l'armoire a pharmacie."
-        return render_template(
-            "upload.html",
-            success_message=success_message,
-            success_message_Pharma=success_message,
-            anchor="Pharma",
-        )
+        return jsonify({"success": True, "message": success_message})
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
-        error_message = f"Erreur : {str(e)}"
-        return render_template(
-            "upload.html",
-            error_message=error_message,
-            error_message_Pharma=error_message,
-            anchor="Pharma",
-        )
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
+

@@ -1,11 +1,9 @@
 from typing import List, Optional, Tuple, TypedDict
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.datastructures import FileStorage
-from sqlalchemy import Column, Integer, PickleType, String, Enum, DATE, URL, LargeBinary, Boolean, JSON
+from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON
 from sqlalchemy.ext.mutable import MutableList
-from datetime import datetime ,date
+from datetime import date
 import logging as lg
-import enum
 
 from .views import app
 
@@ -46,6 +44,18 @@ class Prescription(db.Model):
     def __init__(self, date : DATE, traitement : list[CareItem]):
         self.date = date
         self.traitement = traitement
+        
+class Pharmacie(db.Model):
+    # TODO model stock
+    year_id = None
+    total_used = None
+    total_used_calf = None
+    total_out_dlc = None
+    total_out = None
+    remaining_stock = None
+    
+    def __init__(self):
+        super().__init__()
         
     
 def init_db():
@@ -115,6 +125,10 @@ def add_prescription(date : date, care_items : List[dict]):
     db.session.add(prescription)
     db.session.commit()
     
+
+def get_all_prescription() -> List[Prescription] :
+    return Prescription.query.all()
+    
     
 def add_medic_in_pharma_liste(medic : str):
     pharma_liste : Prescription = Prescription.query.get(1)
@@ -126,6 +140,7 @@ def add_medic_in_pharma_liste(medic : str):
     care_item : CareItem
     for care_item in get_pharma_liste():
         lg.warning(f"{care_item['medicament']}")
+
 
 def get_pharma_liste()-> List[CareItem] :
     pharma_liste : Prescription = Prescription.query.get(1)

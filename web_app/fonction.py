@@ -17,47 +17,50 @@ def day_delta(date : date) -> int :
     one_year_ago = today - timedelta(days=365) # date d'il y a un ans jour pour jour
     return (date - one_year_ago).days
 
-def diff_dates(date1: date, date2: date) -> tuple[int, int, int]:
-    """
-    Retourne la différence exacte entre deux dates sous forme (années, mois, jours).
-    """
-    # if date1 > date2:
-    #     date1, date2 = date2, date1  # Assurer que date1 est la plus ancienne
-
-    # Différence brute
-    annee = date2.year - date1.year
-    mois = date2.month - date1.month
-    jour = date2.day - date1.day
-
-    # Ajustements si nécessaire
-    if jour < 0:
-        mois -= 1
-        # nombre de jours du mois précédent
-        from calendar import monthrange
-        dernier_mois = date2.month - 1 or 12
-        annee_temp = date2.year if date2.month > 1 else date2.year - 1
-        jour += monthrange(annee_temp, dernier_mois)[1]
-
-    if mois < 0:
-        annee -= 1
-        mois += 12
-
-    return annee, mois, jour
 
 def nb_cares_years(id : int) -> int:
     cares: List[Tuple[str, date, str]] = get_care_by_id(id=id)
     return sum(day_delta(care[1]) <= 365 for care in cares) # sum boolean if True 1 else 0
         
+        
 def nb_cares_years(cow : Cow) -> int:
     cares: List[Tuple[str, date, str]] = cow.traitement
     return sum(day_delta(care[1]) <= 365 for care in cares) # sum boolean if True 1 else 0
+    
     
 def get_pharma_liste() -> list[str] :
     from .models import get_pharma_liste as pharma
     return [care_item['medicament'] for care_item in pharma()]
 
+
 def get_pharma_len() -> int :
     return len(get_pharma_liste())
+
+
+def sum_pharma_in(year : int) -> dict[str,int]:
+    from .models import get_all_prescription, Prescription
+    res = {f"{x}" : 0 for x in get_pharma_liste()}
+    prescription : Prescription
+    for prescription in get_all_prescription():#TODO arranger avec années
+        for care in prescription.traitement:
+            medic = care.get("medicament")
+            if quantite := care.get("quantite"):
+                res[medic] += quantite
+    return res
+
+def sum_farma_used(year : int) -> dict[str,int]:
+    # TODO sum_farma_used
+    return None
+
+def sum_calf_used(year : int) -> dict[str,int]:
+    # TODO sum_calf_used
+    return None
+
+def sum_dlc_out(year : int) -> dict[str,int]:
+    # TODO sum_calf_used
+    return None
+        
+    
 
 # def rename(pdf: FileStorage, img: FileStorage, article_id: int) -> tuple[str, str]:
 #     # Extensions

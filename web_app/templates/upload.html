@@ -5,12 +5,14 @@
 {% block body_class %}
   "index-page"
 {% endblock %}
+
+{% if anchor %}
+  <script>
+    window.location.hash = '{{anchor}}'
+  </script>
+{% endif %}
+
 {% block content %}
-  {% if anchor %}
-    <script>
-      window.location.hash = '{{anchor}}'
-    </script>
-  {% endif %}
 
   <!-- Hero Section -->
   <section class="hero section accent-background">
@@ -152,19 +154,13 @@
     <section id="Pharma" class="contact section">
       <div class="container section-title">
         <h2>Add In Pharma Liste</h2>
-        {% if success_message_Pharma %}
-          <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
-        {% endif %}
-        {% if error_message_Pharma %}
-          <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
-        {% endif %}
         <p>Ajouter ici les medicament que vous utiliserait</p>
       </div>
 
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-lg-8">
-            <form action="{{ url_for('add_medic_in_pharma_liste') }}" method="POST" enctype="multipart/form-data" class="php-email-form">
+            <form id="form-pharma" action="{{ url_for('add_medic_in_pharma_liste') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
               <div class="row gy-4">
                 <div class="col-md-6">
                   <label for="medic" class="form-label">medicament :</label>
@@ -176,6 +172,7 @@
                 </div>
               </div>
             </form>
+            <div id="message-form-pharma" class="alert" style="display: none;"></div>
           </div>
         </div>
       </div>
@@ -186,19 +183,13 @@
     <section id="prescription" class="contact section">
       <div class="container section-title">
         <h2>New prescription</h2>
-        {% if success_message_prescription %}
-          <h2><div class="alert alert-success" role="alert">{{ success_message }}</div></h2>
-        {% endif %}
-        {% if error_message_prescription %}
-          <h2><div class="alert alert-danger" role="alert">{{ error_message }}</div></h2>
-        {% endif %}
         <p>Ajouter ici les nouvelles ordonnances vétérinaires</p>
       </div>
 
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-lg-8">
-            <form action="{{ url_for('add_prescription') }}" method="POST" class="php-email-form">
+            <form id="form-prescription" action="{{ url_for('add_prescription') }}" method="POST" class="ajax-form php-email-form">
               <div class="row gy-4">
                 <div class="col-md-6">
                   <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
@@ -233,7 +224,7 @@
                 </div>
               </div>
             </form>
-
+            <div id="message-form-prescription" class="alert" style="display: none;"></div>
           </div>
         </div>
       </div>
@@ -242,22 +233,7 @@
 {% endblock %}
 
 {% block JS %}
-  <!-- Scroll Top -->
-  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
-  <!-- Preloader -->
-  <div id="preloader"></div>
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
 
-  <!-- Vendor JS Files -->
-  <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/php-email-form/validate.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/aos/aos.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/glightbox/js/glightbox.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/swiper/swiper-bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/purecounter/purecounter_vanilla.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
-
-  <!-- Main JS File -->
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% endblock %}
