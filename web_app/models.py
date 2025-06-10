@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple, TypedDict
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, extract
 from sqlalchemy.ext.mutable import MutableList, MutableDict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 import logging as lg
 
 from .views import app
@@ -11,11 +11,18 @@ from .views import app
 db = SQLAlchemy(app)
 
 
-class CareItem(TypedDict):
-    medicament: str
-    quantite: Optional[int]
-
-
+class Reproduction(TypedDict):
+    insemination: date
+    ultrasound : Optional[bool]
+    dry : date
+    calving_preparation: date
+    calving_date : date
+    calving : bool
+    
+class Setting(TypedDict):
+    dry_time : int #Temps de tarrisement (en jour)
+    calving_preparation_time: int  #Temps de prepa vellage (en jour)
+    
 class Cow(db.Model):
     id = Column(Integer, primary_key=True)  # numero Vache
     # liste de (date de traitement, traitement, info complementaire)
@@ -24,18 +31,22 @@ class Cow(db.Model):
     info = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
     in_farm = Column(Boolean)  # faux si vache sortie expoitation
     born_date = Column(DATE)
-
+    reproduction = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
+    
+    
     def __init__(
         self,
         id: int,
         cow_cares: list[tuple[date, dict[str, int], str]],
         in_farm: bool,
         born_date: date,
+        reproduction : list[tuple[Reproduction, str]]
     ):
         self.id = id
         self.cow_cares = cow_cares
         self.in_farm = in_farm
         self.born_date = born_date
+        self.reproduction = reproduction
 
 
 class Prescription(db.Model):
@@ -79,6 +90,13 @@ class Pharmacie(db.Model):
         self.remaining_stock = remaining_stock
 
 
+class Users(db.Model):
+    id = Column(Integer, primary_key=True)  # numero utilisateur
+    setting = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False) #setting utilisateur
+    
+    def __init__(self,setting : Setting):
+        self.setting = setting
+
 def init_db() -> None:
     db.drop_all()
     db.create_all()
@@ -90,7 +108,7 @@ def init_db() -> None:
 # COW FONCTION
 
 
-def upload_cow(id: int) -> None:
+def upload_cow(id: int, born_date) -> None:
     """Adds a new cow to the database if it does not already exist.
 
     If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
@@ -102,7 +120,7 @@ def upload_cow(id: int) -> None:
         None
     """
     if not Cow.query.get(id):
-        new_cow = Cow(id=id, cow_cares=[], in_farm=True)
+        new_cow = Cow(id=id, cow_cares=[], in_farm=True, born_date=born_date, reproduction=[])
         db.session.add(new_cow)
         db.session.commit()
         lg.info(f"{id} : upload in database")
@@ -204,6 +222,50 @@ def get_care_on_year(year: int) -> list[Tuple[date, dict, str]]:
     return res
 
 
+def add_reproduction(id: int, insemination : date) -> None :
+    # TODO docstring add_reproduction
+    cow : Cow
+    if cow := Cow.query.get(id) :
+        cow.reproduction.append({
+            "insemination": insemination,
+            "ultrasound": None,
+            "dry": None,  # À remplir plus tard
+            "calving_preparation": None,
+            "calving_date": None,
+            "calving": False
+        })
+        lg.info(f'insemination on {date} add to {id}')
+    else :
+        lg.error(f'Cow with {id} not found.')
+        
+
+def reproduction_ultrasound(id: int, ultrasound : bool ) -> None:
+    # TODO docstring reproduction_ultrasound
+    cow : Cow
+    if cow := Cow.query.get(id):
+        reproduction : Reproduction  = cow.reproduction[-1][0]
+        reproduction["ultrasound"] = ultrasound
+
+        if ultrasound:
+            set_reproduction(reproduction)
+            lg.info(f'insemination on {date} of {id} confirm')
+        else :
+            lg.info(f'insemination on {date} of {id} invalidate')
+    else : 
+        lg.error(f'Cow with {id} not found.')
+
+
+def set_reproduction(reproduction):
+    # TODO docstring set_reproduction
+    calving_date : date = reproduction["insemination"] + timedelta(days=280)
+    user : Users = Users.query.get(1)
+    calving_preparation_time = user.setting["calving_preparation_time"]
+    dry_time = user.setting["dry_time"]
+
+    reproduction["dry"] = calving_date - timedelta(days=dry_time)
+    reproduction["calving_preparation"] = calving_date - timedelta(days=calving_preparation_time)
+    reproduction["calving_date"] = calving_date
+    
 
 def remove_cow(id: int) -> None:
     """Marks a cow as no longer in the farm by updating its status.
@@ -344,3 +406,26 @@ def upload_pharmacie_year(year: int, pharmacie: Pharmacie) -> None:
 
 
 # END PHARMACIE FONCTION
+
+# USERS FONCTION
+
+def add_user()->None:
+    # TODO docstring add_user
+    
+    user = Users(setting={
+        "dry_time" : 0,
+        "calving_preparation_time" : 0
+    })
+    db.session.add(user)
+    db.session.commit()
+
+def set_user_setting(dry_time : int , calving_preparation: int) -> None :
+    # TODO docstring set_user_setting
+
+    user : Users
+    user = Users.query.first()
+    user.setting["dry_time"]=dry_time
+    user.setting["calving_preparation_time"]=calving_preparation
+        
+
+# END USERS FONCTION
