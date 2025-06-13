@@ -9,20 +9,23 @@ from .views import app
 
 # Create database connection object
 db = SQLAlchemy(app)
+# TODO gestion exeption
 
 
 class Reproduction(TypedDict):
     insemination: date
-    ultrasound : Optional[bool]
-    dry : date
+    ultrasound: Optional[bool]
+    dry: date
     calving_preparation: date
-    calving_date : date
-    calving : bool
-    
+    calving_date: date
+    calving: bool
+
+
 class Setting(TypedDict):
-    dry_time : int #Temps de tarrisement (en jour)
-    calving_preparation_time: int  #Temps de prepa vellage (en jour)
-    
+    dry_time: int  # Temps de tarrisement (en jour)
+    calving_preparation_time: int  # Temps de prepa vellage (en jour)
+
+
 class Cow(db.Model):
     id = Column(Integer, primary_key=True)  # numero Vache
     # liste de (date de traitement, traitement, info complementaire)
@@ -31,16 +34,17 @@ class Cow(db.Model):
     info = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
     in_farm = Column(Boolean)  # faux si vache sortie expoitation
     born_date = Column(DATE)
-    reproduction = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
-    
-    
+    reproduction = Column(
+        MutableList.as_mutable(PickleType), default=list, nullable=False
+    )
+
     def __init__(
         self,
         id: int,
         cow_cares: list[tuple[date, dict[str, int], str]],
         in_farm: bool,
         born_date: date,
-        reproduction : list[tuple[Reproduction, str]]
+        reproduction: list[tuple[Reproduction, str]],
     ):
         self.id = id
         self.cow_cares = cow_cares
@@ -92,10 +96,13 @@ class Pharmacie(db.Model):
 
 class Users(db.Model):
     id = Column(Integer, primary_key=True)  # numero utilisateur
-    setting = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False) #setting utilisateur
-    
-    def __init__(self,setting : Setting):
+    setting = Column(
+        MutableDict.as_mutable(JSON), default=dict, nullable=False
+    )  # setting utilisateur
+
+    def __init__(self, setting: Setting):
         self.setting = setting
+
 
 def init_db() -> None:
     db.drop_all()
@@ -120,12 +127,15 @@ def upload_cow(id: int, born_date) -> None:
         None
     """
     if not Cow.query.get(id):
-        new_cow = Cow(id=id, cow_cares=[], in_farm=True, born_date=born_date, reproduction=[])
+        new_cow = Cow(
+            id=id, cow_cares=[], in_farm=True, born_date=born_date, reproduction=[]
+        )
         db.session.add(new_cow)
         db.session.commit()
         lg.info(f"{id} : upload in database")
     else:
         lg.error(f"{id} : already in database")
+        raise ValueError(f"{id} : already in database")
 
 
 def update_care(
@@ -142,18 +152,17 @@ def update_care(
     Returns:
         Optional[tuple[int, date]]: The number of remaining cares and the date of new available care, or None if the cow is not found.
     """
-    from .fonction import nb_cares_years
 
     # Récupérer la vache depuis la BDD
     cow: Cow
     if cow := Cow.query.get(id):
-        return add_care(cow, cow_care, id, nb_cares_years(cow))
+        return add_care(cow, cow_care, id)
     lg.error(f"Cow with id {id} not found.")
-    return  # ou lever une exception selon ta gestion d'erreur
+    raise ValueError(f"{id} n'existe pas.")
 
 
 def add_care(
-    cow: Cow, cow_care: Tuple[date, dict, str], id: int, nb_cares_years: int
+    cow: Cow, cow_care: Tuple[date, dict[str, int], str], id: int
 ) -> tuple[int, date]:
     """Adds a care record to the specified cow and returns updated care information.
 
@@ -168,18 +177,19 @@ def add_care(
     Returns:
         Tuple[int, date]: The number of remaining cares and the date of new available care.
     """
+    from .fonction import nb_cares_years_of_cow
+
     # Ajouter le traitement à la liste
     cow.cow_cares.append(cow_care)
 
     # Commit les changements
     db.session.commit()
     lg.info(f"Care add to {id}.")
-
-    nb_care = nb_cares_years(cow=cow)  # nombre de traitement dans l'année glissante
-    remaining_care = 3 - nb_care  # traitement restant dans l'année glissante
+    nb_care_year = nb_cares_years_of_cow(cow=cow)
+    remaining_care = 3 - nb_care_year  # traitement restant dans l'année glissante
     new_available_care = (
-        cow.cow_cares[-nb_care][0] + timedelta(days=365)
-        if len(cow.cow_cares) >= nb_care
+        cow.cow_cares[-(nb_care_year)][0] + timedelta(days=365)
+        if len(cow.cow_cares) > nb_care_year
         else cow.cow_cares[0][0] + timedelta(365)
     )  # date de disponibilité de nouveux traitement
     return remaining_care, new_available_care
@@ -222,50 +232,54 @@ def get_care_on_year(year: int) -> list[Tuple[date, dict, str]]:
     return res
 
 
-def add_reproduction(id: int, insemination : date) -> None :
+def add_reproduction(id: int, insemination: date) -> None:
     # TODO docstring add_reproduction
-    cow : Cow
-    if cow := Cow.query.get(id) :
-        cow.reproduction.append({
-            "insemination": insemination,
-            "ultrasound": None,
-            "dry": None,  # À remplir plus tard
-            "calving_preparation": None,
-            "calving_date": None,
-            "calving": False
-        })
-        lg.info(f'insemination on {date} add to {id}')
-    else :
-        lg.error(f'Cow with {id} not found.')
-        
-
-def reproduction_ultrasound(id: int, ultrasound : bool ) -> None:
-    # TODO docstring reproduction_ultrasound
-    cow : Cow
+    cow: Cow
     if cow := Cow.query.get(id):
-        reproduction : Reproduction  = cow.reproduction[-1][0]
+        cow.reproduction.append(
+            {
+                "insemination": insemination,
+                "ultrasound": None,
+                "dry": None,  # À remplir plus tard
+                "calving_preparation": None,
+                "calving_date": None,
+                "calving": False,
+            }
+        )
+        lg.info(f"insemination on {date} add to {id}")
+    else:
+        lg.error(f"Cow with {id} not found.")
+
+
+def reproduction_ultrasound(id: int, ultrasound: bool) -> None:
+    # TODO docstring reproduction_ultrasound
+    cow: Cow
+    if cow := Cow.query.get(id):
+        reproduction: Reproduction = cow.reproduction[-1][0]
         reproduction["ultrasound"] = ultrasound
 
         if ultrasound:
             set_reproduction(reproduction)
-            lg.info(f'insemination on {date} of {id} confirm')
-        else :
-            lg.info(f'insemination on {date} of {id} invalidate')
-    else : 
-        lg.error(f'Cow with {id} not found.')
+            lg.info(f"insemination on {date} of {id} confirm")
+        else:
+            lg.info(f"insemination on {date} of {id} invalidate")
+    else:
+        lg.error(f"Cow with {id} not found.")
 
 
 def set_reproduction(reproduction):
     # TODO docstring set_reproduction
-    calving_date : date = reproduction["insemination"] + timedelta(days=280)
-    user : Users = Users.query.get(1)
+    calving_date: date = reproduction["insemination"] + timedelta(days=280)
+    user: Users = Users.query.get(1)
     calving_preparation_time = user.setting["calving_preparation_time"]
     dry_time = user.setting["dry_time"]
 
     reproduction["dry"] = calving_date - timedelta(days=dry_time)
-    reproduction["calving_preparation"] = calving_date - timedelta(days=calving_preparation_time)
+    reproduction["calving_preparation"] = calving_date - timedelta(
+        days=calving_preparation_time
+    )
     reproduction["calving_date"] = calving_date
-    
+
 
 def remove_cow(id: int) -> None:
     """Marks a cow as no longer in the farm by updating its status.
@@ -287,6 +301,23 @@ def remove_cow(id: int) -> None:
         lg.warning(f"Cow with {id} not found.")
 
 
+def get_all_care() -> (
+    list[
+        tuple[
+            date,
+            dict[str:int],
+        ]
+    ]
+):
+    all_cares: List[Tuple[date, dict[str, int]]] = [
+        care for cow in Cow.query.all() for care in cow.cow_cares
+    ]
+    all_cares.sort(
+        key=lambda care: care[0], reverse=True
+    )  # Tri décroissant sur la date
+    return all_cares
+
+
 # END COW FONCTION
 
 
@@ -306,6 +337,13 @@ def add_prescription(date: date, care_items: dict[str, int]) -> None:
         None
     """
     prescription = Prescription(date=date, care=care_items, dlc_left=False)
+    db.session.add(prescription)
+    db.session.commit()
+
+
+def add_dlc_left(date: date, care_items: dict[str, int]) -> None:
+    # TODO docstring add_dlc_left
+    prescription = Prescription(date=date, care=care_items, dlc_left=True)
     db.session.add(prescription)
     db.session.commit()
 
@@ -353,7 +391,7 @@ def get_dlc_left_on_year(year: int) -> List[Prescription]:
     ).all()
 
 
-def add_medic_in_pharma_liste(medic: str) -> None:
+def add_medic_in_pharma_list(medic: str) -> None:
     """Adds a new medication to the pharmacy list if it does not already exist.
 
     If the medication is not present in the pharmacy list, it is added and the change is committed. If it already exists, an error is logged.
@@ -373,7 +411,7 @@ def add_medic_in_pharma_liste(medic: str) -> None:
         lg.error(f"{medic} already in pharma list")
 
 
-def get_pharma_liste() -> dict[str, int]:
+def get_pharma_list() -> dict[str, int]:
     """Retrieves the pharmacy medication list as a dictionary.
 
     This function returns the care dictionary from the pharmacy Prescription entry in the database.
@@ -391,41 +429,70 @@ def get_pharma_liste() -> dict[str, int]:
 
 
 def get_pharmacie_year(year: int) -> Pharmacie:
-    # TODO get_pharmacie_year
-    raise NotImplementedError("get_pharmacie_year is not yet implemented")
+    # TODO docstring get_pharmacie_year
+    if pharmacie := Pharmacie.query.get(year):
+        return pharmacie
+    raise ValueError(f"{year} doesn't exist.")
 
 
-def set_pharmacie_year(year: int, pharmacie: Pharmacie) -> None:
-    # TODO set_pharmacie_year
-    raise NotImplementedError("set_pharmacie_year is not yet implemented")
+def set_pharmacie_year(
+    year_id: int,
+    total_used: dict[str:int],
+    total_used_calf: dict[str:int],
+    total_out_dlc: dict[str:int],
+    total_out: dict[str:int],
+    remaining_stock: dict[str:int],
+) -> None:
+    # TODO docstring set_pharmacie_year
+    pharmacie = Pharmacie(
+        year_id=year_id,
+        total_used=total_used,
+        total_used_calf=total_used_calf,
+        total_out_dlc=total_out_dlc,
+        total_out=total_out,
+        remaining_stock=remaining_stock,
+    )
+    db.session.add(pharmacie)
+    db.session.commit()
 
 
-def upload_pharmacie_year(year: int, pharmacie: Pharmacie) -> None:
-    # TODO set_pharmacie_year
-    raise NotImplementedError("upload_pharmacie_year is not yet implemented")
+def upload_pharmacie_year(year: int, remaining_stock: dict[str:int]) -> None:
+    # TODO docstring upload_pharmacie_year
+    if Pharmacie.query.get(year):
+        raise ValueError(f"{year} already existe.")
+
+    pharmacie = Pharmacie(
+        year_id=year,
+        total_used={},
+        total_used_calf={},
+        total_out_dlc={},
+        total_out={},
+        remaining_stock=remaining_stock,
+    )
+    db.session.add(pharmacie)
+    db.session.commit()
 
 
 # END PHARMACIE FONCTION
 
 # USERS FONCTION
 
-def add_user()->None:
+
+def add_user() -> None:
     # TODO docstring add_user
-    
-    user = Users(setting={
-        "dry_time" : 0,
-        "calving_preparation_time" : 0
-    })
+
+    user = Users(setting={"dry_time": 0, "calving_preparation_time": 0})
     db.session.add(user)
     db.session.commit()
 
-def set_user_setting(dry_time : int , calving_preparation: int) -> None :
+
+def set_user_setting(dry_time: int, calving_preparation: int) -> None:
     # TODO docstring set_user_setting
 
-    user : Users
+    user: Users
     user = Users.query.first()
-    user.setting["dry_time"]=dry_time
-    user.setting["calving_preparation_time"]=calving_preparation
-        
+    user.setting["dry_time"] = dry_time
+    user.setting["calving_preparation_time"] = calving_preparation
+
 
 # END USERS FONCTION

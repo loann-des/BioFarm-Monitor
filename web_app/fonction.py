@@ -1,10 +1,9 @@
 from collections import Counter
 from datetime import date
 import os
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from config import config as c
-import enum
-from .models import Cow, get_care_by_id
+from .models import Cow,Prescription, get_care_by_id
 from werkzeug.datastructures import FileStorage
 from .views import app
 from datetime import datetime, timedelta
@@ -60,11 +59,11 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
     """
     cares: List[Tuple[date, dict, str]] = cow.cow_cares
     return sum(
-        day_delta(care[1]) <= 365 for care in cares
+        day_delta(care[0]) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
 
 
-def get_pharma_liste() -> list[str]:
+def get_pharma_list() -> Optional[list[str]]:
     """Returns a list of all medication names available in the pharmacy.
 
     This function retrieves the pharmacy list and extracts the medication names from each care item.
@@ -72,9 +71,9 @@ def get_pharma_liste() -> list[str]:
     Returns:
         list[str]: A list of medication names.
     """
-    from .models import get_pharma_liste as pharma
+    from .models import get_pharma_list as pharma
 
-    return pharma().keys
+    return pharma_list if (pharma_list := list(pharma().keys())) else None
 
 
 def get_pharma_len() -> int:
@@ -85,8 +84,8 @@ def get_pharma_len() -> int:
     Returns:
         int: The number of medication.
     """
-    return len(get_pharma_liste())
-
+    return len(pharma_list) if (pharma_list := get_pharma_list()) else 0
+    
 
 def sum_pharmacie_in(year: int) -> dict[str, int]:
     """Sums the quantities of each medication prescribed in a given year.
@@ -101,7 +100,7 @@ def sum_pharmacie_in(year: int) -> dict[str, int]:
     """
     from .models import get_year_prescription, Prescription
 
-    res = {f"{x}": 0 for x in get_pharma_liste()}
+    res = {f"{x}": 0 for x in get_pharma_list()}
     prescription: Prescription
     for prescription in get_year_prescription(year):
         for medic, quantity in prescription.care.items():
@@ -122,17 +121,16 @@ def sum_pharmacie_used(year: int) -> dict[str, int]:
     """
     from .models import get_care_on_year
 
-    res = {f"{x}": 0 for x in get_pharma_liste()}
+    res = {f"{x}": 0 for x in get_pharma_list()}
     cow_care: Tuple[date, dict, str]
     for cow_care in get_care_on_year(year):
         for medic, quantity in cow_care[1].items():
-            res[f"{medic}"] += quantity
+            res[medic] += quantity
     return res
 
 
 def sum_calf_used(year: int) -> dict[str, int]:
-    # TODO sum_calf_used
-    raise NotImplementedError("sum_calf_used is not yet implemented")
+    return {}
 
 
 def sum_dlc_left(year: int) -> dict[str, int]:
@@ -148,11 +146,11 @@ def sum_dlc_left(year: int) -> dict[str, int]:
     """
     from .models import get_dlc_left_on_year
 
-    res = {f"{x}": 0 for x in get_pharma_liste()}
-    cow_care: Tuple[date, dict, str]
+    res = {f"{x}": 0 for x in get_pharma_list()}
+    cow_care: Prescription
     for cow_care in get_dlc_left_on_year(year):
-        for medic, quantity in cow_care[1].items():
-            res[f"{medic}"] += quantity
+        for medic, quantity in cow_care.care.items():
+            res[medic] += quantity
     return res
 
 
@@ -167,7 +165,7 @@ def sum_pharmacie_left(year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total quantities taken out of the pharmacy for the year.
     """
-    return dict(Counter(sum_pharmacie_left(year)) + Counter(sum_dlc_left(year)))
+    return dict(Counter(sum_pharmacie_used(year)) + Counter(sum_dlc_left(year)))
 
 
 def remaining_pharmacie_stock(year: int) -> dict[str, int]:
@@ -210,5 +208,5 @@ def remaining_pharmacie_stock(year: int) -> dict[str, int]:
 #     # Retourner les chemins relatifs depuis "static/"
 #     return f"pdf/{pdf_filename}", f"images/blog/{img_filename}"
 
-app.jinja_env.globals.update(get_pharma_liste=get_pharma_liste)
+app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
 app.jinja_env.globals.update(get_pharma_len=get_pharma_len)

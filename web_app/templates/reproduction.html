@@ -1,33 +1,14 @@
 {% extends 'base.html' %}
+
 {% block title %}
-  upload
-{% endblock %}
+  reproduction
+{% endblock title %}
+
 {% block body_class %}
   "index-page"
-{% endblock %}
-
-{% if anchor %}
-  <script>
-    window.location.hash = '{{anchor}}'
-  </script>
-{% endif %}
-
+{% endblock body_class %}
+{% block page_title %}Reproduction{% endblock page_title %}
 {% block content %}
-
-<!-- Hero Section -->
-  <section class="hero section accent-background">
-    <div class="container position-relative">
-      <div class="row gy-5 justify-content-between">
-        <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center">
-          <h2><span class="accent">Update-Page</span></h2>
-        </div>
-        <div class="col-lg-5 order-1 order-lg-2">
-          <img src="{{ url_for('static', filename='images/logo2.png') }}" class="img-fluid" alt="" />
-        </div>
-      </div>
-    </div>
-  </section>
-<!-- End Hero Section -->
 
 <!-- New Cow Section -->
   <section id="New_Cow" class="contact section">
@@ -99,11 +80,7 @@
   </section>
 <!-- End Remove cow Section -->
 
-
-{% endblock %}
-
+{% endblock content %}
 {% block JS %}
-
   <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-
-{% endblock %}
+{% endblock JS %}

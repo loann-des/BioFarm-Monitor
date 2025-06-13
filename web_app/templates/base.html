@@ -46,9 +46,9 @@
     
             <nav id="navmenu" class="navmenu">
               <ul>
-                <li><a href="/#hero" class="active">Accueil<br></a></li>
-                <li><a href="/#New_Cow">Nouvelles Vaches</a></li>
-                <li><a href="/#Care">Traitement</a></li>
+                <li><a href="/" class="active">Accueil<br></a></li>
+                <li><a href="/pharmacie">Pharmacie</a></li>
+                <li><a href="/reproduction">Reproduction</a></li>
                 <li><a href="/#Remove">Supprimer Vaches</a></li>
                 <!--
                 <li><a href="/blog">Articles</a></li>
@@ -61,10 +61,23 @@
           </div>
     
         </div>
-
-    </header>
-
-    <main class="main">
+        
+      </header>
+      
+      <main class="main">
+      <!-- Hero Section -->
+      <section class="hero section accent-background">
+        <div class="container position-relative">
+          <div class="row gy-5 justify-content-between">
+            <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center">
+              <h2><span class="accent">{% block page_title %} {% endblock page_title %}</span></h2>
+            <div class="col-lg-5 order-1 order-lg-2">
+              <img src="{{ url_for('static', filename='images/logo2.png') }}" class="img-fluid" alt="" />
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- End Hero Section -->
         {% block content %} 
         
         {% endblock %}

@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Pharmacie
+{% endblock %}
+
+{% block body_class %}
+  "index-page"
+{% endblock %}
+
+{% block content %}
+
+
+  <!-- New Care Section -->
+  <section id="Care" class="contact section">
+    <div class="container section-title">
+      <h2>Cow Care</h2>
+      <p>Ajouter ici les nouveaux traitements</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-care" action="{{ url_for('update_care') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# numero Vache #}
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro :</label>
+                <input type="number" name="id" id="id" class="form-control" required />
+              </div>
+
+              {# date de traitement #}
+              <div class="col-md-6">
+                <label for="care_date" class="form-label">Date de traitement :</label>
+                <input type="date" name="care_date" id="care_date" class="form-control" required />
+              </div>
+
+              {#traitement #}
+              <div class="col-md-6">
+                {% for nb_care in range(get_pharma_len()) %}
+                  <label for="medic_{{ nb_care+1 }}" class="form-label">Médicament {{ nb_care+1 }} :</label>
+                  <div class="row g-2 align-items-center mb-3">
+                    <div class="col-md-6">
+                      <select name="medic_{{ nb_care+1 }}" id="medic_{{ nb_care+1 }}" class="form-select">
+                        {% for care in get_pharma_list() %}
+                          <option value="{{ care }}">{{ care }}</option>
+                        {% endfor %}
+                      </select>
+                      <input
+                        type="number"
+                        name="medic_{{ nb_care+1 }}_nb"
+                        id="medic_{{ nb_care+1 }}_nb"
+                        class="form-control"
+                        placeholder="Nombre de doses ou ml"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              {# info complaimentaire traitement #}
+              <div class="col-md-6">
+                <label for="care_info" class="form-label">information de traitement :</label>
+                <input type="text" name="care_info" id="care_info" class="form-control" />
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-care" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End New Care Section -->
+
+  <!-- Pharma Liste Section -->
+  <section id="Pharma" class="contact section">
+    <div class="container section-title">
+      <h2>Add In Pharma Liste</h2>
+      <p>Ajouter ici les medicament que vous utiliserait</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-pharma" action="{{ url_for('add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# medic a ajouter a la list #}
+              <div class="col-md-6">
+                <label for="medic" class="form-label">medicament :</label>
+                <input type="text" name="medic" id="medic" class="form-control" required />
+              </div>
+
+              {# selection de l'unité #}
+              <div class="row g-2 align-items-center mb-3">
+                <div class="col-md-6">
+                  <label for="medic_unit" class="form-label">Médicament unité :</label>
+                  <select name="medic_unit" id="medic_unit" class="form-select">
+                      <option value="dose">dose</option>
+                      <option value="ml">millilitres</option>
+                  </select>
+                </div>
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-pharma" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End Pharma Liste Section -->
+
+  <!-- prescription Section -->
+  <section id="prescription" class="contact section">
+    <div class="container section-title">
+      <h2>New prescription</h2>
+      <p>Ajouter ici les nouvelles ordonnances vétérinaires</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-prescription" action="{{ url_for('add_prescription') }}" method="POST" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# date de l'ordonnance #}
+              <div class="col-md-6">
+                <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
+                <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+              </div>
+
+              {# medicament sur l'ordonnance #}
+              <div class="col-12">
+                {% for nb_care in range(get_pharma_len()) %}
+                  <label for="medic_{{ nb_care+1 }}" class="form-label">Médicament {{ nb_care+1 }} :</label>
+                  <div class="row g-2 align-items-center mb-3">
+                    <div class="col-md-6">
+                      <select name="medic_{{ nb_care+1 }}" id="medic_{{ nb_care+1 }}" class="form-select">
+                        {% for care in get_pharma_list() %}
+                          <option value="{{ care }}">{{ care }}</option>
+                        {% endfor %}
+                      </select>
+                      <input
+                        type="number"
+                        name="medic_{{ nb_care+1 }}_nb"
+                        id="medic_{{ nb_care+1 }}_nb"
+                        class="form-control"
+                        placeholder="Nombre de doses"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-prescription" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End prescription Section -->
+
+  <!-- DLC Section -->
+  <section id="dlc_left" class="contact section">
+    <div class="container section-title">
+      <h2>Medicament DLC</h2>
+      <p>Sorter ici les medicament pour dlc passer</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-dlc_left" action="{{ url_for('add_dlc_left') }}" method="POST" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# date de la sortie #}
+              <div class="col-md-6">
+                <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
+                <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+              </div>
+
+              {# medicament sortie #}
+              <div class="col-12">
+                {% for nb_care in range(get_pharma_len()) %}
+                  <label for="medic_{{ nb_care+1 }}" class="form-label">Médicament {{ nb_care+1 }} :</label>
+                  <div class="row g-2 align-items-center mb-3">
+                    <div class="col-md-6">
+                      <select name="medic_{{ nb_care+1 }}" id="medic_{{ nb_care+1 }}" class="form-select">
+                        {% for care in get_pharma_list() %}
+                          <option value="{{ care }}">{{ care }}</option>
+                        {% endfor %}
+                      </select>
+                      <input
+                        type="number"
+                        name="medic_{{ nb_care+1 }}_nb"
+                        id="medic_{{ nb_care+1 }}_nb"
+                        class="form-control"
+                        placeholder="Nombre de doses"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-dlc_left" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End DLC Section -->
+
+  <!-- Stock bref Section -->
+  <section id="stock_bref" class="contact section">
+    <div class="container section-title">
+      <h2>Stock Bref</h2>
+      <p>ici vos stock de medicament en temps reel</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="php-email-form">
+
+            <div class="row gy-4">
+            
+              <div class="col-12">
+                <div id="stock-result" class="mt-3"></div>
+              </div>
+              
+              <div class="col-md-12 text-center">
+                <button id="load-stock" class="btn btn-primary" type="submit">Afficher le stock</button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--END Stock bref Section -->
+
+  <!-- Stock history Section -->
+  <section id="stock_history" class="contact section">
+    <div class="container section-title">
+      <h2>Stock History</h2>
+      <p>ici l'historique de vos stock de medicament</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="php-email-form">
+
+            <div class="row gy-4">
+              
+              <div class="col-md-12 text-center">
+                <a href="{{ url_for('stock_details') }}">
+                    <button class="btn btn-primary" type="submit">               
+                    Afficher l'historique des stocks            
+                  </button>
+                </a>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--END Stock bref Section -->
+
+  {# TODO historique stock #}
+  {# TODO get stock #}
+
+
+  <!-- init stock Section -->
+  <section id="init_stock" class="contact section">
+    <div class="container section-title">
+      <h2>initialisation stock</h2>
+      <p>Sorter ici les medicament pour dlc passer</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-init_stock" action="{{ url_for('init_stock') }}" method="POST" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# date de l'anné precédante #}
+              <div class="col-md-6">
+                <label for="prescription_date" class="form-label">Date des stock(anné precédante) :</label>
+                <input type="number" name="prescription_date" id="prescription_date" class="form-control" min="2000" max="2099"required />
+              </div>
+
+              {# medicament stock #}
+              <div class="col-12">
+                {% for nb_care in range(get_pharma_len()) %}
+                  <label for="medic_{{ nb_care+1 }}" class="form-label">Médicament {{ nb_care+1 }} :</label>
+                  <div class="row g-2 align-items-center mb-3">
+                    <div class="col-md-6">
+                      <select name="medic_{{ nb_care+1 }}" id="medic_{{ nb_care+1 }}" class="form-select">
+                        {% for care in get_pharma_list() %}
+                          <option value="{{ care }}">{{ care }}</option>
+                        {% endfor %}
+                      </select>
+                      <input
+                        type="number"
+                        name="medic_{{ nb_care+1 }}_nb"
+                        id="medic_{{ nb_care+1 }}_nb"
+                        class="form-control"
+                        placeholder="Nombre de doses"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-init_stock" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End init stock Section -->
+
+
+{% endblock %}
+
+{% block JS %}
+
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+
+{% endblock %}
