@@ -1,10 +1,16 @@
 from datetime import datetime
-from flask import Flask, jsonify, render_template, request
+from io import BytesIO
+from flask import Flask, jsonify, render_template, request, send_file
 import logging as lg
 
 app = Flask(__name__)
 app.config.from_object("config.config")
 
+
+from .fonction import *
+from .models import CowUntils, PrescriptionUntils, PharmacieUtils
+
+#TODO edit Hystory
 
 @app.route("/", methods=["GET"])
 def index():
@@ -18,8 +24,6 @@ def pharmacie():
 
 @app.route("/update_care", methods=["POST"])
 def update_care():
-    from .models import update_care as upc
-    from .fonction import get_pharma_len
 
     def extract_cares(form, pharma_len):
         cares = {}
@@ -51,7 +55,7 @@ def update_care():
 
         lg.info(f"update care{id_cow}...")
 
-        remain_care = upc(id=id_cow, cow_care=care)
+        remain_care = CowUntils.update_care(id=id_cow, cow_care=care)
 
         success_message = (
             f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {remain_care[1]} pour {id_cow}."
@@ -65,9 +69,6 @@ def update_care():
 
 @app.route("/add_prescription", methods=["POST"])
 def add_prescription():
-    from .fonction import get_pharma_len
-    from .models import add_prescription as add_pres
-
     try:
         # Récupère et parse la date
         prescription_date_str = request.form["prescription_date"]
@@ -93,7 +94,7 @@ def add_prescription():
         if not cares:
             raise ValueError("Veuillez renseigner au moins un médicament avec une quantité valide.")
 
-        add_pres(date=date_obj, care_items=cares)
+        PrescriptionUntils.add_prescription(date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Ordonnance ajoutée avec succès."})
 
@@ -104,8 +105,6 @@ def add_prescription():
 
 @app.route("/add_dlc_left", methods=["POST"])
 def add_dlc_left():
-    from .fonction import get_pharma_len
-    from .models import add_dlc_left as dlc_left
 
     try:
         # Récupère et parse la date
@@ -129,7 +128,7 @@ def add_dlc_left():
         if not cares:
             raise ValueError("Veuillez renseigner au moins un médicament avec une quantité valide.")
 
-        dlc_left(date=date_obj, care_items=cares)
+        PrescriptionUntils.add_dlc_left(date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Medicament sortie avec succès."})
 
@@ -140,14 +139,13 @@ def add_dlc_left():
 
 @app.route("/add_medic_in_pharma_list", methods=["POST"])
 def add_medic_in_pharma_list():
-    from .models import add_medic_in_pharma_list as adm
 
     try:
         # Récupération des données du formulaire
         medic = request.form["medic"]
         lg.info(f"Ajout de {medic} a l'armoire a pharmacie...")
 
-        adm(medic=medic)
+        PrescriptionUntils.add_medic_in_pharma_list(medic=medic)
 
         success_message = f"{medic} a été ajout à l'armoire a pharmacie."
         return jsonify({"success": True, "message": success_message})
@@ -159,15 +157,12 @@ def add_medic_in_pharma_list():
 
 @app.route('/init_stock', methods=["POST"])
 def init_stock():
-    from .fonction import get_pharma_len
-    from .models import upload_pharmacie_year as upy
-
     try:
         # Récupère et parse la date
         year = request.form["prescription_date"]
 
         # Récupère les médicaments et quantités
-        remaining_stock : dict[str: int] = {}
+        remaining_stock : dict[str, int] = {}
         for nb_care in range(get_pharma_len()):
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
@@ -183,7 +178,7 @@ def init_stock():
         if not remaining_stock:
             raise ValueError("Veuillez renseigner au moins un médicament avec une quantité valide.")
 
-        upy(year=year, remaining_stock=remaining_stock)
+        PharmacieUtils.upload_pharmacie_year(year=year, remaining_stock=remaining_stock)
 
         return jsonify({"success": True, "message": "pharmacie initialiser avec succès."})
 
@@ -193,9 +188,7 @@ def init_stock():
 
 
 @app.route("/get_stock", methods=["GET"])
-def get_stock():
-    from .fonction import remaining_pharmacie_stock  # ta fonction qui renvoie un dict {medicament: quantité}
-    
+def get_stock():    
     try:
         year = datetime.now().year  # on récupère l'année en paramètre
         stock_data = remaining_pharmacie_stock(year)
@@ -204,10 +197,32 @@ def get_stock():
         return jsonify({"success": False, "message": str(e)})
 
 
-@app.route('/stock_details')
+@app.route('/stock_details', methods=["GET"])
 def stock_details():
     return render_template("stock_details.html")
 
+
+@app.route('/download/', methods=["GET", "POST"])
+def download():
+    print(request.form)
+    try:
+        year = int(request.form["export_year"])  # CHAMP CORRIGÉ ICI
+        csv_str = pharmacie_to_csv(year)
+
+        # Encodage du CSV en bytes pour envoi en tant que fichier
+        csv_bytes = BytesIO(csv_str.encode('utf-8'))
+        
+        lg.info(f"Téléchargement du CSV pour {year}")
+        
+        return send_file(
+            csv_bytes,
+            download_name=f"pharmacie_{year}.csv",
+            as_attachment=True,
+            mimetype='text/csv'
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 400
 # END Pharmatie root
 
 # Reproduction root
@@ -219,15 +234,14 @@ def reproduction():
 @app.route("/upload_cow", methods=["POST"])
 def upload_cow():
     #TODO js upload_cow
-    from .models import upload_cow as upd
 
     try:
         # Récupération des données du formulaire
-        id = int(request.form["id"])
+        cow_id = int(request.form["id"])
 
-        lg.info(f"Adding new cow {id}...")
+        lg.info(f"Adding new cow {cow_id}...")
 
-        upd(id=id, born_date=datetime.now())
+        CowUntils.upload_cow(id=cow_id, born_date=datetime.now())
 
         success_message = "La vache a été ajoutée avec succès !"
         return render_template(
@@ -251,17 +265,16 @@ def upload_cow():
 @app.route("/remove_cow", methods=["POST"])
 def remove_cow():
     #TODO js remove_cow
-    from .models import remove_cow as rmc
 
     try:
         # Récupération des données du formulaire
-        id = int(request.form["id"])
+        cow_id = int(request.form["id"])
 
-        lg.info(f"supresion de {id}...")
+        lg.info(f"supresion de {cow_id}...")
 
-        rmc(id=id)
+        CowUntils.remove_cow(id=cow_id)
 
-        success_message = f"{id} a été supprimée."
+        success_message = f"{cow_id} a été supprimée."
         return render_template(
             "upload.html",
             success_message=success_message,
@@ -281,3 +294,6 @@ def remove_cow():
 
 
 # END  Reproduction root
+app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
+app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
+app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)

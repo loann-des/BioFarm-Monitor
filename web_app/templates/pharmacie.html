@@ -300,8 +300,37 @@
   </section>
   <!--END Stock bref Section -->
 
-  {# TODO historique stock #}
-  {# TODO get stock #}
+  {# TODO export_stock #}
+  <section id="export_stock" class="contact section">
+    <div class="container section-title">
+      <h2>export_stock</h2>
+      <p>tlelecherger ici le recapitulatif annuel</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-export_stock" action="{{ url_for('download') }}" method="POST" class="php-email-form" enctype="multipart/form-data">
+
+            <div class="row gy-4">
+
+              {# date de l'anné a exporé #}
+              <div class="col-md-6">
+                <label for="export_year" class="form-label">Date des stock a exporté :</label>
+                <input type="number" name="export_year" id="export_year" class="form-control" min="2000" max="2099"required />
+              </div>
+              
+              {# utton download #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">telelecherger stock</button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 
 
   <!-- init stock Section -->
