@@ -111,6 +111,7 @@ def init_db() -> None:
     db.drop_all()
     db.create_all()
     db.session.add(Prescription(date=None, care={}, dlc_left=True))
+    UserUtils.add_user()
     db.session.commit()
     lg.warning("Database initialized!")
 
@@ -161,7 +162,7 @@ class CowUntils:
         # Récupérer la vache depuis la BDD
         cow: Cow
         if cow := Cow.query.get(id):
-            return add_care(cow, cow_care, id)
+            return CowUntils.add_care(cow, cow_care, id)
         lg.error(f"Cow with id {id} not found.")
         raise ValueError(f"{id} n'existe pas.")
 
@@ -216,7 +217,7 @@ class CowUntils:
         if cow := Cow.query.get(id):
             return cow.cow_cares
         lg.error(f"Cow with {id} not found.")
-        return  # ou lever une exception selon ta gestion d'erreur
+        raise ValueError(f"{id} n'existe pas.")
 
     @staticmethod
     def get_care_on_year(year: int) -> list[Tuple[date, dict, str]]:
@@ -238,8 +239,9 @@ class CowUntils:
             )
         return res
 
+
     @staticmethod
-    def add_reproduction(id: int, insemination: date) -> None:
+    def add_insemination(id: int, insemination: date) -> None:
         # TODO docstring add_reproduction
         cow: Cow
         if cow := Cow.query.get(id):
@@ -256,9 +258,11 @@ class CowUntils:
             lg.info(f"insemination on {date} add to {id}")
         else:
             lg.error(f"Cow with {id} not found.")
+            raise ValueError(f"{id} n'existe pas.")
+
 
     @staticmethod
-    def reproduction_ultrasound(id: int, ultrasound: bool) -> None:
+    def validated_ultrasound(id: int, ultrasound: bool) -> None:
         # TODO docstring reproduction_ultrasound
         cow: Cow
         if cow := Cow.query.get(id):
@@ -266,12 +270,14 @@ class CowUntils:
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
-                set_reproduction(reproduction)
+                CowUntils.set_reproduction(reproduction)
                 lg.info(f"insemination on {date} of {id} confirm")
             else:
                 lg.info(f"insemination on {date} of {id} invalidate")
         else:
-            lg.error(f"Cow with {id} not found.")
+            lg.error(f"Cow with {id} not found.")        
+            raise ValueError(f"{id} n'existe pas.")
+
 
     @staticmethod
     def set_reproduction(reproduction):
@@ -306,6 +312,8 @@ class CowUntils:
             lg.info(f"Cow {id} left the farm.")
         else:
             lg.warning(f"Cow with {id} not found.")
+            raise ValueError(f"{id} n'existe pas.")
+
 
     @staticmethod
     def get_all_care() -> list[tuple[date, dict[str:int], int]]:
@@ -514,22 +522,23 @@ class PharmacieUtils:
 
 # USERS FONCTION
 
-
-def add_user() -> None:
+class UserUtils :
+    @staticmethod
+    def add_user() -> None:
     # TODO docstring add_user
 
-    user = Users(setting={"dry_time": 0, "calving_preparation_time": 0})
-    db.session.add(user)
-    db.session.commit()
+        user = Users(setting={"dry_time": 0, "calving_preparation_time": 0})
+        db.session.add(user)
+        db.session.commit()
 
-
-def set_user_setting(dry_time: int, calving_preparation: int) -> None:
+    @staticmethod
+    def set_user_setting(dry_time: int, calving_preparation: int) -> None:
     # TODO docstring set_user_setting
 
-    user: Users
-    user = Users.query.first()
-    user.setting["dry_time"] = dry_time
-    user.setting["calving_preparation_time"] = calving_preparation
-
+        user: Users
+        user = Users.query.first()
+        user.setting["dry_time"] = dry_time
+        user.setting["calving_preparation_time"] = calving_preparation
+        db.session.commit()
 
 # END USERS FONCTION

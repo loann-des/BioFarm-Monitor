@@ -8,13 +8,27 @@ app.config.from_object("config.config")
 
 
 from .fonction import *
-from .models import CowUntils, PrescriptionUntils, PharmacieUtils
+from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 
 #TODO edit Hystory
 
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
+@app.route('/user_setting', methods=["POST"])
+def user_setting():
+    try :
+        dry_time = request.form["dry_time"]
+        calving_preparation_time = request.form["calving_preparation_time"]
+        
+        UserUtils.set_user_setting(dry_time=dry_time,calving_preparation=calving_preparation_time)
+
+        return jsonify({"success": True, "message": "setting mis a jours."})
+
+    except Exception as e:
+        lg.error(f"Erreur pendant l’upload : {e}")
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
+
 
 # Pharmatie root
 @app.route("/pharmacie", methods=["GET"])
@@ -223,6 +237,7 @@ def download():
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
+
 # END Pharmatie root
 
 # Reproduction root
@@ -231,10 +246,10 @@ def download():
 def reproduction():
     return render_template("reproduction.html")
 
+
 @app.route("/upload_cow", methods=["POST"])
 def upload_cow():
-    #TODO js upload_cow
-
+    
     try:
         # Récupération des données du formulaire
         cow_id = int(request.form["id"])
@@ -243,28 +258,16 @@ def upload_cow():
 
         CowUntils.upload_cow(id=cow_id, born_date=datetime.now())
 
-        success_message = "La vache a été ajoutée avec succès !"
-        return render_template(
-            "upload.html",
-            success_message=success_message,
-            success_message_New_Cow=success_message,
-            anchor="New_Cow",
-        )
+        return jsonify({"success": True, "message": "La vache a été ajoutée avec succès !"})
+
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
-        error_message = f"Erreur : {str(e)}"
-        return render_template(
-            "upload.html",
-            error_message=error_message,
-            error_message_New_Cow=error_message,
-            anchor="New_Cow",
-        )
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
 @app.route("/remove_cow", methods=["POST"])
 def remove_cow():
-    #TODO js remove_cow
 
     try:
         # Récupération des données du formulaire
@@ -274,26 +277,41 @@ def remove_cow():
 
         CowUntils.remove_cow(id=cow_id)
 
-        success_message = f"{cow_id} a été supprimée."
-        return render_template(
-            "upload.html",
-            success_message=success_message,
-            success_message_Remove=success_message,
-            anchor="Remove",
-        )
+        return jsonify({"success": True, "message": f"{cow_id} a été supprimée."})
+
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
-        error_message = f"Erreur : {str(e)}"
-        return render_template(
-            "upload.html",
-            error_message=error_message,
-            error_message_Remove=error_message,
-            anchor="Remove",
-        )
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
+@app.route('/insemination', methods=["POST"])
+def insemination():
+    # TODO insemination
+    pass
+
+@app.route('/ultrasound')
+def ultrasound():
+    # TODO insemination
+    pass
+
+@app.route('/show_dry')
+def show_dry():
+    # TODO show_dry
+    pass
+
+@app.route('/show_calving_preparation')
+def show_calving_preparation():
+    # TODO show_calving_preparation
+    pass
+
+@app.route('/show_calving_date')
+def show_calving_date():
+    # TODO show_calving_date
+    pass
 # END  Reproduction root
+
+
 app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
 app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
 app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)

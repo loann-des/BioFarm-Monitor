@@ -10,9 +10,49 @@
 {% block content %}
 
 
+  <!-- set_user_setting Section -->
+  <section id="user_setting" class="contact section">
+    <div class="container section-title">
+      <h2>user_setting</h2>
+      <p>Rentré ici vos parametres</p>
+    </div>
 
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          
+          <form id="form-user_setting" action="{{ url_for('user_setting') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# durré tarrisment #}
+              <div class="col-md-6">
+                <label for="dry_time" class="form-label">durré tarrisment</label>
+                <input type="number" name="dry_time" id="dry_time" class="form-control" required />
+              </div>
+
+              {# durré prepa velage #}
+              <div class="col-md-6">
+                <label for="calving_preparation_time" class="form-label">durré prépa vélage</label>
+                <input type="number" name="calving_preparation_time" id="calving_preparation_time" class="form-control" required />
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Set</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-user_setting" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--END set_user_setting Care Section -->
+
+ {# TODO afficher setting #}
 
 {% endblock content %}
 {% block JS %}
-
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
 {% endblock JS %}
