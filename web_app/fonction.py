@@ -3,9 +3,14 @@ from collections import Counter
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
 from werkzeug.datastructures import FileStorage
-from .models import Cow, Prescription, Pharmacie, CowUntils, PharmacieUtils, PrescriptionUntils
-
-
+from .models import (
+    Cow,
+    Prescription,
+    Pharmacie,
+    CowUntils,
+    PharmacieUtils,
+    PrescriptionUntils,
+)
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -71,7 +76,11 @@ def get_pharma_list() -> Optional[list[str]]:
         list[str]: A list of medication names.
     """
 
-    return pharma_list if (pharma_list := list(PrescriptionUntils.get_pharma_list().keys())) else None
+    return (
+        pharma_list
+        if (pharma_list := list(PrescriptionUntils.get_pharma_list().keys()))
+        else None
+    )
 
 
 def get_pharma_len() -> int:
@@ -127,7 +136,7 @@ def sum_pharmacie_used(year: int) -> dict[str, int]:
 
 def sum_calf_used(year: int) -> dict[str, int]:
     # TODO sum_calf_used
-    return {} 
+    return {}
 
 
 def sum_dlc_left(year: int) -> dict[str, int]:
@@ -225,9 +234,10 @@ def update_pharmacie_year(year: int) -> Pharmacie:
         remaining_stock=remaining_stock,
     )
     return PharmacieUtils.updateOrDefault_pharmacie_year(year=year, default=pharmacie)
-    
+
 
 def pharmacie_to_csv(year: int) -> str:
+    # TODO add liste prescription
     pharmacie = update_pharmacie_year(year)
 
     # Liste des champs à exporter
@@ -245,9 +255,10 @@ def pharmacie_to_csv(year: int) -> str:
     prev_pharmacie = PharmacieUtils.get_pharmacie_year(year - 1)
     remaining_stock_last_year = getattr(prev_pharmacie, "remaining_stock", {})
 
-
     # Obtenir tous les médicaments à partir des données
-    all_meds = get_pharma_list()  # ← Liste des médicaments (ex: ["masti", "doliprane", ...])
+    all_meds = (
+        get_pharma_list()
+    )  # ← Liste des médicaments (ex: ["masti", "doliprane", ...])
     all_meds = sorted(all_meds)
 
     output = io.StringIO()
@@ -273,6 +284,36 @@ def pharmacie_to_csv(year: int) -> str:
     return result
 
 
+def get_all_dry_date() -> dict[int, date]:
+
+    dry_dates = {
+        cow_id: reproduction["dry"]
+        for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+    }
+
+    return dict(sorted(dry_dates.items(), key=lambda item: item[1]))
+
+
+def get_all_calving_preparation_date() -> dict[int, date]:
+
+    calving_preparation_dates = {
+        cow_id: reproduction["calving_preparation"]
+        for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+    }
+
+    return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1]))
+
+
+def get_all_calving_date() -> dict[int, date]:
+
+    calving_dates = {
+        cow_id: reproduction["calving_date"]
+        for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+    }
+
+    return dict(sorted(calving_dates.items(), key=lambda item: item[1]))
+
+
 # def rename(pdf: FileStorage, img: FileStorage, article_id: int) -> tuple[str, str]:
 #     # Extensions
 #     pdf_ext = os.path.splitext(pdf.filename)[1] or ".pdf"
@@ -292,5 +333,3 @@ def pharmacie_to_csv(year: int) -> str:
 
 #     # Retourner les chemins relatifs depuis "static/"
 #     return f"pdf/{pdf_filename}", f"images/blog/{img_filename}"
-
-

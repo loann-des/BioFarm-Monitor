@@ -2,15 +2,16 @@
 
 {% block title %}
   reproduction
-{% endblock title %}
+{% endblock %}
 
 {% block body_class %}
   "index-page"
-{% endblock body_class %}
-{% block page_title %}Reproduction{% endblock page_title %}
+{% endblock %}
+{% block page_title %}
+  Reproduction
+{% endblock %}
 {% block content %}
-
-<!-- New Cow Section -->
+  <!-- New Cow Section -->
   <section id="new_cow_section" class="contact section">
     <div class="container section-title">
       <h2>New Cow</h2>
@@ -20,10 +21,8 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-8">
-
           <form id="form-new_cow" action="{{ url_for('upload_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
             <div class="row gy-4">
-              
               {# numero vache a Ajouter #}
               <div class="col-md-6">
                 <label for="id" class="form-label">Numéro :</label>
@@ -34,7 +33,6 @@
               <div class="col-md-12 text-center">
                 <button type="submit" class="btn btn-primary">Ajouter</button>
               </div>
-
             </div>
           </form>
           <div id="message-form-new_cow" class="alert" style="display: none;"></div>
@@ -42,9 +40,9 @@
       </div>
     </div>
   </section>
-<!-- End New Cow Section -->
+  <!-- End New Cow Section -->
 
-<!-- Remove cow Section -->
+  <!-- Remove cow Section -->
   <section id="Remove" class="contact section">
     <div class="container section-title">
       <h2>Remove Cow</h2>
@@ -54,10 +52,8 @@
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-lg-8">
-
           <form id="form-remove_cow" action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
             <div class="row gy-4">
-
               {# numero vache a supprimer #}
               <div class="col-md-6">
                 <label for="id" class="form-label">Numéro :</label>
@@ -68,7 +64,6 @@
               <div class="col-md-12 text-center">
                 <button type="submit" class="btn btn-primary">supprimer</button>
               </div>
-
             </div>
           </form>
           <div id="message-form-remove_cow" class="alert" style="display: none;"></div>
@@ -76,9 +71,180 @@
       </div>
     </div>
   </section>
-<!-- End Remove cow Section -->
+  <!-- End Remove cow Section -->
 
-{% endblock content %}
+  <!-- insemination Section -->
+  <section id="insemination" class="contact section">
+
+    <div class="container section-title">
+      <h2>Insemination</h2>
+      <p>ajouter ici les insemination</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-insemination" action="{{ url_for('insemination') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+              {# date de l'insemination #}
+              <div class="col-md-6">
+                <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
+                <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+              </div>
+
+              {# numero vache inseminé #}
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro :</label>
+                <input type="number" name="id" id="id" class="form-control" required />
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+            </div>
+          </form>
+          <div id="message-form-insemination" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End insemination Section -->
+
+  <!-- ultrasound Section -->
+  <section id="ultrasound" class="contact section">
+
+    <div class="container section-title">
+      <h2>ultrasound</h2>
+      <p>ajouter ici les echographie</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <form id="form-ultrasound" action="{{ url_for('ultrasound') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# numero vache inseminé #}
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro :</label>
+                <input type="number" name="id" id="id" class="form-control" required />
+              </div>
+
+              <div class="col-md-6">
+                <select name="ultrasound" id="ultrasound" class="form-select">
+                    <option value="True">Vrais</option>
+                    <option value="False">Faux</option>
+                </select>
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Envoyer</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-ultrasound" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End ultrasound Section -->
+
+  <!-- show_dry Section -->
+  <section id="show_dry" class="contact section">
+    <div class="container section-title">
+      <h2>show_dry</h2>
+      <p>ici les prochain tarrisment en temps reel</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="php-email-form">
+
+            <div class="row gy-4">
+            
+              <div class="col-12">
+                <div id="dry-result" class="mt-3"></div>
+              </div>
+              
+              <div class="col-md-12 text-center">
+                <button id="load-dry" class="btn btn-primary" type="submit">Afficher les tarrisement</button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--END show_dry Section -->
+  
+  <!-- show_calving_preparation Section -->
+  <section id="show_calving_preparation" class="contact section">
+    <div class="container section-title">
+      <h2>show_calving_preparation</h2>
+      <p>ici les prochain prepa velage</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="php-email-form">
+
+            <div class="row gy-4">
+            
+              <div class="col-12">
+                <div id="calving_preparation-result" class="mt-3"></div>
+              </div>
+              
+              <div class="col-md-12 text-center">
+                <button id="load-calving_preparation" class="btn btn-primary" type="submit">Afficher les tarrisement</button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--END show_calving_preparation Section -->
+
+  <!-- show_calving_date Section -->
+  <section id="show_calving_date" class="contact section">
+    <div class="container section-title">
+      <h2>show_calving_date</h2>
+      <p>ici les prochain velages</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="php-email-form">
+
+            <div class="row gy-4">
+            
+              <div class="col-12">
+                <div id="calving-result" class="mt-3"></div>
+              </div>
+              
+              <div class="col-md-12 text-center">
+                <button id="load-calving" class="btn btn-primary" type="submit">Afficher les tarrisement</button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!--END show_calving_date Section -->
+{% endblock %}
 {% block JS %}
   <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-{% endblock JS %}
+{% endblock %}

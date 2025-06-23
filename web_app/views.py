@@ -10,18 +10,25 @@ app.config.from_object("config.config")
 from .fonction import *
 from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 
-#TODO edit Hystory
+# TODO edit Hystory
+# TODO gestion des log
+
 
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
-@app.route('/user_setting', methods=["POST"])
+
+
+@app.route("/user_setting", methods=["POST"])
+# TODO recalculer velage si changer
 def user_setting():
-    try :
+    try:
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
-        
-        UserUtils.set_user_setting(dry_time=dry_time,calving_preparation=calving_preparation_time)
+
+        UserUtils.set_user_setting(
+            dry_time=dry_time, calving_preparation=calving_preparation_time
+        )
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -71,9 +78,7 @@ def update_care():
 
         remain_care = CowUntils.update_care(id=id_cow, cow_care=care)
 
-        success_message = (
-            f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {remain_care[1]} pour {id_cow}."
-        )
+        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {remain_care[1]} pour {id_cow}."
         return jsonify({"success": True, "message": success_message})
 
     except Exception as e:
@@ -97,16 +102,24 @@ def add_prescription():
             if medic and quantite:
                 qte_int = int(quantite)
                 if qte_int < 0:
-                    lg.error(f"Quantité negative invalide pour medic_{nb_care+1}: {quantite}")
-                    raise ValueError(f"Le médicament '{medic}' en quantité negative est interdit.")
+                    lg.error(
+                        f"Quantité negative invalide pour medic_{nb_care+1}: {quantite}"
+                    )
+                    raise ValueError(
+                        f"Le médicament '{medic}' en quantité negative est interdit."
+                    )
                 if qte_int > 0:
                     if medic in cares:
-                        lg.error(f"Quantité invalide pour medic_{nb_care+1}: {quantite}")
+                        lg.error(
+                            f"Quantité invalide pour medic_{nb_care+1}: {quantite}"
+                        )
                         raise ValueError(f"Le médicament '{medic}' est en double.")
                     cares[medic] = qte_int
 
         if not cares:
-            raise ValueError("Veuillez renseigner au moins un médicament avec une quantité valide.")
+            raise ValueError(
+                "Veuillez renseigner au moins un médicament avec une quantité valide."
+            )
 
         PrescriptionUntils.add_prescription(date=date_obj, care_items=cares)
 
@@ -133,14 +146,18 @@ def add_dlc_left():
 
             if medic and quantite:
                 qte_int = int(quantite)
-                if qte_int > 0: # ignor les chaps vide
+                if qte_int > 0:  # ignor les chaps vide
                     if medic in cares:
-                        lg.error(f"Quantité invalide pour medic_{nb_care+1}: {quantite}")
+                        lg.error(
+                            f"Quantité invalide pour medic_{nb_care+1}: {quantite}"
+                        )
                         raise ValueError(f"Le médicament '{medic}' est en double.")
                     cares[medic] = qte_int
 
         if not cares:
-            raise ValueError("Veuillez renseigner au moins un médicament avec une quantité valide.")
+            raise ValueError(
+                "Veuillez renseigner au moins un médicament avec une quantité valide."
+            )
 
         PrescriptionUntils.add_dlc_left(date=date_obj, care_items=cares)
 
@@ -169,32 +186,38 @@ def add_medic_in_pharma_list():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route('/init_stock', methods=["POST"])
+@app.route("/init_stock", methods=["POST"])
 def init_stock():
     try:
         # Récupère et parse la date
         year = request.form["prescription_date"]
 
         # Récupère les médicaments et quantités
-        remaining_stock : dict[str, int] = {}
+        remaining_stock: dict[str, int] = {}
         for nb_care in range(get_pharma_len()):
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
 
             if medic and quantite:
                 qte_int = int(quantite)
-                if qte_int > 0: # ignor les chaps vide
+                if qte_int > 0:  # ignor les chaps vide
                     if medic in remaining_stock:
-                        lg.error(f"Quantité invalide pour medic_{nb_care+1}: {quantite}")
+                        lg.error(
+                            f"Quantité invalide pour medic_{nb_care+1}: {quantite}"
+                        )
                         raise ValueError(f"Le médicament '{medic}' est en double.")
                     remaining_stock[medic] = qte_int
 
         if not remaining_stock:
-            raise ValueError("Veuillez renseigner au moins un médicament avec une quantité valide.")
+            raise ValueError(
+                "Veuillez renseigner au moins un médicament avec une quantité valide."
+            )
 
         PharmacieUtils.upload_pharmacie_year(year=year, remaining_stock=remaining_stock)
 
-        return jsonify({"success": True, "message": "pharmacie initialiser avec succès."})
+        return jsonify(
+            {"success": True, "message": "pharmacie initialiser avec succès."}
+        )
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
@@ -202,7 +225,7 @@ def init_stock():
 
 
 @app.route("/get_stock", methods=["GET"])
-def get_stock():    
+def get_stock():
     try:
         year = datetime.now().year  # on récupère l'année en paramètre
         stock_data = remaining_pharmacie_stock(year)
@@ -211,12 +234,12 @@ def get_stock():
         return jsonify({"success": False, "message": str(e)})
 
 
-@app.route('/stock_details', methods=["GET"])
+@app.route("/stock_details", methods=["GET"])
 def stock_details():
     return render_template("stock_details.html")
 
 
-@app.route('/download/', methods=["GET", "POST"])
+@app.route("/download/", methods=["GET", "POST"])
 def download():
     print(request.form)
     try:
@@ -224,23 +247,25 @@ def download():
         csv_str = pharmacie_to_csv(year)
 
         # Encodage du CSV en bytes pour envoi en tant que fichier
-        csv_bytes = BytesIO(csv_str.encode('utf-8'))
-        
+        csv_bytes = BytesIO(csv_str.encode("utf-8"))
+
         lg.info(f"Téléchargement du CSV pour {year}")
-        
+
         return send_file(
             csv_bytes,
             download_name=f"pharmacie_{year}.csv",
             as_attachment=True,
-            mimetype='text/csv'
+            mimetype="text/csv",
         )
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
+
 # END Pharmatie root
 
 # Reproduction root
+
 
 @app.route("/reproduction", methods=["GET"])
 def reproduction():
@@ -249,7 +274,7 @@ def reproduction():
 
 @app.route("/upload_cow", methods=["POST"])
 def upload_cow():
-    
+    # TODO gestion veaux upload_cow
     try:
         # Récupération des données du formulaire
         cow_id = int(request.form["id"])
@@ -258,8 +283,9 @@ def upload_cow():
 
         CowUntils.upload_cow(id=cow_id, born_date=datetime.now())
 
-        return jsonify({"success": True, "message": "La vache a été ajoutée avec succès !"})
-
+        return jsonify(
+            {"success": True, "message": "La vache a été ajoutée avec succès !"}
+        )
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
@@ -279,36 +305,76 @@ def remove_cow():
 
         return jsonify({"success": True, "message": f"{cow_id} a été supprimée."})
 
-
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route('/insemination', methods=["POST"])
+@app.route("/insemination", methods=["POST"])
 def insemination():
-    # TODO insemination
-    pass
 
-@app.route('/ultrasound')
+    try:
+        # Récupère et parse la date
+        dlc_left_date_str = request.form["prescription_date"]
+        date_obj = datetime.strptime(dlc_left_date_str, "%Y-%m-%d").date()
+
+        # Récupération de l'id de la vache
+        cow_id = int(request.form["id"])
+
+        CowUntils.add_insemination(id=cow_id, insemination=date_obj)
+
+        return jsonify(
+            {"success": True, "message": f"insemination {cow_id} ajouter avec succes"}
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erreur :{e}"})
+
+
+@app.route("/ultrasound", methods=["POST"])
 def ultrasound():
-    # TODO insemination
-    pass
+    try:
+        # Récupération de l'id de la vache
+        cow_id = int(request.form["id"])
 
-@app.route('/show_dry')
+        ultrasound = bool(request.form["ultrasound"])
+
+        CowUntils.validated_ultrasound(id=cow_id, ultrasound=ultrasound)
+
+        success_message = f"l'echographie de {cow_id} a été {'valider' if ultrasound else 'invalider'} avec succes"
+        return jsonify({"success": True, "message": success_message})
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erreur :{e}"})
+
+
+@app.route("/show_dry")
 def show_dry():
-    # TODO show_dry
-    pass
+    try:
+        dry_data = get_all_dry_date()
+        return jsonify({"success": True, "dry": dry_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
-@app.route('/show_calving_preparation')
+
+@app.route("/show_calving_preparation")
 def show_calving_preparation():
-    # TODO show_calving_preparation
-    pass
+    try:
+        calving_preparation = get_all_calving_preparation_date()
+        return jsonify({"success": True, "calving_preparation": calving_preparation})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
 
-@app.route('/show_calving_date')
+
+@app.route("/show_calving_date")
 def show_calving_date():
-    # TODO show_calving_date
-    pass
+    try:
+        calving_data = get_all_calving_date()
+        return jsonify({"success": True, "calving": calving_data})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
 # END  Reproduction root
 
 

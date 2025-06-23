@@ -10,6 +10,8 @@ from .views import app
 # Create database connection object
 db = SQLAlchemy(app)
 # TODO gestion exeption
+# TODO gestion des log
+# TODO correction de dict[a : b] en dict[a, b]
 
 
 class Reproduction(TypedDict):
@@ -81,12 +83,12 @@ class Pharmacie(db.Model):
     def __init__(
         self,
         year_id: int,
-        total_enter: dict[str:int],
-        total_used: dict[str:int],
-        total_used_calf: dict[str:int],
-        total_out_dlc: dict[str:int],
-        total_out: dict[str:int],
-        remaining_stock: dict[str:int],
+        total_enter: dict[str, int],
+        total_used: dict[str, int],
+        total_used_calf: dict[str, int],
+        total_out_dlc: dict[str, int],
+        total_out: dict[str, int],
+        remaining_stock: dict[str, int],
     ):
         self.year_id = year_id
         self.total_enter = total_enter
@@ -121,7 +123,7 @@ def init_db() -> None:
 
 class CowUntils:
     @staticmethod
-    def upload_cow(id: int, born_date) -> None:
+    def upload_cow(id: int, born_date: date) -> None:
         """Adds a new cow to the database if it does not already exist.
 
         If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
@@ -134,7 +136,7 @@ class CowUntils:
         """
         if not Cow.query.get(id):
             new_cow = Cow(
-                id=id, cow_cares=[], in_farm=True, born_date=born_date, reproduction=[]
+                id=id, cow_cares=[], in_farm=True, born_date=born_date, reproduction=[{}]
             )
             db.session.add(new_cow)
             db.session.commit()
@@ -145,7 +147,7 @@ class CowUntils:
 
     @staticmethod
     def update_care(
-        id: int, cow_care: Tuple[date, dict, str]
+        id: int, cow_care: Tuple[date, dict[str, int], str]
     ) -> Optional[tuple[int, date]]:
         """Updates the care record for a cow with the specified ID.
 
@@ -201,7 +203,7 @@ class CowUntils:
         return remaining_care, new_available_care
 
     @staticmethod
-    def get_care_by_id(id: int) -> Optional[list[Tuple[date, dict, str]]]:
+    def get_care_by_id(id: int) -> Optional[list[Tuple[date, dict[str, int], str]]]:
         """Retrieves the care records for a cow with the specified ID.
 
         Returns the list of care records for the cow if found, otherwise logs an error and returns None.
@@ -220,7 +222,7 @@ class CowUntils:
         raise ValueError(f"{id} n'existe pas.")
 
     @staticmethod
-    def get_care_on_year(year: int) -> list[Tuple[date, dict, str]]:
+    def get_care_on_year(year: int) -> list[Tuple[date, dict[str, int], str]]:
         """Retrieves all care records for all cows that occurred in a specific year.
 
         This function iterates through all cows and collects care records whose date matches the specified year.
@@ -239,59 +241,83 @@ class CowUntils:
             )
         return res
 
-
     @staticmethod
     def add_insemination(id: int, insemination: date) -> None:
         # TODO docstring add_reproduction
+        # TODO Gestion doublon add_reproduction
         cow: Cow
         if cow := Cow.query.get(id):
             cow.reproduction.append(
-                {
-                    "insemination": insemination,
-                    "ultrasound": None,
-                    "dry": None,  # À remplir plus tard
-                    "calving_preparation": None,
-                    "calving_date": None,
-                    "calving": False,
-                }
+                (
+                    {
+                        "insemination": insemination,
+                        "ultrasound": None,
+                        "dry": None,  # À remplir plus tard
+                        "calving_preparation": None,
+                        "calving_date": None,
+                        "calving": False,
+                    },
+                    "",
+                )
             )
+            db.session.commit()
             lg.info(f"insemination on {date} add to {id}")
         else:
             lg.error(f"Cow with {id} not found.")
             raise ValueError(f"{id} n'existe pas.")
 
-
     @staticmethod
     def validated_ultrasound(id: int, ultrasound: bool) -> None:
         # TODO docstring reproduction_ultrasound
+        # TODO gestion pas d'insemination reproduction_ultrasound
         cow: Cow
         if cow := Cow.query.get(id):
             reproduction: Reproduction = cow.reproduction[-1][0]
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
-                CowUntils.set_reproduction(reproduction)
+
+                cow.reproduction[-1] = CowUntils.set_reproduction(reproduction), ""
                 lg.info(f"insemination on {date} of {id} confirm")
             else:
                 lg.info(f"insemination on {date} of {id} invalidate")
+                
+            db.session.commit()
         else:
-            lg.error(f"Cow with {id} not found.")        
+            lg.error(f"Cow with {id} not found.")
             raise ValueError(f"{id} n'existe pas.")
 
-
     @staticmethod
-    def set_reproduction(reproduction):
+    def set_reproduction(reproduction: Reproduction) -> Reproduction:
         # TODO docstring set_reproduction
         calving_date: date = reproduction["insemination"] + timedelta(days=280)
         user: Users = Users.query.get(1)
-        calving_preparation_time = user.setting["calving_preparation_time"]
-        dry_time = user.setting["dry_time"]
+        calving_preparation_time = int(user.setting["calving_preparation_time"])
+        dry_time = int(user.setting["dry_time"])
 
         reproduction["dry"] = calving_date - timedelta(days=dry_time)
         reproduction["calving_preparation"] = calving_date - timedelta(
             days=calving_preparation_time
         )
         reproduction["calving_date"] = calving_date
+        return reproduction
+
+    @staticmethod
+    def get_reproduction(id: int) -> Reproduction:
+        cow: Cow
+        if cow := Cow.query.get(id):
+            return cow.reproduction[-1][0]
+        else:
+            raise ValueError(f"{id} n'existe pas.")
+
+    @staticmethod
+    def get_valide_reproduction() -> dict[int, Reproduction]:
+        cows : list[Cow] = Cow.query.all()
+        return {
+            cow.id: cow.reproduction[-1][0]
+            for cow in cows
+            if cow.reproduction and cow.reproduction[-1][0].get("ultrasound")
+        }
 
     @staticmethod
     def remove_cow(id: int) -> None:
@@ -314,9 +340,8 @@ class CowUntils:
             lg.warning(f"Cow with {id} not found.")
             raise ValueError(f"{id} n'existe pas.")
 
-
     @staticmethod
-    def get_all_care() -> list[tuple[date, dict[str:int], int]]:
+    def get_all_care() -> list[tuple[date, dict[str, int], int]]:
         all_cares: List[Tuple[date, dict[str, int], int]] = [
             (care_date, care_dict, cow.id)
             for cow in Cow.query.all()
@@ -370,7 +395,7 @@ class PrescriptionUntils:
         return Prescription.query.all()
 
     @staticmethod
-    def get_all_prescription_cares() -> List[tuple[date, dict[str:int], bool]]:
+    def get_all_prescription_cares() -> List[tuple[date, dict[str, int], bool]]:
         all_cares: List[Tuple[date, dict[str, int], bool]] = [
             (prescription.date, prescription.care, prescription.dlc_left)
             for prescription in Prescription.query.all()
@@ -481,11 +506,11 @@ class PharmacieUtils:
     @staticmethod
     def set_pharmacie_year(
         year_id: int,
-        total_used: dict[str:int],
-        total_used_calf: dict[str:int],
-        total_out_dlc: dict[str:int],
-        total_out: dict[str:int],
-        remaining_stock: dict[str:int],
+        total_used: dict[str, int],
+        total_used_calf: dict[str, int],
+        total_out_dlc: dict[str, int],
+        total_out: dict[str, int],
+        remaining_stock: dict[str, int],
     ) -> None:
         # TODO docstring set_pharmacie_year
         pharmacie = Pharmacie(
@@ -500,7 +525,7 @@ class PharmacieUtils:
         db.session.commit()
 
     @staticmethod
-    def upload_pharmacie_year(year: int, remaining_stock: dict[str:int]) -> None:
+    def upload_pharmacie_year(year: int, remaining_stock: dict[str, int]) -> None:
         # TODO docstring upload_pharmacie_year
         if Pharmacie.query.get(year):
             raise ValueError(f"{year} already existe.")
@@ -522,10 +547,11 @@ class PharmacieUtils:
 
 # USERS FONCTION
 
-class UserUtils :
+
+class UserUtils:
     @staticmethod
     def add_user() -> None:
-    # TODO docstring add_user
+        # TODO docstring add_user
 
         user = Users(setting={"dry_time": 0, "calving_preparation_time": 0})
         db.session.add(user)
@@ -533,12 +559,13 @@ class UserUtils :
 
     @staticmethod
     def set_user_setting(dry_time: int, calving_preparation: int) -> None:
-    # TODO docstring set_user_setting
+        # TODO docstring set_user_setting
 
         user: Users
         user = Users.query.first()
         user.setting["dry_time"] = dry_time
         user.setting["calving_preparation_time"] = calving_preparation
         db.session.commit()
+
 
 # END USERS FONCTION

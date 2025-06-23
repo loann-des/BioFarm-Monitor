@@ -2,10 +2,10 @@
 Bio Farm monitoring 
 
 Instalation :
-    python3
-    environement virtuelle
-    flask
-    flask-sqlachemy
+    python3,
+    environement virtuelle,
+    flask,
+    flask-sqlachemy,
     flaskwtf wtforms
 
 setting :
