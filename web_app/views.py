@@ -374,6 +374,36 @@ def show_calving_date():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
+@app.route("/upload_calf", methods=["POST"])
+def upload_calf():
+    # TODO gestion veaux upload_cow
+    try:
+        # Récupération des données du formulaire
+        borning = request.form["borning"]
+        mother_id = request.form["mother_id"]
+        calf_id = request.form["calf_id"]
+        calving_date = request.form["calving_date"]
+        if borning == "abortion" :
+            CowUntils.validated_calving(cow_id=mother_id,abortion=True)
+            success_message = f"avortement de {mother_id} rensegné, courage"
+        
+        elif (calf_id and calving_date):
+            lg.info(f"Adding new calf {calf_id}...")
+            CowUntils.validated_calving(cow_id=mother_id,abortion=False)
+            calving_date = datetime.strptime(calving_date, "%Y-%m-%d").date()
+            CowUntils.add_calf(calf_id=calf_id, born_date=calving_date)
+            success_message = f"naissance de {calf_id} confirmé"
+        else :
+            raise ValueError(f"Renségner \"Numéro Veau\" et  \"Date de velage\"")
+
+
+        return jsonify(
+            {"success": True, "message": success_message}
+        )
+
+    except Exception as e:
+        lg.error(f"Erreur pendant l’upload : {e}")
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 # END  Reproduction root
 

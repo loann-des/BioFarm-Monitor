@@ -12,6 +12,7 @@ db = SQLAlchemy(app)
 # TODO gestion exeption
 # TODO gestion des log
 # TODO correction de dict[a : b] en dict[a, b]
+# TODO remplacer id par cow_id
 
 
 class Reproduction(TypedDict):
@@ -21,6 +22,7 @@ class Reproduction(TypedDict):
     calving_preparation: date
     calving_date: date
     calving: bool
+    abortion : bool
 
 
 class Setting(TypedDict):
@@ -146,6 +148,20 @@ class CowUntils:
             raise ValueError(f"{id} : already in database")
 
     @staticmethod
+    def add_calf(calf_id: int, born_date: date ) -> None :
+        # TODO docstring upload_calf
+        if not Cow.query.get(calf_id):
+            new_cow = Cow(
+                id=calf_id, cow_cares=[], in_farm=True, born_date=born_date, reproduction=[]
+            )
+            db.session.add(new_cow)
+            db.session.commit()
+            lg.info(f"{calf_id} : upload in database")
+        else:
+            lg.error(f"{calf_id} : already in database")
+            raise ValueError(f"{calf_id} : already in database")
+
+    @staticmethod
     def update_care(
         id: int, cow_care: Tuple[date, dict[str, int], str]
     ) -> Optional[tuple[int, date]]:
@@ -256,6 +272,7 @@ class CowUntils:
                         "calving_preparation": None,
                         "calving_date": None,
                         "calving": False,
+                        "abortion" : False,
                     },
                     "",
                 )
@@ -312,6 +329,7 @@ class CowUntils:
 
     @staticmethod
     def get_valide_reproduction() -> dict[int, Reproduction]:
+        #TODO filtré naissance
         cows : list[Cow] = Cow.query.all()
         return {
             cow.id: cow.reproduction[-1][0]
@@ -319,6 +337,23 @@ class CowUntils:
             if cow.reproduction and cow.reproduction[-1][0].get("ultrasound")
         }
 
+    @staticmethod
+    def validated_calving(cow_id : int , abortion : bool) -> None :
+        # TODO docstring validated_calving
+        # TODO gestion pas d'insemination reproduction_ultrasound calving
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            reproduction : Reproduction = cow.reproduction[-1][0]
+            reproduction["calving"] = True
+            reproduction["abortion"] = abortion
+
+            lg.info(f"calving of of {cow_id} confirm")
+
+            db.session.commit()
+        else:
+            lg.error(f"Cow with {cow_id} not found.")
+            raise ValueError(f"{cow_id} n'existe pas.")
+              
     @staticmethod
     def remove_cow(id: int) -> None:
         """Marks a cow as no longer in the farm by updating its status.

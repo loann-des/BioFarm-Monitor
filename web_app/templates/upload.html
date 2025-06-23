@@ -12,9 +12,9 @@
   </script>
 {% endif %}
 
+{# TODO Clean div inutile #}
 {% block content %}
-
-<!-- Hero Section -->
+  <!-- Hero Section -->
   <section class="hero section accent-background">
     <div class="container position-relative">
       <div class="row gy-5 justify-content-between">
@@ -27,9 +27,9 @@
       </div>
     </div>
   </section>
-<!-- End Hero Section -->
+  <!-- End Hero Section -->
 
-<!-- New Cow Section -->
+  <!-- New Cow Section -->
   <section id="New_Cow" class="contact section">
     <div class="container section-title">
       <h2>New Cow</h2>
@@ -63,9 +63,9 @@
       </div>
     </div>
   </section>
-<!-- End New Cow Section -->
+  <!-- End New Cow Section -->
 
-<!-- Remove cow Section -->
+  <!-- Remove cow Section -->
   <section id="Remove" class="contact section">
     <div class="container section-title">
       <h2>Remove Cow</h2>
@@ -97,13 +97,9 @@
       </div>
     </div>
   </section>
-<!-- End Remove cow Section -->
-
-
+  <!-- End Remove cow Section -->
 {% endblock %}
 
 {% block JS %}
-
   <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-
 {% endblock %}

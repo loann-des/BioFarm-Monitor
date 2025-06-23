@@ -11,6 +11,9 @@
   Reproduction
 {% endblock %}
 {% block content %}
+{# TODO Clean div inutile #}
+  
+  
   <!-- New Cow Section -->
   <section id="new_cow_section" class="contact section">
     <div class="container section-title">
@@ -244,6 +247,62 @@
     </div>
   </section>
   <!--END show_calving_date Section -->
+
+  <!-- new_calf Section -->
+  <section id="new_calf" class="contact section">
+    <div class="container section-title">
+      <h2>New Calf</h2>
+      <p>Ajouter ici les naissances</p>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+          <form id="form-new_calf" action="{{ url_for('upload_calf') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# selection sex #}
+              <div class="col-md-6">
+                <label for="id" class="form-label">Naissances :</label>
+                <select name="borning" id="borning" class="form-select" required>
+                  <option value="male">male</option>
+                  <option value="female">femmel</option>
+                  <option value="abortion">avorton</option>
+
+                </select>
+              </div>
+
+              {# numero mere #}
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro Mère :</label>
+                <input type="number" name="mother_id" id="mother_id" class="form-control" required />
+              </div>
+
+              {# numero veaux #}
+              <div class="col-md-6">
+                <label for="id" class="form-label">Numéro Veau :</label>
+                <input type="number" name="calf_id" id="calf_id" class="form-control"/>
+              </div>
+
+              {# date de velage #}
+              <div class="col-md-6">
+                <label for="calving_date" class="form-label">Date de velage :</label>
+                <input type="date" name="calving_date" id="calving_date" class="form-control">
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+              </div>
+            </div>
+          </form>
+          <div id="message-form-new_calf" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- End upload_calf Section -->
 {% endblock %}
 {% block JS %}
   <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
