@@ -6,7 +6,8 @@ Instalation :
     environement virtuelle,
     flask,
     flask-sqlachemy,
-    flaskwtf wtforms
+    flaskwtf wtforms,
+    openpyxl
 
 setting :
     FLASK_APP = app.py

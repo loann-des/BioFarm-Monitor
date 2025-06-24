@@ -1,15 +1,18 @@
 import os, csv, io
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
 from werkzeug.datastructures import FileStorage
+import openpyxl
+from openpyxl.styles import Font, PatternFill
+from io import BytesIO
 from .models import (
     Cow,
     Prescription,
     Pharmacie,
     CowUntils,
-    PharmacieUtils,
     PrescriptionUntils,
+    PharmacieUtils,
 )
 
 
@@ -65,6 +68,48 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
     return sum(
         day_delta(care[0]) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
+
+
+def remaining_care_on_year(cow: Cow) -> int:
+    """Calculates the number of remaining care treatments available for a cow in the current rolling year.
+
+    This function determines how many care treatments a cow can still receive within a 365-day period, based on a maximum of three allowed treatments per year.
+
+    Args:
+        cow (Cow): The cow object whose remaining care treatments are to be calculated.
+
+    Returns:
+        int: The number of remaining care treatments for the cow in the current rolling year.
+    """
+    nb_care_year = nb_cares_years_of_cow(cow=cow)
+    # traitement restant dans l'année glissante
+    return 3 - nb_care_year
+
+
+def new_available_care(cow: Cow) -> Optional[date]:
+    """Determines the next date a cow becomes eligible for a new care treatment.
+
+    This function calculates when a cow can receive its next care treatment based on its care history and the annual treatment limit.
+
+    Args:
+        cow (Cow): The cow object whose next available care date is to be determined.
+
+    Returns:
+        Optional[date]: The date when the cow is eligible for a new care treatment, or None if no care has been given.
+    """
+
+    nb_care_year = nb_cares_years_of_cow(cow=cow)
+
+    if nb_care_year > 0 and len(cow.cow_cares) >= nb_care_year:
+        # On prend la date du soin qui correspond à nb_care_year avant la fin de la liste
+        care_date = cow.cow_cares[-nb_care_year][0]
+        return care_date + timedelta(days=365)
+    elif len(cow.cow_cares) > 0:
+        # Si il y a moins ou autant de soins que nb_care_year, on prend la date du premier soin
+        return cow.cow_cares[0][0] + timedelta(days=365)
+    else:
+        # Pas de soins, donc pas de date dispo
+        return None
 
 
 def get_pharma_list() -> Optional[list[str]]:
@@ -135,8 +180,23 @@ def sum_pharmacie_used(year: int) -> dict[str, int]:
 
 
 def sum_calf_used(year: int) -> dict[str, int]:
-    # TODO sum_calf_used
-    return {}
+    """Sums the quantities of each medication used for calves in a given year.
+
+    This function iterates over all calf care records for the specified year and accumulates the total quantity used for each medication.
+
+    Args:
+        year (int): The year to sum medication usage for calves.
+
+    Returns:
+        dict[str, int]: A dictionary mapping medication names to their total used quantities for calves in the year.
+    """
+
+    res = {f"{x}": 0 for x in get_pharma_list()}
+    cow_care: Tuple[date, dict[str, int], str]
+    for cow_care in CowUntils.get_calf_care_on_year(year):
+        for medic, quantity in cow_care[1].items():
+            res[medic] += quantity
+    return res
 
 
 def sum_dlc_left(year: int) -> dict[str, int]:
@@ -193,7 +253,14 @@ def remaining_pharmacie_stock(year: int) -> dict[str, int]:
 
 
 def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
-    # TODO Docstring get_hystory_pharmacie
+    """Builds a chronological history of all pharmacy-related events.
+
+    This function combines care and prescription records, labels them, and returns a list sorted by date in descending order.
+
+    Returns:
+        list[tuple[date, dict[str:int], str]]: A list of tuples containing the date, medication dictionary, and event type label.
+    """
+
     # Récupère les données
     care_raw = CowUntils.get_all_care() or []
     prescription_raw = PrescriptionUntils.get_all_prescription_cares() or []
@@ -212,7 +279,16 @@ def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
 
 
 def update_pharmacie_year(year: int) -> Pharmacie:
-    # TODO Docstring get_hystory_pharmacie
+    """Updates or creates the pharmacy record for a given year with all relevant medication statistics.
+
+    This function calculates and aggregates medication entries, usages, removals, and remaining stock for the specified year, then updates or creates the corresponding pharmacy record.
+
+    Args:
+        year (int): The year for which to update the pharmacy record.
+
+    Returns:
+        Pharmacie: The updated or newly created pharmacy record for the year.
+    """
 
     total_enter = sum_pharmacie_in(year)
     total_used_calf = sum_calf_used(year)
@@ -237,7 +313,17 @@ def update_pharmacie_year(year: int) -> Pharmacie:
 
 
 def pharmacie_to_csv(year: int) -> str:
-    # TODO add liste prescription
+    """Generates a CSV report of pharmacy medication statistics for a given year.
+
+    This function compiles medication stock, usage, and prescription data into a CSV format, including previous year's stock and per-date prescription details.
+
+    Args:
+        year (int): The year for which to generate the pharmacy CSV report.
+
+    Returns:
+        str: The generated CSV content as a string.
+    """
+
     pharmacie = update_pharmacie_year(year)
 
     # Liste des champs à exporter
@@ -256,15 +342,12 @@ def pharmacie_to_csv(year: int) -> str:
     remaining_stock_last_year = getattr(prev_pharmacie, "remaining_stock", {})
 
     # Obtenir tous les médicaments à partir des données
-    all_meds = (
-        get_pharma_list()
-    )  # ← Liste des médicaments (ex: ["masti", "doliprane", ...])
-    all_meds = sorted(all_meds)
+    all_meds = sorted(get_pharma_list())
 
     output = io.StringIO()
     writer = csv.writer(output)
 
-    # En-tête
+    # En-tête principale
     writer.writerow(["field"] + all_meds)
 
     # Ligne spéciale pour l’année précédente
@@ -272,19 +355,90 @@ def pharmacie_to_csv(year: int) -> str:
     row.extend(remaining_stock_last_year.get(med, 0) for med in all_meds)
     writer.writerow(row)
 
+    # === AJOUT : lignes des prescriptions par date ===
+    # Construire dict : date_str -> med -> qty
+    prescriptions_per_date = {
+        pres.date.strftime("%d %b %Y"): pres.care
+        for pres in PrescriptionUntils.get_year_prescription(year)
+    }
+
+    # Trier les dates
+    sorted_dates = sorted(
+        prescriptions_per_date.keys(), key=lambda d: datetime.strptime(d, "%d %b %Y")
+    )
+
+    # Écrire en CSV avec "prescription DATE" dans la première colonne pour bien identifier
+    for date_str in sorted_dates:
+        row = [date_str]
+        row.extend(prescriptions_per_date[date_str].get(med, 0) for med in all_meds)
+        writer.writerow(row)
+
+    # === FIN AJOUT ===
+
     # Autres champs
-    for field in fields[1:]:  # on saute 'remaining_stock_last_year'
+    for field in fields[1:]:  # on saute 'remaining_stock_last_year' car déjà écrit
         row = [field]
         field_data = getattr(pharmacie, field, {})
         row.extend(field_data.get(med, 0) for med in all_meds)
         writer.writerow(row)
 
     result = output.getvalue()
-    print("CSV généré (pivoté + année précédente):\n", result)
+    print("CSV généré (pivoté + année précédente + prescriptions par date):\n", result)
     return result
 
 
+def remaining_care_to_excel() -> bytes:
+    """Generates an Excel file summarizing the remaining care treatments for each cow.
+
+    This function creates an Excel spreadsheet listing each cow's ID, the number of remaining treatments, and the next renewal date, with color-coded formatting for easy interpretation.
+
+    Returns:
+        bytes: The Excel file content as a bytes object.
+    """
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Traitements Restants"
+
+    headers = ["Numéro Vache", "Nb Traitements Restants", "Date Renouvellement"]
+    ws.append(headers)
+
+    color_map = {
+        3: "00FF00",  # vert
+        2: "FFA500",  # orange
+        1: "FF0000",  # rouge
+        0: "000000",  # noir
+    }
+
+    for cow in CowUntils.get_all_cow():
+        cow_id = cow.id
+        nb_remaining = remaining_care_on_year(cow)
+        renewal_date = new_available_care(cow)
+        renewal_date_str = renewal_date.strftime("%d %b %Y") if renewal_date else "N/A"
+
+        ws.append([cow_id, nb_remaining, renewal_date_str])
+        cell = ws.cell(row=ws.max_row, column=2)
+        color = color_map.get(nb_remaining, "000000")
+
+        # case coloré
+        cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+        # texte en gras (optionnel)
+        cell.font = Font(bold=True)
+
+    # Envoi dans un buffer binaire
+    excel_io = BytesIO()
+    wb.save(excel_io)
+    excel_io.seek(0)
+    return excel_io
+
+
 def get_all_dry_date() -> dict[int, date]:
+    """Retrieves and sorts the dry dates for all cows with valid reproduction records.
+
+    This function collects the 'dry' date for each cow and returns a dictionary sorted by date.
+
+    Returns:
+        dict[int, date]: A dictionary mapping cow IDs to their dry dates, sorted by date.
+    """
 
     dry_dates = {
         cow_id: reproduction["dry"]
@@ -295,6 +449,13 @@ def get_all_dry_date() -> dict[int, date]:
 
 
 def get_all_calving_preparation_date() -> dict[int, date]:
+    """Retrieves and sorts the calving preparation dates for all cows with valid reproduction records.
+
+    This function collects the 'calving_preparation' date for each cow and returns a dictionary sorted by date.
+
+    Returns:
+        dict[int, date]: A dictionary mapping cow IDs to their calving preparation dates, sorted by date.
+    """
 
     calving_preparation_dates = {
         cow_id: reproduction["calving_preparation"]
@@ -305,6 +466,13 @@ def get_all_calving_preparation_date() -> dict[int, date]:
 
 
 def get_all_calving_date() -> dict[int, date]:
+    """Retrieves and sorts the calving dates for all cows with valid reproduction records.
+
+    This function collects the 'calving_date' for each cow and returns a dictionary sorted by date.
+
+    Returns:
+        dict[int, date]: A dictionary mapping cow IDs to their calving dates, sorted by date.
+    """
 
     calving_dates = {
         cow_id: reproduction["calving_date"]

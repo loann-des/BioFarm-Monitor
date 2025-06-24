@@ -241,7 +241,6 @@ def stock_details():
 
 @app.route("/download/", methods=["GET", "POST"])
 def download():
-    print(request.form)
     try:
         year = int(request.form["export_year"])  # CHAMP CORRIGÉ ICI
         csv_str = pharmacie_to_csv(year)
@@ -261,6 +260,20 @@ def download():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
+@app.route("/download_remaining_care/", methods=["GET", "POST"])
+def download_remaining_care():
+    try:
+        excel_io = remaining_care_to_excel()
+
+        return send_file(
+            excel_io,
+            download_name="traitement.xlsx",
+            as_attachment=True,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 400
 
 # END Pharmatie root
 
@@ -373,6 +386,7 @@ def show_calving_date():
         return jsonify({"success": True, "calving": calving_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
 
 @app.route("/upload_calf", methods=["POST"])
 def upload_calf():
