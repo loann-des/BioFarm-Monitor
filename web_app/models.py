@@ -20,6 +20,11 @@ from .fonction import *
 
 
 class Reproduction(TypedDict):
+    """Represents the reproduction record for a cow, including key dates and outcomes.
+
+    This class stores insemination, ultrasound, dry period, calving preparation, calving date, and abortion status for a cow's reproductive cycle.
+    """
+
     insemination: date
     ultrasound: Optional[bool]
     dry: date
@@ -30,11 +35,21 @@ class Reproduction(TypedDict):
 
 
 class Setting(TypedDict):
+    """Represents user settings for dry time and calving preparation time.
+
+    This class stores the number of days for the dry period and the calving preparation period for a user.
+    """
+
     dry_time: int  # Temps de tarrisement (en jour)
     calving_preparation_time: int  # Temps de prepa vellage (en jour)
 
 
 class Cow(db.Model):
+    """Represents a cow in the database, including care records, annotations, status, birth date, and reproduction history.
+
+    This class stores all relevant information about a cow, such as its unique ID, care events, farm status, birth date, and reproduction records.
+    """
+
     id = Column(Integer, primary_key=True)  # numero Vache
     # liste de (date de traitement, traitement, info complementaire)
     cow_cares = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
@@ -54,6 +69,17 @@ class Cow(db.Model):
         born_date: date,
         reproduction: list[tuple[Reproduction, str]],
     ):
+        """Initializes a Cow object with the provided attributes.
+
+        This constructor sets the cow's unique ID, care records, farm status, birth date, and reproduction history.
+
+        Args:
+            id (int): The unique identifier for the cow.
+            cow_cares (list[tuple[date, dict[str, int], str]]): The list of care records for the cow.
+            in_farm (bool): Indicates if the cow is currently in the farm.
+            born_date (date): The birth date of the cow.
+            reproduction (list[tuple[Reproduction, str]]): The list of reproduction records for the cow.
+        """
         self.id = id
         self.cow_cares = cow_cares
         self.in_farm = in_farm
@@ -62,6 +88,11 @@ class Cow(db.Model):
 
 
 class Prescription(db.Model):
+    """Represents a prescription record in the database, including date, care items, and DLC status.
+
+    This class stores information about a prescription, such as its date, the medications prescribed, and whether it was removed due to expired shelf life (DLC).
+    """
+
     id = Column(Integer, primary_key=True)  # id Prescription
     date = Column(DATE)  # date de la Prescription
 
@@ -71,12 +102,26 @@ class Prescription(db.Model):
     dlc_left = Column(Boolean)
 
     def __init__(self, date: DATE, care: dict[str, int], dlc_left: bool):
+        """Initializes a Prescription object with the provided date, care items, and DLC status.
+
+        This constructor sets the prescription's date, care dictionary, and whether it was removed due to expired shelf life (DLC).
+
+        Args:
+            date (DATE): The date of the prescription.
+            care (dict[str, int]): The medications and their quantities for the prescription.
+            dlc_left (bool): True if the prescription is for medication removed due to expired DLC, False otherwise.
+        """
         self.date = date
         self.care = care
         self.dlc_left = dlc_left
 
 
 class Pharmacie(db.Model):
+    """Represents a pharmacy record for a specific year, including medication statistics and remaining stock.
+
+    This class stores annual pharmacy data such as medication entries, usage, removals, and remaining stock for inventory management.
+    """
+
     year_id = Column(Integer, primary_key=True)
 
     total_enter = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
@@ -96,6 +141,19 @@ class Pharmacie(db.Model):
         total_out: dict[str, int],
         remaining_stock: dict[str, int],
     ):
+        """Initializes a Pharmacie object with the provided annual medication statistics and stock.
+
+        This constructor sets the year, medication entries, usage, removals, and remaining stock for the pharmacy record.
+
+        Args:
+            year_id (int): The year for the pharmacy record.
+            total_enter (dict[str, int]): Total medication entered in the year.
+            total_used (dict[str, int]): Total medication used in the year.
+            total_used_calf (dict[str, int]): Total medication used for calves in the year.
+            total_out_dlc (dict[str, int]): Total medication removed due to expired shelf life (DLC).
+            total_out (dict[str, int]): Total medication taken out of the pharmacy.
+            remaining_stock (dict[str, int]): Remaining stock of each medication at year end.
+        """
         self.year_id = year_id
         self.total_enter = total_enter
         self.total_used = total_used
@@ -106,16 +164,35 @@ class Pharmacie(db.Model):
 
 
 class Users(db.Model):
+    """Represents a user in the database, including their settings for dry time and calving preparation time.
+
+    This class stores user-specific configuration for managing cow care and reproduction cycles.
+    """
+
     id = Column(Integer, primary_key=True)  # numero utilisateur
     setting = Column(
         MutableDict.as_mutable(JSON), default=dict, nullable=False
     )  # setting utilisateur
 
     def __init__(self, setting: Setting):
+        """Initializes a Users object with the provided settings.
+
+        This constructor sets the user's settings for dry time and calving preparation time.
+
+        Args:
+            setting (Setting): The user's settings containing dry time and calving preparation time.
+        """
         self.setting = setting
 
 
 def init_db() -> None:
+    """Initializes the database by dropping all tables, recreating them, and adding default entries.
+
+    This function resets the database, adds a default prescription and user, commits the changes, and logs a warning that the database has been initialized.
+
+    Returns:
+        None
+    """
     db.drop_all()
     db.create_all()
     db.session.add(Prescription(date=None, care={}, dlc_left=True))
@@ -125,9 +202,12 @@ def init_db() -> None:
 
 
 # COW FONCTION
-
-
 class CowUntils:
+    """Provides utility functions for managing cow records, care events, and reproduction data.
+
+    This class contains static methods to add, update, retrieve, and manage cows and their associated care and reproduction records in the database.
+    """
+
     @staticmethod
     def get_all_cow() -> list[Cow]:
         """Retrieves all cows from the database.
@@ -241,9 +321,9 @@ class CowUntils:
         # Commit les changements
         db.session.commit()
         lg.info(f"Care add to {id}.")
-        
+
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
-        return remaining_care_on_year(cow=cow) , new_available_care(cow=cow)
+        return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
 
     @staticmethod
     def get_care_by_id(id: int) -> Optional[list[Tuple[date, dict[str, int], str]]]:
@@ -295,7 +375,7 @@ class CowUntils:
 
         Returns:
             list[Tuple[date, dict[str, int], str]]: A list of calf care records from the specified year.
-        """        
+        """
         res = []
         cow: Cow
         for cow in Cow.query.all():
@@ -328,7 +408,7 @@ class CowUntils:
 
         Returns:
             None
-        """        # TODO Gestion doublon add_reproduction
+        """  # TODO Gestion doublon add_reproduction
         cow: Cow
         if cow := Cow.query.get(id):
             cow.reproduction.append(
@@ -363,7 +443,7 @@ class CowUntils:
 
         Returns:
             None
-        """        
+        """
         # TODO gestion pas d'insemination reproduction_ultrasound
         cow: Cow
         if cow := Cow.query.get(id):
@@ -456,7 +536,7 @@ class CowUntils:
 
         Returns:
             None
-        """        # TODO gestion pas d'insemination reproduction_ultrasound calving
+        """  # TODO gestion pas d'insemination reproduction_ultrasound calving
         cow: Cow
         if cow := Cow.query.get(cow_id):
             reproduction: Reproduction = cow.reproduction[-1][0]
@@ -499,7 +579,7 @@ class CowUntils:
 
         Returns:
             list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
-        """        
+        """
         all_cares: List[Tuple[date, dict[str, int], int]] = [
             (care_date, care_dict, cow.id)
             for cow in Cow.query.all()
@@ -514,9 +594,12 @@ class CowUntils:
 
 
 # PRESCRIPTION FONCTION
-
-
 class PrescriptionUntils:
+    """Provides utility functions for managing prescription records and pharmacy medication lists.
+
+    This class contains static methods to add, update, and retrieve prescriptions and medication lists in the database.
+    """
+
     @staticmethod
     def add_prescription(date: date, care_items: dict[str, int]) -> None:
         """Adds a new prescription to the database with the specified date and care items.
@@ -648,10 +731,14 @@ class PrescriptionUntils:
 
 # END PRESCRIPTION FONCTION
 
+
 # PHARMACIE FONCTION
-
-
 class PharmacieUtils:
+    """Provides utility functions for managing pharmacy records and annual medication statistics.
+
+    This class contains static methods to retrieve, update, and create pharmacy records for specific years, as well as to manage medication stock and usage data.
+    """
+
     @staticmethod
     def get_pharmacie_year(year: int) -> Pharmacie:
         """Retrieves the pharmacy record for a specific year.
@@ -705,7 +792,7 @@ class PharmacieUtils:
 
         Returns:
             List[Pharmacie]: A list of all pharmacy records in the database.
-        """       
+        """
         return Pharmacie.query.all()
 
     @staticmethod
@@ -777,10 +864,14 @@ class PharmacieUtils:
 
 # END PHARMACIE FONCTION
 
+
 # USERS FONCTION
-
-
 class UserUtils:
+    """Provides utility functions for managing user records and user-specific settings.
+
+    This class contains static methods to add users, update user settings, and retrieve user configuration from the database.
+    """
+
     @staticmethod
     def add_user() -> None:
         """Adds a new user to the database with default settings.
@@ -814,6 +905,17 @@ class UserUtils:
         user.setting["dry_time"] = dry_time
         user.setting["calving_preparation_time"] = calving_preparation
         db.session.commit()
+
+    def get_user_setting() -> Setting:
+        """Retrieves the current user's settings for dry time and calving preparation time.
+
+        This function returns the settings dictionary for the first user in the database.
+
+        Returns:
+            Setting: The user's settings containing dry time and calving preparation time.
+        """
+        user: Users = Users.query.first()
+        return user.setting
 
 
 # END USERS FONCTION
