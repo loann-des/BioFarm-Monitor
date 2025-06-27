@@ -25,13 +25,13 @@
           <form id="form-care" action="{{ url_for('update_care') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
             <div class="row gy-4">
 
-              {# numero Vache #}
+              {# Numéro Vache #}
               <div class="col-md-6">
                 <label for="id" class="form-label">Numéro :</label>
                 <input type="number" name="id" id="id" class="form-control" required />
               </div>
 
-              {# date de traitement #}
+              {# Date de traitement #}
               <div class="col-md-6">
                 <label for="care_date" class="form-label">Date de traitement :</label>
                 <input type="date" name="care_date" id="care_date" class="form-control" required />
@@ -61,7 +61,7 @@
                 {% endfor %}
               </div>
 
-              {# info complaimentaire traitement #}
+              {# info complémentaire traitement #}
               <div class="col-md-6">
                 <label for="care_info" class="form-label">information de traitement :</label>
                 <input type="text" name="care_info" id="care_info" class="form-control" />
@@ -85,7 +85,7 @@
   <section id="Pharma" class="contact section">
     <div class="container section-title">
       <h2>Add In Pharma Liste</h2>
-      <p>Ajouter ici les medicament que vous utiliserait</p>
+      <p>Ajoutez ici les médicaments que vous utiliserez</p>
     </div>
 
     <div class="container">
@@ -129,7 +129,7 @@
   <section id="prescription" class="contact section">
     <div class="container section-title">
       <h2>New prescription</h2>
-      <p>Ajouter ici les nouvelles ordonnances vétérinaires</p>
+      <p>Ajoutez ici les nouvelles ordonnances vétérinaires</p>
     </div>
 
     <div class="container">
@@ -185,8 +185,8 @@
   <!-- DLC Section -->
   <section id="dlc_left" class="contact section">
     <div class="container section-title">
-      <h2>Medicament DLC</h2>
-      <p>Sorter ici les medicament pour dlc passer</p>
+      <h2>Médicament DLC</h2>
+      <p>Sortez ici les médicaments pour DLC passée</p>
     </div>
 
     <div class="container">
@@ -243,7 +243,7 @@
   <section id="stock_bref" class="contact section">
     <div class="container section-title">
       <h2>Stock Bref</h2>
-      <p>ici vos stock de medicament en temps reel</p>
+      <p>Ici vos stocks de médicaments en temps réel</p>
     </div>
 
     <div class="container">
@@ -274,7 +274,7 @@
   <section id="stock_history" class="contact section">
     <div class="container section-title">
       <h2>Stock History</h2>
-      <p>ici l'historique de vos stock de medicament</p>
+      <p>Ici l'historique de votre stock de médicaments</p>
     </div>
 
     <div class="container">
@@ -305,7 +305,7 @@
   <section id="export_stock" class="contact section">
     <div class="container section-title">
       <h2>export_stock</h2>
-      <p>tlelecherger ici le recapitulatif annuel</p>
+      <p>Téléchargez ici le récapitulatif annuel</p>
     </div>
 
     <div class="container">
@@ -315,15 +315,15 @@
 
             <div class="row gy-4">
 
-              {# date de l'anné a exporé #}
+              {# date de l'année à exporter #}
               <div class="col-md-6">
-                <label for="export_year" class="form-label">Date des stock a exporté :</label>
+                <label for="export_year" class="form-label">Date des stocks à exporter :</label>
                 <input type="number" name="export_year" id="export_year" class="form-control" min="2000" max="2099"required />
               </div>
               
               {# utton download #}
               <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">telelecherger stock</button>
+                <button type="submit" class="btn btn-primary">Téléchargez stock</button>
               </div>
 
             </div>
@@ -338,7 +338,7 @@
   <section id="download_remaining_care" class="contact section">
     <div class="container section-title">
       <h2>export_traitement</h2>
-      <p>tlelecherger ici le recapitulatif annuel</p>
+      <p>Téléchargez ici le récapitulatif annuel</p>
     </div>
 
     <div class="container">
@@ -350,7 +350,7 @@
               
               {# utton download #}
               <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">telelecherger traitement</button>
+                <button type="submit" class="btn btn-primary">Téléchargez traitement</button>
               </div>
 
             </div>
@@ -364,8 +364,8 @@
   <!-- init stock Section -->
   <section id="init_stock" class="contact section">
     <div class="container section-title">
-      <h2>initialisation stock</h2>
-      <p>Sorter ici les medicament pour dlc passer</p>
+      <h2>Initialisation stock</h2>
+      <p>Sortez ici les médicaments pour DLC passée</p>
     </div>
 
     <div class="container">
@@ -374,13 +374,13 @@
           <form id="form-init_stock" action="{{ url_for('init_stock') }}" method="POST" class="ajax-form php-email-form">
             <div class="row gy-4">
 
-              {# date de l'anné precédante #}
+              {# date de l'année précédente #}
               <div class="col-md-6">
-                <label for="prescription_date" class="form-label">Date des stock(anné precédante) :</label>
+                <label for="prescription_date" class="form-label">Date des stock (année précédente) :</label>
                 <input type="number" name="prescription_date" id="prescription_date" class="form-control" min="2000" max="2099"required />
               </div>
 
-              {# medicament stock #}
+              {# Médicament stock #}
               <div class="col-12">
                 {% for nb_care in range(get_pharma_len()) %}
                   <label for="medic_{{ nb_care+1 }}" class="form-label">Médicament {{ nb_care+1 }} :</label>

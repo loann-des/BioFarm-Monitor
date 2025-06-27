@@ -1,16 +1,16 @@
 # BioFarm-Monitor
 Bio Farm monitoring 
 
-Instalation :
-    python3,
-    environement virtuelle,
-    flask,
-    flask-sqlachemy,
-    flaskwtf wtforms,
-    openpyxl
+Installation :
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install requirements.txt
 
 setting :
-    FLASK_APP = app.py
+    export FLASK_APP = app.py
 
 init :
     flask init_db
+    flask run
+

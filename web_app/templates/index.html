@@ -6,7 +6,7 @@
   "index-page"
 {% endblock body_class %}
 
-{% block page_title %}Acceuil{% endblock page_title %}
+{% block page_title %}Accueil{% endblock page_title %}
 {% block content %}
 {# TODO Clean div inutile #}
   
@@ -15,7 +15,7 @@
   <section id="user_setting" class="contact section">
     <div class="container section-title">
       <h2>user_setting</h2>
-      <p>Rentré ici vos parametres</p>
+      <p>Rentrez ici vos paramètres</p>
     </div>
 
     <div class="container">
@@ -25,15 +25,15 @@
           <form id="form-user_setting" action="{{ url_for('user_setting') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
             <div class="row gy-4">
 
-              {# durré tarrisment #}
+              {# durée tarissement #}
               <div class="col-md-6">
                 <label for="dry_time" class="form-label">durré tarrisment</label>
                 <input type="number" name="dry_time" id="dry_time" class="form-control" required />
               </div>
 
-              {# durré prepa velage #}
+              {# durée prépa vêlage #}
               <div class="col-md-6">
-                <label for="calving_preparation_time" class="form-label">durré prépa vélage</label>
+                <label for="calving_preparation_time" class="form-label">durée prépa vêlage</label>
                 <input type="number" name="calving_preparation_time" id="calving_preparation_time" class="form-control" required />
               </div>
 
