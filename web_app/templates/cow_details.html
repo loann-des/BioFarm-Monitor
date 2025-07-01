@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}
+  Liste des vaches
+{% endblock %}
+{% block body_class %}
+  index-page
+{% endblock %}
+
+{% block page_title %}
+  {{cow.id}}
+{% endblock %}
+{% block content %}
+
+  <section id='cow_détails' class='contact section'>
+    <div class="container section-title">
+      <h2>Détails de {{ cow.id }}</h2>
+    </div>
+    <div class='php-email-form'>
+        <p>Dans la ferme : {{ cow.in_farm }}</p>
+        <p>Date de naissance : {{ cow.born_date }}</p>
+    </div>
+  </section>
+
+  <section id='cow_cares' class='contact section'>
+    <div class="container section-title">
+      <h2>Traitements</h2>
+    </div>
+    <div class='php-email-form'>
+      {% for date,care,info in cow.cow_cares %}
+        <div class="row gy-4" id="cow-care-block-{{ date }}">
+          <div class="col-12">
+            <p>
+              <strong>Date de soin :</strong> {{ date }}
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <p>
+              <strong>Type de soin :</strong> {{ care }}
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <p>
+              <strong>Informations :</strong> {{ info }}
+            </p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+    <section id='calving' class='contact section'>
+    <div class="container section-title">
+      <h2>Reproduction</h2>
+    </div>
+    <div class='php-email-form'>
+      {% for repro,info in cow.reproduction %}
+      {% if repro['insemination'] %}
+    
+      <div class="row gy-4">
+        <div class="col-12">
+          <p>
+            <strong>Date d'insemination :</strong> {{ repro['insemination'] }}<br>
+            <strong>echographie :</strong> {{ repro['ultrasound'] }}
+          </p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>tarissement :</strong> {{ repro['dry'] }}<br>
+            <strong>préparation au vêlage :</strong> {{ repro['calving_preparation'] }}
+          </p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>Date vêlage :</strong> {{ repro['calving_date'] }}<br>
+            <strong>Vêlage :</strong> {{ repro['calving'] }}
+          </p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>avortement :</strong> {{ repro['abortion'] }}<br>
+            <strong>Informations :</strong> {{ info }}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+{% endblock %}
+{% block JS %}
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+{% endblock %}

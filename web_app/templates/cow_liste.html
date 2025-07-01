@@ -26,7 +26,7 @@
             </p>
           </div>
 
-          <form id="form-view-{{ cow.id }}" action="{{ url_for('view_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
+          <form action="{{ url_for('view_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data">
             <div class="col-md-12 text-center">
               <button type="submit" class="btn btn-primary">view</button>
             </div>
@@ -43,8 +43,8 @@
               <button type="submit" class="btn btn-primary">supprimer</button>
             </div>
           </form>
+          <div id="message-form-suppress-{{cow.id}}" class="alert" style="display: none;"></div>
         </div>
-        <div id="message-form-suppress-{{cow.id}}" class="alert" style="display: none;"></div>
       {% endfor %}
     </div>
   </section>

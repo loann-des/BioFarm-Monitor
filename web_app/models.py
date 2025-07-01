@@ -209,6 +209,25 @@ class CowUntils:
     """
 
     @staticmethod
+    def get_cow(cow_id: int) -> Cow:
+        """Retrieves a cow by its ID from the database.
+
+        This function queries the database for a cow with the specified ID and returns the Cow object if found.
+
+        Args:
+            cow_id (int): The unique identifier for the cow.
+
+        Returns:
+            Cow: The Cow object corresponding to the given ID.
+
+        Raises:
+            ValueError: If the cow with the given ID does not exist.
+        """
+        if cow := Cow.query.get(cow_id):
+            return cow
+        raise ValueError(f"Cow with ID {cow_id} not found")
+
+    @staticmethod
     def get_all_cows() -> list[Cow]:
         """Retrieves all cows from the database.
 
@@ -247,7 +266,7 @@ class CowUntils:
             raise ValueError(f"{id} : already in database")
 
     @staticmethod
-    def suppress_cow(cow_id : int) -> None:
+    def suppress_cow(cow_id: int) -> None:
         """Removes a cow from the database by its ID.
 
         This function deletes the cow with the specified ID from the database and commits the change. If the cow does not exist, an error is logged.

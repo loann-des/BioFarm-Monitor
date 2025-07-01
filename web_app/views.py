@@ -53,7 +53,7 @@ def user_setting():
 
 @app.route("/update_care", methods=["POST"])
 def update_care():
-
+# TODO valider traitemment seulement si pas de bug (dernier opération)
     def extract_cares(form, pharma_len):
         cares = {}
         for nb_care in range(pharma_len):
@@ -425,13 +425,16 @@ def upload_calf():
 
 # cow_liste form
     
-@app.route('/view_cow/<int:cow_id>', methods=['GET'])
+@app.route('/view_cow/<int:cow_id>', methods=['GET','POST'])
 def view_cow(cow_id):
-    pass
-
+    if cow := CowUntils.get_cow(cow_id=cow_id):
+        print("🐄 Vache récupérée :", cow)
+        return render_template("cow_details.html", cow=cow)
+    else:
+        return "Vache introuvable", 404
 @app.route('/edit_cow/<int:cow_id>', methods=['GET', 'POST'])
 def edit_cow(cow_id):
-    pass
+    return render_template("edit_cow.html", cow=CowUntils.get_cow(cow_id=cow_id))
 
 @app.route('/suppress_cow/<int:cow_id>', methods=['POST'])
 def suppress_cow(cow_id):
