@@ -206,4 +206,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("form[id^='form-suppress-']").forEach(form => {
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const cowId = this.id.replace("form-suppress-", "");
+      const cowDiv = document.getElementById(`cow-block-${cowId}`);
+      const messageBox = document.getElementById(`message-form-suppress-${cowId}`);
+
+      try {
+        const response = await fetch(this.action, {
+          method: "POST",
+          body: new FormData(this),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          cowDiv.remove();  // Supprime la div contenant la vache
+        } else {
+          messageBox.classList.add("alert-danger");
+          messageBox.textContent = result.message || "Erreur lors de la suppression.";
+          messageBox.style.display = "block";
+        }
+      } catch (error) {
+        messageBox.classList.add("alert-danger");
+        messageBox.textContent = "Erreur réseau.";
+        messageBox.style.display = "block";
+        console.error(error);
+      }
+    });
+  });
+});
+
 

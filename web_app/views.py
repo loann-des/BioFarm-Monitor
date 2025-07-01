@@ -13,11 +13,23 @@ from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 # TODO edit Hystory
 # TODO gestion des log
 
+# root 
 
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
+@app.route("/reproduction", methods=["GET"])
+def reproduction():
+    return render_template("reproduction.html")
+
+@app.route("/pharmacie", methods=["GET"])
+def pharmacie():
+    return render_template("pharmacie.html")
+
+@app.route("/cow_liste", methods=["GET"])
+def cow_liste():
+    return render_template("cow_liste.html")
 
 @app.route("/user_setting", methods=["POST"])
 # TODO recalculer velage si changer
@@ -37,11 +49,7 @@ def user_setting():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-# Pharmatie root
-@app.route("/pharmacie", methods=["GET"])
-def pharmacie():
-    return render_template("pharmacie.html")
-
+# Pharmacie form
 
 @app.route("/update_care", methods=["POST"])
 def update_care():
@@ -275,15 +283,9 @@ def download_remaining_care():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
-# END Pharmatie root
+# END Pharmacie form
 
-# Reproduction root
-
-
-@app.route("/reproduction", methods=["GET"])
-def reproduction():
-    return render_template("reproduction.html")
-
+# Reproduction form
 
 @app.route("/upload_cow", methods=["POST"])
 def upload_cow():
@@ -419,9 +421,29 @@ def upload_calf():
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
-# END  Reproduction root
+# END  Reproduction form
 
+# cow_liste form
+    
+@app.route('/view_cow/<int:cow_id>', methods=['GET'])
+def view_cow(cow_id):
+    pass
 
+@app.route('/edit_cow/<int:cow_id>', methods=['GET', 'POST'])
+def edit_cow(cow_id):
+    pass
+
+@app.route('/suppress_cow/<int:cow_id>', methods=['POST'])
+def suppress_cow(cow_id):
+    try:
+        CowUntils.suppress_cow(cow_id=cow_id)
+        return jsonify({"success": True, "message": f"Vache {cow_id} supprimée."})
+    except Exception as e:
+        lg.error(f"Erreur pendant la suppression de la vache {cow_id}: {e}")
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
+# 
+# END cow_liste form
 app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
 app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
 app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)
+app.jinja_env.globals.update(get_all_cows=CowUntils.get_all_cows)

@@ -209,7 +209,7 @@ class CowUntils:
     """
 
     @staticmethod
-    def get_all_cow() -> list[Cow]:
+    def get_all_cows() -> list[Cow]:
         """Retrieves all cows from the database.
 
         This function queries the database and returns a list of all Cow objects.
@@ -245,6 +245,27 @@ class CowUntils:
         else:
             lg.error(f"{id} : already in database")
             raise ValueError(f"{id} : already in database")
+
+    @staticmethod
+    def suppress_cow(cow_id : int) -> None:
+        """Removes a cow from the database by its ID.
+
+        This function deletes the cow with the specified ID from the database and commits the change. If the cow does not exist, an error is logged.
+
+        Args:
+            cow_id (int): The unique identifier for the cow to be removed.
+            born_date (date): The birth date of the cow.
+
+        Returns:
+            None
+        """
+        if cow := Cow.query.get(cow_id):
+            db.session.delete(cow)
+            db.session.commit()
+            lg.info(f"{cow_id} : delete in database")
+        else:
+            lg.error(f"{cow_id} : not in database")
+            raise ValueError(f"{cow_id} : doesn't exist in database")
 
     @staticmethod
     def add_calf(calf_id: int, born_date: date) -> None:

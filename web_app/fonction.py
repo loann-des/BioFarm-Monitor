@@ -409,7 +409,7 @@ def remaining_care_to_excel() -> bytes:
         0: "000000",  # noir
     }
 
-    for cow in CowUntils.get_all_cow():
+    for cow in CowUntils.s():
         cow_id = cow.id
         nb_remaining = remaining_care_on_year(cow)
         renewal_date = new_available_care(cow)

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}
+  Liste des vaches
+{% endblock %}
+{% block body_class %}
+  "index-page"
+{% endblock %}
+
+{% block page_title %}
+  Liste des vaches
+{% endblock %}
+{% block content %}
+  <section id="cow_liste" class="contact section">
+    <div class="php-email-form">
+      {% for cow in get_all_cows() %}
+        <div class="row gy-4" id="cow-block-{{ cow.id }}">
+          <div class="col-12">
+            <p>
+              <strong>{{ cow.id }}</strong>
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <p>
+              <strong>Dans la ferme :</strong> {{ cow.in_farm }}
+            </p>
+          </div>
+
+          <form id="form-view-{{ cow.id }}" action="{{ url_for('view_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
+            <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-primary">view</button>
+            </div>
+          </form>
+
+          <form id="form-edit-{{ cow.id }}" action="{{ url_for('edit_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
+            <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-primary">edit</button>
+            </div>
+          </form>
+
+          <form id="form-suppress-{{ cow.id }}" action="{{ url_for('suppress_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
+            <div class="col-md-12 text-center">
+              <button type="submit" class="btn btn-primary">supprimer</button>
+            </div>
+          </form>
+        </div>
+        <div id="message-form-suppress-{{cow.id}}" class="alert" style="display: none;"></div>
+      {% endfor %}
+    </div>
+  </section>
+
+{% endblock %}
+{% block JS %}
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+{% endblock %}
