@@ -56,7 +56,8 @@ class Cow(db.Model):
     # liste de (date de l'annotation, annotation general)
     info = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
     in_farm = Column(Boolean)  # faux si vache sortie expoitation
-    born_date = Column(DATE)
+    born_date = Column(DATE)  # date de naissance de la vache
+    # liste de (Reproduction, info complementaire)
     reproduction = Column(
         MutableList.as_mutable(PickleType), default=list, nullable=False
     )
@@ -64,10 +65,11 @@ class Cow(db.Model):
     def __init__(
         self,
         id: int,
-        cow_cares: list[tuple[date, dict[str, int], str]],
-        in_farm: bool,
-        born_date: date,
-        reproduction: list[tuple[Reproduction, str]],
+        cow_cares: list[tuple[date, dict[str, int], str]] = None,
+        info: list[tuple[date, str]] = None,
+        in_farm: bool = True,
+        born_date: date = None,
+        reproduction: list[tuple[Reproduction, str]] = None,
     ):
         """Initializes a Cow object with the provided attributes.
 
@@ -80,8 +82,15 @@ class Cow(db.Model):
             born_date (date): The birth date of the cow.
             reproduction (list[tuple[Reproduction, str]]): The list of reproduction records for the cow.
         """
+        if cow_cares is None:
+            cow_cares = []
+        if info is None:
+            info = []
+        if reproduction is None:
+            reproduction = []
         self.id = id
         self.cow_cares = cow_cares
+        self.info = info
         self.in_farm = in_farm
         self.born_date = born_date
         self.reproduction = reproduction
@@ -265,6 +274,61 @@ class CowUntils:
             lg.error(f"{id} : already in database")
             raise ValueError(f"{id} : already in database")
 
+    @staticmethod
+    def update_cow(cow_id: int, **kwargs) -> None:
+        """Updates the attributes of a cow in the database.
+
+        This function retrieves the cow with the specified ID and updates its attributes based on the provided keyword arguments.
+
+        Args:
+            cow_id (int): The unique identifier for the cow to be updated.
+            **kwargs: The attributes to update (e.g., in_farm, born_date, etc.).
+
+        Returns:
+            None
+        """
+        if cow := Cow.query.get(cow_id):
+            for key, value in kwargs.items():
+                setattr(cow, key, value)
+            db.session.commit()
+            lg.info(f"{cow_id} : updated in database")
+        else:
+            lg.error(f"{cow_id} : not in database")
+            raise ValueError(f"{cow_id} : doesn't exist in database")
+
+    @staticmethod
+    def update_cow_care(cow_id : int, care_index: int, new_care : tuple[date, dict[str, int], str]) -> None:
+        cow : Cow
+        if cow := Cow.query.get(cow_id):
+            # Remplacement du soin dans la liste
+            cow.cow_cares[care_index] = new_care
+            db.session.commit()
+            lg.info(f"{cow_id} : care updated in database")
+        else :
+            raise ValueError(f"{cow_id} : doesn't exist in database")
+    
+    @staticmethod
+    def delete_cow_care(cow_id, care_index):
+        """Deletes a specific care record from a cow's care list.
+
+        This function removes the care record at the specified index from the cow's care list and commits the change to the database.
+
+        Args:
+            cow_id (int): The unique identifier for the cow.
+            care_index (int): The index of the care record to be deleted.
+
+        Returns:
+            None
+        """
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            del cow.cow_cares[care_index]
+            db.session.commit()
+            lg.info(f"{cow_id} : care deleted in database")
+        else:
+            lg.error(f"{cow_id} : not in database")
+            raise ValueError(f"{cow_id} : doesn't exist in database")
+    
     @staticmethod
     def suppress_cow(cow_id: int) -> None:
         """Removes a cow from the database by its ID.

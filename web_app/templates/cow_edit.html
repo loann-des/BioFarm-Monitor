@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}
+  Liste des vaches
+{% endblock %}
+{% block body_class %}
+  index-page
+{% endblock %}
+
+{% block page_title %}
+  {{cow.id}}
+{% endblock %}
+{% block content %}
+
+{# Détails de la vache #}
+<section id="cow_details" class="contact section">
+  <div class="container section-title">
+    <h2>Détails de {{ cow.id }}</h2> <!-- ID non éditable -->
+  </div>
+
+  <form method="POST" action="{{ url_for('update_cow_details', cow_id=cow.id) }}" class="php-email-form">
+    <div class="mb-3">
+      <label>Dans la ferme :</label>
+      <input type="text" name="in_farm" class="form-control" value="{{ cow.in_farm }}">
+    </div>
+
+    <div class="mb-3">
+      <label>Date de naissance :</label>
+      <input type="date" name="born_date" class="form-control" value="{{ cow.born_date }}">
+    </div>
+
+    {% for date, info in cow.info %}
+      <div class="row gy-4">
+        <div class="col-12">
+          <label><strong>{{ date }} :</strong></label>
+          <input type="text" name="info_{{ loop.index }}" class="form-control" value="{{ info }}">
+          <input type="hidden" name="info_date_{{ loop.index }}" value="{{ date }}">
+        </div>
+      </div>
+    {% endfor %}
+
+    <input type="hidden" name="info_count" value="{{ cow.info | length }}">
+    <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+  </form>
+</section>
+{# END Détails de la vache #}
+
+{# Traitements de la vache #}
+  <section id="cow_cares" class="contact section">
+    <div class="container section-title">
+      <h2>Traitements</h2>
+    </div>
+
+    {% for care_index, care in enumerate(cow.cow_cares) %}
+      <form method="POST" action="{{ url_for('update_cow_care', cow_id=cow.id, care_index=care_index) }}" class="php-email-form">
+        <div class="row gy-4">
+
+          {# Date #}
+          <div class="col-md-6">
+            <label for="care_date">Date :</label>
+            <input type="date" name="care_date" class="form-control" required value="{{ care[0] }}" />
+          </div>
+
+          {# Médicaments #}
+          <div class="col-md-6">
+            {% for med_name, qty in care[1].items() %}
+              <label>Médicament :</label>
+              <select name="medic_{{ loop.index }}" class="form-select">
+                {% for med in get_pharma_list() %}
+                  <option value="{{ med }}" {% if med == med_name %}selected{% endif %}>{{ med }}</option>
+                {% endfor %}
+              </select>
+              <input type="number" name="medic_{{ loop.index }}_nb" class="form-control" value="{{ qty }}" min="1" />
+            {% endfor %}
+          </div>
+
+          {# Info complémentaire #}
+          <div class="col-md-12">
+            <label for="care_info">Info complémentaire :</label>
+            <input type="text" name="care_info" class="form-control" value="{{ care[2] or '' }}" />
+          </div>
+
+          <div class="col-md-12 text-center">
+            <button type="submit" class="btn btn-warning">Modifier le soin</button>
+          </div>
+
+        </div>
+      </form>
+      <form method="POST" action="{{ url_for('delete_cow_care', cow_id=cow.id, care_index=care_index) }}" onsubmit="return confirm('Confirmer la suppression ?');">
+        <button type="submit" class="btn btn-danger">Supprimer ce soin</button>
+      </form>
+
+      <hr>
+    {% endfor %}
+
+
+
+    </div>
+  </section>
+{# END Traitements de la vache #}
+
+{# Détails de la reproduction #}
+  <section id='calving' class='contact section'>
+    <div class="container section-title">
+      <h2>Reproduction</h2>
+    </div>
+    <div class='php-email-form'>
+      {% for repro,info in cow.reproduction %}
+      {% if repro['insemination'] %}
+    
+      <div class="row gy-4">
+        <div class="col-12">
+          <p>
+            <strong>Date d'insemination :</strong> {{ repro['insemination'] }}<br>
+            <strong>echographie :</strong> {{ repro['ultrasound'] }}
+          </p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>tarissement :</strong> {{ repro['dry'] }}<br>
+            <strong>préparation au vêlage :</strong> {{ repro['calving_preparation'] }}
+          </p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>Date vêlage :</strong> {{ repro['calving_date'] }}<br>
+            <strong>Vêlage :</strong> {{ repro['calving'] }}
+          </p>
+        </div>
+
+        <div class="col-md-6">
+          <p>
+            <strong>avortement :</strong> {{ repro['abortion'] }}<br>
+            <strong>Informations :</strong> {{ info }}
+          </p>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+{# END Détails de la reproduction #}
+
+{% endblock %}
+{% block JS %}
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+{% endblock %}

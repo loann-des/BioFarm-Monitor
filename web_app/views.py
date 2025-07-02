@@ -1,6 +1,16 @@
 from datetime import datetime
 from io import BytesIO
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import (
+    Flask,
+    abort,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    url_for,
+)
 import logging as lg
 
 app = Flask(__name__)
@@ -10,26 +20,32 @@ app.config.from_object("config.config")
 from .fonction import *
 from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 
-# TODO edit Hystory
+# TODO edit
 # TODO gestion des log
+# TODO historique commande
 
-# root 
+# root
+
 
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
+
 @app.route("/reproduction", methods=["GET"])
 def reproduction():
     return render_template("reproduction.html")
+
 
 @app.route("/pharmacie", methods=["GET"])
 def pharmacie():
     return render_template("pharmacie.html")
 
+
 @app.route("/cow_liste", methods=["GET"])
 def cow_liste():
     return render_template("cow_liste.html")
+
 
 @app.route("/user_setting", methods=["POST"])
 # TODO recalculer velage si changer
@@ -51,9 +67,10 @@ def user_setting():
 
 # Pharmacie form
 
+
 @app.route("/update_care", methods=["POST"])
 def update_care():
-# TODO valider traitemment seulement si pas de bug (dernier opération)
+    # TODO valider traitemment seulement si pas de bug (dernier opération)
     def extract_cares(form, pharma_len):
         cares = {}
         for nb_care in range(pharma_len):
@@ -268,6 +285,7 @@ def download():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
+
 @app.route("/download_remaining_care/", methods=["GET", "POST"])
 def download_remaining_care():
     try:
@@ -283,9 +301,11 @@ def download_remaining_care():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
 
+
 # END Pharmacie form
 
 # Reproduction form
+
 
 @app.route("/upload_cow", methods=["POST"])
 def upload_cow():
@@ -399,53 +419,132 @@ def upload_calf():
         mother_id = request.form["mother_id"]
         calf_id = request.form["calf_id"]
         calving_date = request.form["calving_date"]
-        if borning == "abortion" :
-            CowUntils.validated_calving(cow_id=mother_id,abortion=True)
+        if borning == "abortion":
+            CowUntils.validated_calving(cow_id=mother_id, abortion=True)
             success_message = f"avortement de {mother_id} rensegné, courage"
-        
-        elif (calf_id and calving_date):
+
+        elif calf_id and calving_date:
             lg.info(f"Adding new calf {calf_id}...")
-            CowUntils.validated_calving(cow_id=mother_id,abortion=False)
+            CowUntils.validated_calving(cow_id=mother_id, abortion=False)
             calving_date = datetime.strptime(calving_date, "%Y-%m-%d").date()
             CowUntils.add_calf(calf_id=calf_id, born_date=calving_date)
             success_message = f"naissance de {calf_id} confirmé"
-        else :
-            raise ValueError(f"Renségner \"Numéro Veau\" et  \"Date de velage\"")
+        else:
+            raise ValueError('Renségner "Numéro Veau" et  "Date de velage"')
 
-
-        return jsonify(
-            {"success": True, "message": success_message}
-        )
+        return jsonify({"success": True, "message": success_message})
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
+
 # END  Reproduction form
 
 # cow_liste form
-    
-@app.route('/view_cow/<int:cow_id>', methods=['GET','POST'])
+
+
+@app.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
 def view_cow(cow_id):
     if cow := CowUntils.get_cow(cow_id=cow_id):
         print("🐄 Vache récupérée :", cow)
         return render_template("cow_details.html", cow=cow)
     else:
         return "Vache introuvable", 404
-@app.route('/edit_cow/<int:cow_id>', methods=['GET', 'POST'])
-def edit_cow(cow_id):
-    return render_template("edit_cow.html", cow=CowUntils.get_cow(cow_id=cow_id))
 
-@app.route('/suppress_cow/<int:cow_id>', methods=['POST'])
+
+@app.route("/cow_liste/edit_cow/<int:cow_id>", methods=["GET", "POST"])
+def edit_cow(cow_id):
+    return render_template("cow_edit.html", cow=CowUntils.get_cow(cow_id=cow_id))
+
+
+@app.route("/cow_liste/suppress_cow/<int:cow_id>", methods=["POST"])
 def suppress_cow(cow_id):
+    # TODO Ajout ms confirmation avant suppression
+    lg.info(f"Suppression de la vache {cow_id}...")
     try:
         CowUntils.suppress_cow(cow_id=cow_id)
         return jsonify({"success": True, "message": f"Vache {cow_id} supprimée."})
     except Exception as e:
         lg.error(f"Erreur pendant la suppression de la vache {cow_id}: {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
-# 
+
+
 # END cow_liste form
+
+
+# cow_edit form
+
+
+@app.route("/update_cow_details/<int:cow_id>", methods=["POST"])
+def update_cow_details(cow_id):
+    # Récupération des données du formulaire
+    in_farm = bool(request.form.get("in_farm"))
+    born_date_str = request.form.get("born_date")
+    born_date = datetime.strptime(born_date_str, "%Y-%m-%d").date()
+        
+    # Préparation des kwargs à passer à la fonction update_cow
+    update_data = {
+        "in_farm": in_farm,
+        "born_date": born_date,
+    }
+
+    # Récupération des infos supplémentaires dynamiques
+    info_count = int(request.form.get("info_count", 0))
+    info_list = []
+    for i in range(1, info_count + 1):
+        date = request.form.get(f"info_date_{i}")
+        info = request.form.get(f"info_{i}")
+        if date and info:
+            info_list.append((date, info))
+
+    update_data["info"] = info_list  # ou adapte le nom de champ selon ton modèle
+
+    try:
+        CowUntils.update_cow(cow_id, **update_data)
+        flash("Vache mise à jour avec succès.", "success")
+    except ValueError as e:
+        flash(str(e), "danger")
+
+    return redirect(url_for("edit_cow", cow_id=cow_id))
+
+@app.route("/update_cow_care/<int:cow_id>/<int:care_index>", methods=["POST"])
+def update_cow_care(cow_id, care_index):
+
+    # Récupération des données du formulaire
+    date_str = request.form.get("care_date")
+    new_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    new_info = request.form.get("care_info", "")
+
+    # Récupération des médicaments
+    meds = {}
+    i = 1
+    while med := request.form.get(f"medic_{i}"):
+        if qty := request.form.get(f"medic_{i}_nb"):
+            meds[med] = int(qty)
+        i += 1
+
+    CowUntils.update_cow_care(
+        cow_id=cow_id, care_index=care_index, new_care=(new_date, meds, new_info)
+    )
+
+    flash("Soin modifié avec succès", "success")
+    return redirect(url_for("edit_cow", cow_id=cow_id))  # ou autre vue
+
+@app.route('/delete_cow_care/<int:cow_id>/<int:care_index>', methods=['POST'])
+def delete_cow_care(cow_id, care_index):
+    try:
+        CowUntils.delete_cow_care(cow_id=cow_id, care_index=care_index)
+        flash("Soin supprimé.")
+    except IndexError:
+        flash("Soin introuvable.")
+    return redirect(url_for('edit_cow', cow_id=cow_id))
+
+# END cow_edit form
+
+# Jinja2 global functions
+
+app.jinja_env.globals.update(enumerate=enumerate)
 app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
 app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
 app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)

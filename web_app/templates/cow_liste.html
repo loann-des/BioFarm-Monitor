@@ -32,7 +32,7 @@
             </div>
           </form>
 
-          <form id="form-edit-{{ cow.id }}" action="{{ url_for('edit_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
+          <form action="{{ url_for('edit_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data">
             <div class="col-md-12 text-center">
               <button type="submit" class="btn btn-primary">edit</button>
             </div>
@@ -40,7 +40,7 @@
 
           <form id="form-suppress-{{ cow.id }}" action="{{ url_for('suppress_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
             <div class="col-md-12 text-center">
-              <button type="submit" class="btn btn-primary">supprimer</button>
+              <button type="submit" class="btn btn-danger">Supprimer</button>
             </div>
           </form>
           <div id="message-form-suppress-{{cow.id}}" class="alert" style="display: none;"></div>

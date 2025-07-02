@@ -11,7 +11,8 @@
 {% endblock %}
 {% block content %}
 
-  <section id='cow_détails' class='contact section'>
+{# Détails de la vache #}
+  <section id='cow_details' class='contact section'>
     <div class="container section-title">
       <h2>Détails de {{ cow.id }}</h2>
     </div>
@@ -19,8 +20,19 @@
         <p>Dans la ferme : {{ cow.in_farm }}</p>
         <p>Date de naissance : {{ cow.born_date }}</p>
     </div>
+    {% for date,info in cow.info %}
+      <div class="row gy-4">
+        <div class="col-12">
+          <p>
+            <strong>{{date}} :</strong> {{ info }}
+          </p>
+        </div>
+      </div>
+    {% endfor %}
   </section>
+{# END Détails de la vache #}
 
+{# Traitements de la vache #}
   <section id='cow_cares' class='contact section'>
     <div class="container section-title">
       <h2>Traitements</h2>
@@ -49,8 +61,10 @@
       {% endfor %}
     </div>
   </section>
+{# END Traitements de la vache #}
 
-    <section id='calving' class='contact section'>
+{# Détails de la reproduction #}
+  <section id='calving' class='contact section'>
     <div class="container section-title">
       <h2>Reproduction</h2>
     </div>
@@ -91,6 +105,7 @@
       {% endfor %}
     </div>
   </section>
+{# Détails de la reproduction #}
 
 {% endblock %}
 {% block JS %}
