@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import BytesIO
+from time import strftime
 from flask import (
     Flask,
     abort,
@@ -71,7 +72,7 @@ def user_setting():
 @app.route("/update_care", methods=["POST"])
 def update_care():
     # TODO valider traitemment seulement si pas de bug (dernier opération)
-    def extract_cares(form, pharma_len):
+    def extract_cares(form : dict, pharma_len : int):
         cares = {}
         for nb_care in range(pharma_len):
             medic = form.get(f"medic_{nb_care+1}")
@@ -86,7 +87,7 @@ def update_care():
                     lg.warning(f"Quantité invalide pour medic_{nb_care+1}: {quantite}")
         return cares
 
-    def extract_care_date_and_info(form):
+    def extract_care_date_and_info(form : dict):
         care_date_str = form["care_date"]
         care_info = form["care_info"]
         care_date = datetime.strptime(care_date_str, "%Y-%m-%d").date()
@@ -101,7 +102,7 @@ def update_care():
 
         lg.info(f"update care{id_cow}...")
 
-        remain_care = CowUntils.update_care(id=id_cow, cow_care=care)
+        remain_care = CowUntils.add_cow_care(id=id_cow, cow_care=care)
 
         success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {remain_care[1]} pour {id_cow}."
         return jsonify({"success": True, "message": success_message})
@@ -316,10 +317,10 @@ def upload_cow():
 
         lg.info(f"Adding new cow {cow_id}...")
 
-        CowUntils.upload_cow(id=cow_id, born_date=datetime.now())
+        CowUntils.add_cow(id=cow_id)
 
         return jsonify(
-            {"success": True, "message": "La vache a été ajoutée avec succès !"}
+            {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}
         )
 
     except Exception as e:
@@ -540,6 +541,54 @@ def delete_cow_care(cow_id, care_index):
         flash("Soin introuvable.")
     return redirect(url_for('edit_cow', cow_id=cow_id))
 
+@app.route("/update_cow_reproduction/<int:cow_id>/<int:repro_index>", methods=["POST"])
+def update_cow_reproduction(cow_id, repro_index):
+    # TODO recalculer sur modif
+
+    try:
+        # Récupérer les données du formulaire
+        insemination = request.form.get("insemination")
+        ultrasound = request.form.get("ultrasound")
+        dry = request.form.get("dry")
+        calving_preparation = request.form.get("calving_preparation")
+        calving_date = request.form.get("calving_date")
+        calving = request.form.get("calving")
+        abortion = request.form.get("abortion")
+        info = request.form.get("info")
+
+        # Convertir les chaînes en dates et booléens
+        new_repro = {
+            "insemination": parse_date(insemination),
+            "ultrasound": parse_bool(ultrasound),
+            "dry": parse_date(dry),
+            "calving_preparation": parse_date(calving_preparation),
+            "calving_date": parse_date(calving_date),
+            "calving": parse_bool(calving),
+            "abortion": parse_bool(abortion),
+        }
+
+        # Mettre à jour la reproduction et l'info complémentaire
+        CowUntils.update_cow_reproduction(
+            cow_id=cow_id, repro_index=repro_index, new_repro=(new_repro, info)
+        )
+
+    except (ValueError, KeyError) as e:
+        flash(f"Erreur lors de la mise à jour: {e}", "error")
+    except Exception as e:
+        app.logger.exception("Unexpected error during cow reproduction update")
+        raise
+
+    return redirect(url_for("cow_details", cow_id=cow_id))
+
+@app.route('/delete_cow_reproduction/<int:cow_id>/<int:repro_index>', methods=['POST'])
+def delete_cow_reproduction(cow_id, repro_index):
+    try:
+        CowUntils.delete_cow_reproduction(cow_id=cow_id, repro_index=repro_index)
+        flash("Reproduction supprimée.")
+    except IndexError:
+        flash("Reproduction introuvable.")
+    return redirect(url_for('edit_cow', cow_id=cow_id))
+
 # END cow_edit form
 
 # Jinja2 global functions
@@ -549,3 +598,6 @@ app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
 app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
 app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)
 app.jinja_env.globals.update(get_all_cows=CowUntils.get_all_cows)
+app.jinja_env.globals.update(strftime=strftime)
+app.jinja_env.globals.update(format_bool_fr=format_bool_fr)
+

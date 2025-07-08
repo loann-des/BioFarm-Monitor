@@ -19,6 +19,31 @@ from .models import (
 basedir = os.path.abspath(os.path.dirname(__file__))
 URI = os.path.join(basedir, "txt")
 
+def first(lst: List) -> Optional[object]:
+    """Returns the first element of a list or None if the list is empty."""
+    return lst[0] if lst else None
+
+def last(lst: List) -> Optional[object]:
+    """Returns the last element of a list or None if the list is empty."""
+    return lst[-1] if lst else None
+
+def strftime(date: date) -> str:
+    return date.strftime('%d %B %Y')
+
+def format_bool_fr(value: bool, true_str="Oui", false_str="Non") -> str:
+    return true_str if value else false_str
+
+def parse_date(date_str : str) -> Optional[date]:    
+    """Parses a date string in the format 'YYYY-MM-DD' and returns a date object
+    """
+    return datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
+
+
+def parse_bool(value: str) -> Optional[bool]:
+    if value is None or not value:
+        return None
+    return value.lower() in {"true", "1", "yes"}
+
 
 def day_delta(date: date) -> int:
     """Calculates the number of days between the given date and the date one year ago from today.

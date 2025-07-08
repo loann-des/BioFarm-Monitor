@@ -10,7 +10,8 @@ from .views import app
 # Create database connection object
 db = SQLAlchemy(app)
 
-from .fonction import *
+
+
 
 # TODO gestion exeption
 # TODO gestion des log
@@ -109,6 +110,7 @@ class Prescription(db.Model):
     care = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
 
     dlc_left = Column(Boolean)
+    # TODO pdf prescription scanné ?
 
     def __init__(self, date: DATE, care: dict[str, int], dlc_left: bool):
         """Initializes a Prescription object with the provided date, care items, and DLC status.
@@ -217,6 +219,8 @@ class CowUntils:
     This class contains static methods to add, update, retrieve, and manage cows and their associated care and reproduction records in the database.
     """
 
+    # general cow functions ------------------------------------------------
+
     @staticmethod
     def get_cow(cow_id: int) -> Cow:
         """Retrieves a cow by its ID from the database.
@@ -248,7 +252,7 @@ class CowUntils:
         return Cow.query.all()
 
     @staticmethod
-    def upload_cow(id: int, born_date: date) -> None:
+    def add_cow(id: int, born_date: date = None) -> None:
         """Adds a new cow to the database if it does not already exist.
 
         If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
@@ -262,10 +266,8 @@ class CowUntils:
         if not Cow.query.get(id):
             new_cow = Cow(
                 id=id,
-                cow_cares=[],
-                in_farm=True,
                 born_date=born_date,
-                reproduction=[(None, None)],
+                reproduction=[None],
             )
             db.session.add(new_cow)
             db.session.commit()
@@ -297,39 +299,6 @@ class CowUntils:
             raise ValueError(f"{cow_id} : doesn't exist in database")
 
     @staticmethod
-    def update_cow_care(cow_id : int, care_index: int, new_care : tuple[date, dict[str, int], str]) -> None:
-        cow : Cow
-        if cow := Cow.query.get(cow_id):
-            # Remplacement du soin dans la liste
-            cow.cow_cares[care_index] = new_care
-            db.session.commit()
-            lg.info(f"{cow_id} : care updated in database")
-        else :
-            raise ValueError(f"{cow_id} : doesn't exist in database")
-    
-    @staticmethod
-    def delete_cow_care(cow_id, care_index):
-        """Deletes a specific care record from a cow's care list.
-
-        This function removes the care record at the specified index from the cow's care list and commits the change to the database.
-
-        Args:
-            cow_id (int): The unique identifier for the cow.
-            care_index (int): The index of the care record to be deleted.
-
-        Returns:
-            None
-        """
-        cow: Cow
-        if cow := Cow.query.get(cow_id):
-            del cow.cow_cares[care_index]
-            db.session.commit()
-            lg.info(f"{cow_id} : care deleted in database")
-        else:
-            lg.error(f"{cow_id} : not in database")
-            raise ValueError(f"{cow_id} : doesn't exist in database")
-    
-    @staticmethod
     def suppress_cow(cow_id: int) -> None:
         """Removes a cow from the database by its ID.
 
@@ -349,6 +318,27 @@ class CowUntils:
         else:
             lg.error(f"{cow_id} : not in database")
             raise ValueError(f"{cow_id} : doesn't exist in database")
+
+    @staticmethod
+    def remove_cow(id: int) -> None:
+        """Marks a cow as no longer in the farm by updating its status.
+
+        If the cow with the given ID exists, its status is updated and the change is committed. If the cow does not exist, a warning is logged.
+
+        Args:
+            id (int): The unique identifier for the cow to remove.
+
+        Returns:
+            None
+        """
+        cow: Cow
+        if cow := Cow.query.get(id):
+            cow.in_farm = False
+            db.session.commit()
+            lg.info(f"Cow {id} left the farm.")
+        else:
+            lg.warning(f"Cow with {id} not found.")
+            raise ValueError(f"{id} n'existe pas.")
 
     @staticmethod
     def add_calf(calf_id: int, born_date: date) -> None:
@@ -378,8 +368,11 @@ class CowUntils:
             lg.error(f"{calf_id} : already in database")
             raise ValueError(f"{calf_id} : already in database")
 
+    # END general cow functions ------------------------------------------------
+
+    # cow care functions ------------------------------------------------
     @staticmethod
-    def update_care(
+    def add_cow_care(
         id: int, cow_care: Tuple[date, dict[str, int], str]
     ) -> Optional[tuple[int, date]]:
         """Updates the care record for a cow with the specified ID.
@@ -427,7 +420,61 @@ class CowUntils:
         lg.info(f"Care add to {id}.")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
-        return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
+        return f.remaining_care_on_year(cow=cow), f.new_available_care(cow=cow)
+
+    @staticmethod
+    def update_cow_care(
+        cow_id: int, care_index: int, new_care: tuple[date, dict[str, int], str]
+    ) -> None:
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            # Remplacement du soin dans la liste
+            cow.cow_cares[care_index] = new_care
+            db.session.commit()
+            lg.info(f"{cow_id} : care updated in database")
+        else:
+            raise ValueError(f"{cow_id} : doesn't exist in database")
+
+    @staticmethod
+    def delete_cow_care(cow_id, care_index):
+        """Deletes a specific care record from a cow's care list.
+
+        This function removes the care record at the specified index from the cow's care list and commits the change to the database.
+
+        Args:
+            cow_id (int): The unique identifier for the cow.
+            care_index (int): The index of the care record to be deleted.
+
+        Returns:
+            None
+        """
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            del cow.cow_cares[care_index]
+            db.session.commit()
+            lg.info(f"{cow_id} : care deleted in database")
+        else:
+            lg.error(f"{cow_id} : not in database")
+            raise ValueError(f"{cow_id} : doesn't exist in database")
+
+    @staticmethod
+    def get_all_care() -> list[tuple[date, dict[str, int], int]]:
+        """Retrieves all non-empty care records for all cows, sorted by date in descending order.
+
+        This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
+
+        Returns:
+            list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
+        """
+        cows: List[Cow] = Cow.query.all()
+        all_cares: List[Tuple[date, dict[str, int], int]] = [
+            (care_date, care_dict, cow.id)
+            for cow in cows
+            for care_date, care_dict, *_ in cow.cow_cares
+            if care_dict
+        ]
+        all_cares.sort(key=lambda x: x[0], reverse=True)  # tri par date décroissante
+        return all_cares
 
     @staticmethod
     def get_care_by_id(id: int) -> Optional[list[Tuple[date, dict[str, int], str]]]:
@@ -483,7 +530,11 @@ class CowUntils:
         res = []
         cow: Cow
         for cow in Cow.query.all():
-            if len(cow.reproduction) == 0:
+            has_no_repro = len(cow.reproduction) == 0
+            last_repro = cow.reproduction[-1][0] if cow.reproduction else None
+            last_insemination = last_repro.get("insemination") if last_repro else None
+
+            if has_no_repro:
                 res.extend(
                     cow_care for cow_care in cow.cow_cares if cow_care[0].year == year
                 )
@@ -492,13 +543,14 @@ class CowUntils:
                     cow_care
                     for cow_care in cow.cow_cares
                     if cow_care[0].year == year
-                    and (
-                        cow_care[0] <= cow.reproduction[-1][0].get("insemination")
-                        if cow.reproduction[-1][0]
-                        else False
-                    )
+                    and last_insemination is not None
+                    and cow_care[0] <= last_insemination
                 )
         return res
+
+    # END cow care functions ------------------------------------------------
+
+    # reproduction functions ------------------------------------------------
 
     @staticmethod
     def add_insemination(id: int, insemination: date) -> None:
@@ -620,16 +672,17 @@ class CowUntils:
         Returns:
             dict[int, Reproduction]: A dictionary of cow IDs to their valid reproduction records.
         """
-        # TODO filtré naissance
+        from .fonction import last
+
         cows: list[Cow] = Cow.query.all()
         return {
             cow.id: cow.reproduction[-1][0]
             for cow in cows
-            if cow.reproduction and cow.reproduction[-1][0].get("ultrasound")
+            if last(cow.reproduction) and cow.reproduction[-1][0].get("ultrasound")
         }
 
     @staticmethod
-    def validated_calving(cow_id: int, abortion: bool) -> None:
+    def validated_calving(cow_id: int, abortion: bool, info: str=None) -> None:
         """Validates the calving event for a cow and records whether it was an abortion.
 
         This function updates the latest reproduction record for the specified cow to indicate a calving event and whether it was an abortion. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -646,6 +699,7 @@ class CowUntils:
             reproduction: Reproduction = cow.reproduction[-1][0]
             reproduction["calving"] = True
             reproduction["abortion"] = abortion
+            cow.reproduction[-1] = (reproduction, info)
 
             lg.info(f"calving of of {cow_id} confirm")
 
@@ -655,43 +709,56 @@ class CowUntils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def remove_cow(id: int) -> None:
-        """Marks a cow as no longer in the farm by updating its status.
+    def update_cow_reproduction(
+        # TODO cow.reproduction[repro_index] = (new_repro, "") supprime les informations existantes. Passez la valeur info comme argument pour préserver les données utilisateur.
+        cow_id: int,
+        repro_index: int,
+        new_repro: tuple[Reproduction, str],
+    ) -> None:
+        """Updates a specific reproduction record for a cow.
 
-        If the cow with the given ID exists, its status is updated and the change is committed. If the cow does not exist, a warning is logged.
+        This function replaces the reproduction record at the specified index with a new reproduction dictionary and commits the change to the database.
 
         Args:
-            id (int): The unique identifier for the cow to remove.
+            cow_id (int): The unique identifier for the cow.
+            repro_index (int): The index of the reproduction record to update.
+            new_repro (Reproduction): The new reproduction record to set.
 
         Returns:
             None
         """
         cow: Cow
-        if cow := Cow.query.get(id):
-            cow.in_farm = False
+        if cow := Cow.query.get(cow_id):
+            cow.reproduction[repro_index] = (new_repro, "")
             db.session.commit()
-            lg.info(f"Cow {id} left the farm.")
+            lg.info(f"{cow_id} : reproduction updated in database")
         else:
-            lg.warning(f"Cow with {id} not found.")
-            raise ValueError(f"{id} n'existe pas.")
+            lg.error(f"{cow_id} : not in database")
+            raise ValueError(f"{cow_id} : doesn't exist in database")
 
     @staticmethod
-    def get_all_care() -> list[tuple[date, dict[str, int], int]]:
-        """Retrieves all non-empty care records for all cows, sorted by date in descending order.
+    def delete_cow_reproduction(cow_id: int, repro_index: int) -> None:
+        """Deletes a specific reproduction record from a cow's reproduction history.
 
-        This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
+        This function removes the reproduction record at the specified index and commits the change to the database. If the cow does not exist, an error is logged and a ValueError is raised.
+
+        Args:
+            cow_id (int): The unique identifier for the cow.
+            repro_index (int): The index of the reproduction record to delete.
 
         Returns:
-            list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
+            None
         """
-        all_cares: List[Tuple[date, dict[str, int], int]] = [
-            (care_date, care_dict, cow.id)
-            for cow in Cow.query.all()
-            for care_date, care_dict, *_ in cow.cow_cares
-            if care_dict  # ignore les soins vides
-        ]
-        all_cares.sort(key=lambda x: x[0], reverse=True)  # tri par date décroissante
-        return all_cares
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            del cow.reproduction[repro_index]
+            db.session.commit()
+            lg.info(f"{cow_id} : reproduction deleted in database")
+        else:
+            lg.error(f"{cow_id} : not in database")
+            raise ValueError(f"{cow_id} : doesn't exist in database")
+
+    # END reproduction functions ------------------------------------------------
 
 
 # END COW FONCTION

@@ -99,46 +99,87 @@
 {# END Traitements de la vache #}
 
 {# Détails de la reproduction #}
-  <section id='calving' class='contact section'>
+  <section id="calving" class="contact section">
     <div class="container section-title">
       <h2>Reproduction</h2>
     </div>
-    <div class='php-email-form'>
-      {% for repro,info in cow.reproduction %}
-      {% if repro['insemination'] %}
-    
-      <div class="row gy-4">
-        <div class="col-12">
-          <p>
-            <strong>Date d'insemination :</strong> {{ repro['insemination'] }}<br>
-            <strong>echographie :</strong> {{ repro['ultrasound'] }}
-          </p>
-        </div>
+{% for repro_index, repro_tuple in enumerate(cow.reproduction) %}
+{% if repro_index > 0 %}
 
-        <div class="col-md-6">
-          <p>
-            <strong>tarissement :</strong> {{ repro['dry'] }}<br>
-            <strong>préparation au vêlage :</strong> {{ repro['calving_preparation'] }}
-          </p>
-        </div>
+  {% set repro = repro_tuple[0] %}
+  {% set info = repro_tuple[1] %}
 
-        <div class="col-md-6">
-          <p>
-            <strong>Date vêlage :</strong> {{ repro['calving_date'] }}<br>
-            <strong>Vêlage :</strong> {{ repro['calving'] }}
-          </p>
-        </div>
+  <form method="POST" action="{{ url_for('update_cow_reproduction', cow_id=cow.id, repro_index=repro_index) }}" class="php-email-form mb-4">
+    <div class="row gy-4">
 
-        <div class="col-md-6">
-          <p>
-            <strong>avortement :</strong> {{ repro['abortion'] }}<br>
-            <strong>Informations :</strong> {{ info }}
-          </p>
-        </div>
+      <div class="col-md-6">
+        <label for="insemination_{{ repro_index }}">Insemination :</label>
+        <input type="date" name="insemination" id="insemination_{{ repro_index }}" class="form-control" required
+              value="{{ repro.insemination }}" />
       </div>
-      {% endif %}
-      {% endfor %}
+
+      <div class="col-md-6">
+        <label for="ultrasound_{{ repro_index }}">Ultrasound :</label>
+        <select name="ultrasound" id="ultrasound_{{ repro_index }}" class="form-select">
+          <option value="" {% if repro.ultrasound is none %}selected{% endif %}>N/A</option>
+          <option value="true" {% if repro.ultrasound == true %}selected{% endif %}>Oui</option>
+          <option value="false" {% if repro.ultrasound == false %}selected{% endif %}>Non</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label for="dry_{{ repro_index }}">Dry period :</label>
+        <input type="date" name="dry" id="dry_{{ repro_index }}" class="form-control" required
+              value="{{ repro.dry }}" />
+      </div>
+
+      <div class="col-md-6">
+        <label for="calving_preparation_{{ repro_index }}">Calving preparation :</label>
+        <input type="date" name="calving_preparation" id="calving_preparation_{{ repro_index }}" class="form-control" required
+              value="{{ repro.calving_preparation }}" />
+      </div>
+
+      <div class="col-md-6">
+        <label for="calving_date_{{ repro_index }}">Calving date :</label>
+        <input type="date" name="calving_date" id="calving_date_{{ repro_index }}" class="form-control" required
+              value="{{ repro.calving_date }}" />
+      </div>
+
+      <div class="col-md-3">
+        <label for="calving_{{ repro_index }}">Calving :</label>
+        <select name="calving" id="calving_{{ repro_index }}" class="form-select" required>
+          <option value="true" {% if repro.calving %}selected{% endif %}>Oui</option>
+          <option value="false" {% if not repro.calving %}selected{% endif %}>Non</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label for="abortion_{{ repro_index }}">Abortion :</label>
+        <select name="abortion" id="abortion_{{ repro_index }}" class="form-select" required>
+          <option value="true" {% if repro.abortion %}selected{% endif %}>Oui</option>
+          <option value="false" {% if not repro.abortion %}selected{% endif %}>Non</option>
+        </select>
+      </div>
+
+      <div class="col-md-12">
+        <label for="info_{{ repro_index }}">Info complémentaire :</label>
+        <input type="text" name="info" id="info_{{ repro_index }}" class="form-control" value="{{ info or '' }}" />
+      </div>
+
+      <div class="col-md-12 text-center mt-3">
+        <button type="submit" class="btn btn-warning">Modifier la reproduction</button>
+      </div>
+
     </div>
+  </form>
+
+  <form method="POST" action="{{ url_for('delete_cow_reproduction', cow_id=cow.id, repro_index=repro_index) }}" onsubmit="return confirm('Confirmer la suppression ?');">
+    <button type="submit" class="btn btn-danger mb-5">Supprimer cette reproduction</button>
+  </form>
+  <hr>
+{% endif %}
+{% endfor %}
+
   </section>
 {# END Détails de la reproduction #}
 
