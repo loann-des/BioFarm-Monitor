@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import BytesIO
+import pandas as pd
 from time import strftime
 from flask import (
     Flask,
@@ -307,9 +308,34 @@ def download_remaining_care():
 
 # Reproduction form
 
+@app.route("/upload_cow/", methods=["GET", "POST"])
+def upload_cows():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if not file:
+            return "Aucun fichier reçu", 400
 
-@app.route("/upload_cow", methods=["POST"])
-def upload_cow():
+        try:
+            # Lire le fichier Excel directement en mémoire
+            df = pd.read_excel(BytesIO(file.read()))
+
+            # Lire uniquement la première colonne (ex: ID de la vache)
+            cow_ids = df.iloc[:, 0].dropna().unique()
+
+            added, skipped = 0, 0
+            for cow_id in cow_ids:
+                try:
+                    CowUntils.add_cow(id=int(cow_id))
+                    added += 1
+                except ValueError:
+                    skipped += 1
+
+            return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
+
+@app.route("/add_cow", methods=["POST"])
+def add_cow():
     # TODO gestion veaux upload_cow
     try:
         # Récupération des données du formulaire

@@ -28,13 +28,13 @@
               {# durée tarissement #}
               <div class="col-md-6">
                 <label for="dry_time" class="form-label">durré tarrisment</label>
-                <input type="number" name="dry_time" id="dry_time" class="form-control" required />
+                <input type="number" name="dry_time" id="dry_time" required />
               </div>
 
               {# durée prépa vêlage #}
               <div class="col-md-6">
                 <label for="calving_preparation_time" class="form-label">durée prépa vêlage</label>
-                <input type="number" name="calving_preparation_time" id="calving_preparation_time" class="form-control" required />
+                <input type="number" name="calving_preparation_time" id="calving_preparation_time" required />
               </div>
 
               {# button submit #}
@@ -47,9 +47,43 @@
           <div id="message-form-user_setting" class="alert" style="display: none;"></div>
         </div>
       </div>
-    </div>
+    </div> 
   </section>
   <!--END set_user_setting Care Section -->
+
+  <!-- init vache-->
+  <section id="init_cow" class="contact section">
+    <div class="container section-title">
+      <h2>Initialiser vos vaches</h2>
+      <h2>Importer un fichier Excel (colonne ID de vache)</h2>
+    </div>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          
+          <form id="form-init_cow" action="{{ url_for('upload_cows') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+            <div class="row gy-4">
+
+              {# ID de la vache #}
+              <div class="col-md-6">
+                <label for="file" class="form-label">fichier</label>
+                <input type=file name=file accept=".xls,.xlsx" required>
+              </div>
+
+              {# button submit #}
+              <div class="col-md-12 text-center">
+                <button type="submit" class="btn btn-primary">Importer</button>
+              </div>
+
+            </div>
+          </form>
+          <div id="message-form-init_cow" class="alert" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- END init vache-->
 
  {# TODO afficher setting #}
 

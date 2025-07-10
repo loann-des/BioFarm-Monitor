@@ -1077,6 +1077,7 @@ class UserUtils:
         user.setting["calving_preparation_time"] = calving_preparation
         db.session.commit()
 
+    @staticmethod
     def get_user_setting() -> Setting:
         """Retrieves the current user's settings for dry time and calving preparation time.
 
