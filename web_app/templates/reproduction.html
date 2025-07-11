@@ -11,36 +11,32 @@
   Reproduction
 {% endblock %}
 {% block content %}
-{# TODO Clean div inutile #}
-  
-  
+{# TODO faire les commentaires #}
+
   <!-- New Cow Section -->
   <section id="new_cow_section" class="contact section">
     <div class="container section-title">
       <h2>New Cow</h2>
       <p>Ajouter ici les nouvelles vaches</p>
     </div>
+    <div class="row justify-content-center">
+      <form id="form-new_cow" action="{{ url_for('add_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <form id="form-new_cow" action="{{ url_for('add_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-            <div class="row gy-4">
-              {# numero vache à ajouter #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Numéro :</label>
-                <input type="number" name="id" id="id" class="form-control" required />
-              </div>
+          {# ID de la vache #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="id" class="form-label">Numéro :</label>
+            <input type="number" name="id" id="id" class="form-control" required />
+          </div>
 
-              {# button submit #}
-              <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">Ajouter</button>
-              </div>
-            </div>
-          </form>
-          <div id="message-form-new_cow" class="alert" style="display: none;"></div>
+          {# button submit #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Ajouter</button>
+          </div>
+
         </div>
-      </div>
+      </form>
+      <div id="message-form-new_cow" class="alert" style="display: none;"></div>
     </div>
   </section>
   <!-- End New Cow Section -->
@@ -51,106 +47,88 @@
       <h2>Remove Cow</h2>
       <p>Supprimer ici les vaches</p>
     </div>
-
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <form id="form-remove_cow" action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-            <div class="row gy-4">
-              {# Numéro vache à supprimer #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Numéro :</label>
-                <input type="number" name="id" id="id" class="form-control" required />
-              </div>
-
-              {# button submit #}
-              <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">Supprimer</button>
-              </div>
-            </div>
-          </form>
-          <div id="message-form-remove_cow" class="alert" style="display: none;"></div>
+    <div class="row justify-content-center">
+      <form id="form-remove_cow" action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+          
+          {# ID de la vache à supprimer #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="id" class="form-label">Numéro :</label>
+            <input type="number" name="id" id="id" class="form-control" required />
+          </div>
+          
+          {# button submit #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Supprimer</button>
+          </div>
         </div>
-      </div>
+
+      </form>
+      <div id="message-form-remove_cow" class="alert" style="display: none;"></div>
     </div>
   </section>
   <!-- End Remove cow Section -->
 
   <!-- insemination Section -->
   <section id="insemination" class="contact section">
-
     <div class="container section-title">
       <h2>Insémination</h2>
       <p>Ajoutez ici les inséminations</p>
     </div>
+    <div class="row justify-content-center">
+      <form id="form-insemination" action="{{ url_for('insemination') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
 
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <form id="form-insemination" action="{{ url_for('insemination') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-            <div class="row gy-4">
-              {# date de l'insémination #}
-              <div class="col-md-6">
-                <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
-                <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
-              </div>
+          {# date de l'insemination#}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="prescription_date" class="form-label">Date de l'Insémination :</label>
+            <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+          </div>
 
-              {# numéro vache inseminée #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Numéro :</label>
-                <input type="number" name="id" id="id" class="form-control" required />
-              </div>
+          {# ID de la vache #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="id" class="form-label">Numéro :</label>
+            <input type="number" name="id" id="id" class="form-control" required />
+          </div>
 
-              {# button submit #}
-              <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">Ajouter</button>
-              </div>
-            </div>
-          </form>
-          <div id="message-form-insemination" class="alert" style="display: none;"></div>
+          {# button submit #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Ajouter Insémination</button>
+          </div>
+
         </div>
-      </div>
+      </form>
+      <div id="message-form-insemination" class="alert" style="display: none;"></div>
     </div>
   </section>
   <!-- End insemination Section -->
 
   <!-- ultrasound Section -->
   <section id="ultrasound" class="contact section">
-
     <div class="container section-title">
       <h2>ultrasound</h2>
       <p>Ajoutez ici les échographies</p>
     </div>
-
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <form id="form-ultrasound" action="{{ url_for('ultrasound') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-            <div class="row gy-4">
-
-              {# numéro vache inseminée #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Numéro :</label>
-                <input type="number" name="id" id="id" class="form-control" required />
-              </div>
-
-              <div class="col-md-6">
-                <select name="ultrasound" id="ultrasound" class="form-select">
-                    <option value="True">Vrais</option>
-                    <option value="False">Faux</option>
-                </select>
-              </div>
-
-              {# button submit #}
-              <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">Envoyer</button>
-              </div>
-
-            </div>
-          </form>
-          <div id="message-form-ultrasound" class="alert" style="display: none;"></div>
+    <div class="row justify-content-center">
+      <form id="form-ultrasound" action="{{ url_for('ultrasound') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="id" class="form-label">Numéro :</label>
+            <input type="number" name="id" id="id" class="form-control" required />
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="ultrasound" class="form-label">Échographie :</label>
+            <select name="ultrasound" id="ultrasound" class="form-select">
+              <option value="True">Vrais</option>
+              <option value="False">Faux</option>
+            </select>
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Envoyer echographie</button>
+          </div>
         </div>
-      </div>
+      </form>
+      <div id="message-form-ultrasound" class="alert" style="display: none;"></div>
     </div>
   </section>
   <!-- End ultrasound Section -->
@@ -162,91 +140,63 @@
       <p>Ici les prochains tarissements en temps réel</p>
     </div>
 
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <div class="php-email-form">
+    <div class="row justify-content-center">
+      <div class="php-email-form">
+        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+          <div class="col-12">
+            <div id="dry-result" class="mt-3"></div>
+          </div>
 
-            <div class="row gy-4">
-            
-              <div class="col-12">
-                <div id="dry-result" class="mt-3"></div>
-              </div>
-              
-              <div class="col-md-12 text-center">
-                <button id="load-dry" class="btn btn-primary" type="submit">Afficher les tarissements</button>
-              </div>
-
-            </div>
-
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button id="load-dry" class="btn btn-primary" type="submit">Afficher les tarissements</button>
           </div>
         </div>
       </div>
     </div>
   </section>
-  <!--END show_dry Section -->
-  
+  <!-- END show_dry Section -->
+
   <!-- show_calving_preparation Section -->
   <section id="show_calving_preparation" class="contact section">
     <div class="container section-title">
       <h2>show_calving_preparation</h2>
       <p>Ici les prochain prépa vêlage</p>
     </div>
-
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <div class="php-email-form">
-
-            <div class="row gy-4">
-            
-              <div class="col-12">
-                <div id="calving_preparation-result" class="mt-3"></div>
-              </div>
-              
-              <div class="col-md-12 text-center">
-                <button id="load-calving_preparation" class="btn btn-primary" type="submit">Afficher les tarissements</button>
-              </div>
-
-            </div>
-
+    <div class="row justify-content-center">
+      <div class="php-email-form">
+        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+          <div class="col-12">
+            <div id="calving_preparation-result" class="mt-3"></div>
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button id="load-calving_preparation" class="btn btn-primary" type="submit">Afficher les prépas vêlage</button>
           </div>
         </div>
       </div>
     </div>
   </section>
-  <!--END show_calving_preparation Section -->
+  <!-- END show_calving_preparation Section -->
 
   <!-- show_calving_date Section -->
   <section id="show_calving_date" class="contact section">
     <div class="container section-title">
       <h2>show_calving_date</h2>
-      <p>Ici les prochain v^lages</p>
+      <p>Ici les prochains vêlages</p>
     </div>
-
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-          <div class="php-email-form">
-
-            <div class="row gy-4">
-            
-              <div class="col-12">
-                <div id="calving-result" class="mt-3"></div>
-              </div>
-              
-              <div class="col-md-12 text-center">
-                <button id="load-calving" class="btn btn-primary" type="submit">Afficher les tarissements</button>
-              </div>
-
-            </div>
-
+    <div class="row justify-content-center">
+      <div class="php-email-form">
+        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+          <div class="col-12">
+            <div id="calving-result" class="mt-3"></div>
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button id="load-calving" class="btn btn-primary" type="submit">Afficher les vêlages</button>
           </div>
         </div>
       </div>
     </div>
   </section>
-  <!--END show_calving_date Section -->
+  <!-- END show_calving_date Section -->
 
   <!-- new_calf Section -->
   <section id="new_calf" class="contact section">
@@ -254,55 +204,38 @@
       <h2>New Calf</h2>
       <p>Ajoutez ici les naissances</p>
     </div>
-
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-lg-8">
-
-          <form id="form-new_calf" action="{{ url_for('upload_calf') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-            <div class="row gy-4">
-
-              {# selection sex #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Naissances :</label>
-                <select name="borning" id="borning" class="form-select" required>
-                  <option value="male">male</option>
-                  <option value="female">femmel</option>
-                  <option value="abortion">avorton</option>
-
-                </select>
-              </div>
-
-              {# numero mere #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Numéro Mère :</label>
-                <input type="number" name="mother_id" id="mother_id" class="form-control" required />
-              </div>
-
-              {# numero veaux #}
-              <div class="col-md-6">
-                <label for="id" class="form-label">Numéro Veau :</label>
-                <input type="number" name="calf_id" id="calf_id" class="form-control"/>
-              </div>
-
-              {# date de velage #}
-              <div class="col-md-6">
-                <label for="calving_date" class="form-label">Date de velage :</label>
-                <input type="date" name="calving_date" id="calving_date" class="form-control">
-              </div>
-
-              {# button submit #}
-              <div class="col-md-12 text-center">
-                <button type="submit" class="btn btn-primary">Ajouter</button>
-              </div>
-            </div>
-          </form>
-          <div id="message-form-new_calf" class="alert" style="display: none;"></div>
+    <div class="row justify-content-center">
+      <form id="form-new_calf" action="{{ url_for('upload_calf') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-4 g-3 justify-content-center">
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="borning" class="form-label">Naissances :</label>
+            <select name="borning" id="borning" class="form-select" required>
+              <option value="male">male</option>
+              <option value="female">femmel</option>
+              <option value="abortion">avorton</option>
+            </select>
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="mother_id" class="form-label">Numéro Mère :</label>
+            <input type="number" name="mother_id" id="mother_id" class="form-control" required />
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="calf_id" class="form-label">Numéro Veau :</label>
+            <input type="number" name="calf_id" id="calf_id" class="form-control" />
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="calving_date" class="form-label">Date de velage :</label>
+            <input type="date" name="calving_date" id="calving_date" class="form-control" />
+          </div>
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Ajouter</button>
+          </div>
         </div>
-      </div>
+      </form>
+      <div id="message-form-new_calf" class="alert" style="display: none;"></div>
     </div>
   </section>
-  <!-- End upload_calf Section -->
+  <!-- End new_calf Section -->
 {% endblock %}
 {% block JS %}
   <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
