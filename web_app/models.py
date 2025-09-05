@@ -29,10 +29,13 @@ class Reproduction(TypedDict):
     insemination: date
     ultrasound: Optional[bool]
     dry: date
+    dry_status: bool  # status du tarrisement
     calving_preparation: date
+    calving_preparation_status: bool # status de prepa vellage
     calving_date: date
-    calving: bool
+    calving: bool # status du vellage
     abortion: bool
+    reproduction_details: Optional[str]  # détails sur la reproduction
 
 
 class Setting(TypedDict):
@@ -58,7 +61,7 @@ class Cow(db.Model):
     info = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
     in_farm = Column(Boolean)  # faux si vache sortie expoitation
     born_date = Column(DATE)  # date de naissance de la vache
-    # liste de (Reproduction, info complementaire)
+    # liste de Reproduction
     reproduction = Column(
         MutableList.as_mutable(PickleType), default=list, nullable=False
     )
@@ -70,18 +73,19 @@ class Cow(db.Model):
         info: list[tuple[date, str]] = None,
         in_farm: bool = True,
         born_date: date = None,
-        reproduction: list[tuple[Reproduction, str]] = None,
+        reproduction: list[Reproduction] = None,
     ):
         """Initializes a Cow object with the provided attributes.
 
-        This constructor sets the cow's unique ID, care records, farm status, birth date, and reproduction history.
+        This constructor sets the cow's unique ID, care records, annotations, farm status, birth date, and reproduction history.
 
         Args:
             id (int): The unique identifier for the cow.
-            cow_cares (list[tuple[date, dict[str, int], str]]): The list of care records for the cow.
-            in_farm (bool): Indicates if the cow is currently in the farm.
-            born_date (date): The birth date of the cow.
-            reproduction (list[tuple[Reproduction, str]]): The list of reproduction records for the cow.
+            cow_cares (list[tuple[date, dict[str, int], str]], optional): List of care records for the cow.
+            info (list[tuple[date, str]], optional): List of general annotations for the cow.
+            in_farm (bool, optional): Indicates if the cow is currently in the farm.
+            born_date (date, optional): The birth date of the cow.
+            reproduction (list[Reproduction], optional): List of reproduction records for the cow.
         """
         if cow_cares is None:
             cow_cares = []
@@ -531,7 +535,7 @@ class CowUntils:
         cow: Cow
         for cow in Cow.query.all():
             has_no_repro = len(cow.reproduction) == 0
-            last_repro = cow.reproduction[-1][0] if cow.reproduction else None
+            last_repro = cow.reproduction[-1] if cow.reproduction else None
             last_insemination = last_repro.get("insemination") if last_repro else None
 
             if has_no_repro:
@@ -568,7 +572,6 @@ class CowUntils:
         cow: Cow
         if cow := Cow.query.get(id):
             cow.reproduction.append(
-                (
                     {
                         "insemination": insemination,
                         "ultrasound": None,
@@ -578,8 +581,6 @@ class CowUntils:
                         "calving": False,
                         "abortion": False,
                     },
-                    "",
-                )
             )
             db.session.commit()
             lg.info(f"insemination on {date} add to {id}")
@@ -603,12 +604,12 @@ class CowUntils:
         # TODO gestion pas d'insemination reproduction_ultrasound
         cow: Cow
         if cow := Cow.query.get(id):
-            reproduction: Reproduction = cow.reproduction[-1][0]
+            reproduction: Reproduction = cow.reproduction[-1]
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
 
-                cow.reproduction[-1] = CowUntils.set_reproduction(reproduction), ""
+                cow.reproduction[-1] = CowUntils.set_reproduction(reproduction)
                 lg.info(f"insemination on {date} of {id} confirm")
             else:
                 lg.info(f"insemination on {date} of {id} invalidate")
@@ -659,7 +660,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get(id):
-            return cow.reproduction[-1][0]
+            return cow.reproduction[-1]
         else:
             raise ValueError(f"{id} n'existe pas.")
 
@@ -673,13 +674,13 @@ class CowUntils:
             dict[int, Reproduction]: A dictionary of cow IDs to their valid reproduction records.
         """
         from .fonction import last
-
         cows: list[Cow] = Cow.query.all()
         return {
-            cow.id: cow.reproduction[-1][0]
+            cow.id: cow.reproduction[-1]
             for cow in cows
-            if last(cow.reproduction) and cow.reproduction[-1][0].get("ultrasound")
+            if last(cow.reproduction) and cow.reproduction[-1].get("ultrasound") and not cow.reproduction[-1].get("calving")
         }
+
 
     @staticmethod
     def validated_calving(cow_id: int, abortion: bool, info: str=None) -> None:
@@ -696,10 +697,10 @@ class CowUntils:
         """  # TODO gestion pas d'insemination reproduction_ultrasound calving
         cow: Cow
         if cow := Cow.query.get(cow_id):
-            reproduction: Reproduction = cow.reproduction[-1][0]
+            reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving"] = True
             reproduction["abortion"] = abortion
-            cow.reproduction[-1] = (reproduction, info)
+            cow.reproduction[-1] = reproduction
 
             lg.info(f"calving of of {cow_id} confirm")
 
@@ -709,11 +710,65 @@ class CowUntils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
+    def validated_dry(cow_id: int) -> None:
+        """Validates the dry for a cow.
+
+        This function updates the latest reproduction record for the specified cow to indicate that the dry period has been completed. If the cow does not exist, an error is logged and a ValueError is raised.
+
+        Args:
+            cow_id (int): The unique identifier for the cow.
+
+        Returns:
+            None
+        """
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            try :
+                reproduction: Reproduction = cow.reproduction[-1]
+                reproduction["dry_status"] = True
+                cow.reproduction[-1] = reproduction
+
+                lg.info(f"dry of of {cow_id} confirm")
+
+                db.session.commit()
+            except Exception as e:
+                lg.error(f"Error updating dry status for cow {cow_id}: {e}")
+                raise
+        else:
+            lg.error(f"Cow with {cow_id} not found.")
+            raise ValueError(f"{cow_id} n'existe pas.")
+
+        
+    @staticmethod
+    def validated_calving_preparation(cow_id: int) -> None:
+        """Validates the calving preparation for a cow.
+
+        This function updates the latest reproduction record for the specified cow to indicate that the calving preparation has been completed. If the cow does not exist, an error is logged and a ValueError is raised.
+
+        Args:
+            cow_id (int): The unique identifier for the cow.
+
+        Returns:
+            None
+        """
+        cow: Cow
+        if cow := Cow.query.get(cow_id):
+            reproduction: Reproduction = cow.reproduction[-1]
+            reproduction["calving_preparation_status"] = True
+            cow.reproduction[-1] = reproduction
+
+            lg.info(f"calving preparation of of {cow_id} confirm")
+
+            db.session.commit()
+        else:
+            lg.error(f"Cow with {cow_id} not found.")
+            raise ValueError(f"{cow_id} n'existe pas.")
+    
+    @staticmethod
     def update_cow_reproduction(
-        # TODO cow.reproduction[repro_index] = (new_repro, "") supprime les informations existantes. Passez la valeur info comme argument pour préserver les données utilisateur.
         cow_id: int,
         repro_index: int,
-        new_repro: tuple[Reproduction, str],
+        new_repro: Reproduction,
     ) -> None:
         """Updates a specific reproduction record for a cow.
 
@@ -729,7 +784,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get(cow_id):
-            cow.reproduction[repro_index] = (new_repro, "")
+            cow.reproduction[repro_index] = new_repro
             db.session.commit()
             lg.info(f"{cow_id} : reproduction updated in database")
         else:

@@ -1,5 +1,15 @@
 import os
+import logging as lg
 class config :
+    
+    # Configuration du logging pour toute l'application
+    lg.basicConfig(
+        filename='app.log',  # Nom du fichier log
+        level=lg.INFO,       # Niveau de log (INFO, WARNING, ERROR, etc.)
+        format='%(asctime)s %(levelname)s %(message)s'
+    )
+
+    
     SECRET_KEY = '#d#JCqTTW\nilK\\7m\x0bp#\tj~#H'
 
     APP_G_ID = 1200420960103822

@@ -84,11 +84,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.success) {
-                const {dry} = data;
+                const { dry } = data;
                 if (Object.keys(dry).length === 0) {
-                    resultDiv.innerHTML = "Aucun tarrisment à prévoir.";
+                    resultDiv.innerHTML = "Aucun tarissement à prévoir.";
                 } else {
-                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Tarrissement</th></tr></thead><tbody>";
+                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Tarissement</th><th>Action</th></tr></thead><tbody>";
 
                     const sortedEntries = Object.entries(dry).sort((a, b) => {
                         return new Date(a[1]) - new Date(b[1]);
@@ -100,11 +100,43 @@ document.addEventListener("DOMContentLoaded", () => {
                             month: "short",
                             year: "numeric"
                         });
-                        html += `<tr><td>${cowId}</td><td>${formattedDate}</td></tr>`;
+                        html += `
+                            <tr>
+                                <td>${cowId}</td>
+                                <td>${formattedDate}</td>
+                                <td><button class="btn btn-success validate-btn" data-cow="${cowId}">Valider</button></td>
+                            </tr>
+                        `;
                     }
 
                     html += "</tbody></table>";
                     resultDiv.innerHTML = html;
+
+                    // Ajouter les écouteurs pour les boutons valider
+                    document.querySelectorAll(".validate-btn").forEach(btn => {
+                        btn.addEventListener("click", async (e) => {
+                            const cowId = e.target.dataset.cow;
+                            try {
+                                const res = await fetch("/validate_dry", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json"
+                                    },
+                                    body: JSON.stringify({ cow_id: cowId })
+                                });
+                                const result = await res.json();
+                                if (result.success) {
+                                    alert(`Tarissement validé pour la vache ${cowId}`);
+                                    e.target.closest("tr").remove(); // Supprime la ligne du tableau
+                                } else {
+                                    alert(`Erreur : ${result.message}`);
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert("Erreur lors de la validation.");
+                            }
+                        });
+                    });
                 }
             } else {
                 resultDiv.innerHTML = `Erreur : ${data.message}`;
@@ -115,6 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
 
 //Js show_calving_preparation
 document.addEventListener("DOMContentLoaded", () => {

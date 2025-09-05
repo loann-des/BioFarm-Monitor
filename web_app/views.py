@@ -266,8 +266,9 @@ def stock_details():
     return render_template("stock_details.html")
 
 
-@app.route("/download/", methods=["GET", "POST"])
+@app.route("/download", methods=["GET", "POST"])
 def download():
+    lg.info("export-stock")
     try:
         year = int(request.form["export_year"])  # CHAMP CORRIGÉ ICI
         csv_str = pharmacie_to_csv(year)
@@ -288,7 +289,7 @@ def download():
         return jsonify({"success": False, "message": str(e)}), 400
 
 
-@app.route("/download_remaining_care/", methods=["GET", "POST"])
+@app.route("/download_remaining_care", methods=["GET", "POST"])
 def download_remaining_care():
     try:
         excel_io = remaining_care_to_excel()
@@ -298,7 +299,7 @@ def download_remaining_care():
             download_name="traitement.xlsx",
             as_attachment=True,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+        ), jsonify({"success": True, "message": "telechargement"})
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400
@@ -412,15 +413,31 @@ def ultrasound():
 
 @app.route("/show_dry")
 def show_dry():
+    #TODO valider dry
     try:
         dry_data = get_all_dry_date()
         return jsonify({"success": True, "dry": dry_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
+@app.route("/validate_dry", methods=["POST"])
+def validate_dry():
+    data = request.get_json()
+    cow_id = data.get("cow_id")
 
+    if not cow_id:
+        return jsonify({"success": False, "message": "Aucune vache spécifiée."}), 400
+
+    try:
+        CowUntils.validated_dry(cow_id=cow_id)
+
+        return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    
 @app.route("/show_calving_preparation")
 def show_calving_preparation():
+    #TODO valider calving preparation
     try:
         calving_preparation = get_all_calving_preparation_date()
         return jsonify({"success": True, "calving_preparation": calving_preparation})

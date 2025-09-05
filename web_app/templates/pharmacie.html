@@ -247,7 +247,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-export_stock" action="{{ url_for('download') }}" method="POST" class="php-email-form" enctype="multipart/form-data">
+      <form id="form-export_stock" action="{{ url_for('download') }}" class="ajax-form php-email-form" method="POST" enctype="multipart/form-data">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
           {# date de l'année à exporter #}
@@ -263,6 +263,7 @@
 
         </div>
       </form>
+      <div id="message-form-export_stock" class="alert" style="display: none;"></div>
     </div>
 
   </section>
@@ -276,16 +277,18 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-download_remaining_care" action="{{ url_for('download_remaining_care') }}" method="POST" class="php-email-form" enctype="multipart/form-data">
+      <form id="form-download_remaining_care" action="{{ url_for('download_remaining_care') }}" class="ajax-form php-email-form" method="POST" enctype="multipart/form-data">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
-          {# utton download #}
+          {# button download #}
           <div class="col d-flex flex-column align-items-center text-center">
             <button type="submit" class="btn btn-primary">Téléchargez traitement</button>
           </div>
 
         </div>
       </form>
+      <div id="message-form-download_remaining_care" class="alert" style="display: none;"></div>
+
     </div>
   </section>
   <!-- END export_stock Section -->

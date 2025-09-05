@@ -14,7 +14,7 @@ from .models import (
     PrescriptionUntils,
     PharmacieUtils,
 )
-
+import logging as lg
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 URI = os.path.join(basedir, "txt")
@@ -464,11 +464,15 @@ def get_all_dry_date() -> dict[int, date]:
     Returns:
         dict[int, date]: A dictionary mapping cow IDs to their dry dates, sorted by date.
     """
-
-    dry_dates = {
-        cow_id: reproduction["dry"]
-        for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
-    }
+    try :
+        dry_dates = {
+            cow_id: reproduction["dry"]
+            for cow_id, reproduction in CowUntils.get_valide_reproduction().items() 
+            if not reproduction.get("dry_status", False)
+        }
+    except Exception as e:
+        lg.error(f"Erreur lors de récupération des dates de tarisement : {e}")
+        dry_dates = {}
 
     return dict(sorted(dry_dates.items(), key=lambda item: item[1]))
 
@@ -485,6 +489,7 @@ def get_all_calving_preparation_date() -> dict[int, date]:
     calving_preparation_dates = {
         cow_id: reproduction["calving_preparation"]
         for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+        if not reproduction["calving_preparation_status"]
     }
 
     return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1]))
