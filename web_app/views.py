@@ -50,7 +50,6 @@ def cow_liste():
 
 
 @app.route("/user_setting", methods=["POST"])
-# TODO recalculer velage si changer
 def user_setting():
     try:
         dry_time = request.form["dry_time"]
@@ -59,6 +58,8 @@ def user_setting():
         UserUtils.set_user_setting(
             dry_time=dry_time, calving_preparation=calving_preparation_time
         )
+        
+        CowUntils.reload_all_reproduction()
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 

@@ -29,9 +29,9 @@ class Reproduction(TypedDict):
     dry: date
     dry_status: bool  # status du tarrisement
     calving_preparation: date
-    calving_preparation_status: bool # status de prepa vellage
+    calving_preparation_status: bool  # status de prepa vellage
     calving_date: date
-    calving: bool # status du vellage
+    calving: bool  # status du vellage
     abortion: bool
     reproduction_details: Optional[str]  # détails sur la reproduction
 
@@ -54,9 +54,11 @@ class Cow(db.Model):
 
     id = Column(Integer, primary_key=True)  # numero Vache
     # liste de (date de traitement, traitement, info complementaire)
-    cow_cares = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
+    cow_cares = Column(MutableList.as_mutable(
+        PickleType), default=list, nullable=False)
     # liste de (date de l'annotation, annotation general)
-    info = Column(MutableList.as_mutable(PickleType), default=list, nullable=False)
+    info = Column(MutableList.as_mutable(PickleType),
+                  default=list, nullable=False)
     in_farm = Column(Boolean)  # faux si vache sortie expoitation
     born_date = Column(DATE)  # date de naissance de la vache
     # liste de Reproduction
@@ -137,12 +139,18 @@ class Pharmacie(db.Model):
 
     year_id = Column(Integer, primary_key=True)
 
-    total_enter = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    total_used = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    total_used_calf = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    total_out_dlc = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    total_out = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
-    remaining_stock = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+    total_enter = Column(MutableDict.as_mutable(JSON),
+                         default=dict, nullable=False)
+    total_used = Column(MutableDict.as_mutable(JSON),
+                        default=dict, nullable=False)
+    total_used_calf = Column(MutableDict.as_mutable(
+        JSON), default=dict, nullable=False)
+    total_out_dlc = Column(MutableDict.as_mutable(JSON),
+                           default=dict, nullable=False)
+    total_out = Column(MutableDict.as_mutable(JSON),
+                       default=dict, nullable=False)
+    remaining_stock = Column(MutableDict.as_mutable(
+        JSON), default=dict, nullable=False)
 
     def __init__(
         self,
@@ -476,7 +484,8 @@ class CowUntils:
             for care_date, care_dict, *_ in cow.cow_cares
             if care_dict
         ]
-        all_cares.sort(key=lambda x: x[0], reverse=True)  # tri par date décroissante
+        # tri par date décroissante
+        all_cares.sort(key=lambda x: x[0], reverse=True)
         return all_cares
 
     @staticmethod
@@ -535,7 +544,8 @@ class CowUntils:
         for cow in Cow.query.all():
             has_no_repro = len(cow.reproduction) == 0
             last_repro = cow.reproduction[-1] if cow.reproduction else None
-            last_insemination = last_repro.get("insemination") if last_repro else None
+            last_insemination = last_repro.get(
+                "insemination") if last_repro else None
 
             if has_no_repro:
                 res.extend(
@@ -571,15 +581,15 @@ class CowUntils:
         cow: Cow
         if cow := Cow.query.get(id):
             cow.reproduction.append(
-                    {
-                        "insemination": insemination,
-                        "ultrasound": None,
-                        "dry": None,  # À remplir plus tard
-                        "calving_preparation": None,
-                        "calving_date": None,
-                        "calving": False,
-                        "abortion": False,
-                    },
+                {
+                    "insemination": insemination,
+                    "ultrasound": None,
+                    "dry": None,  # À remplir plus tard
+                    "calving_preparation": None,
+                    "calving_date": None,
+                    "calving": False,
+                    "abortion": False,
+                },
             )
             db.session.commit()
             lg.info(f"insemination on {date} add to {id}")
@@ -632,7 +642,8 @@ class CowUntils:
         """
         calving_date: date = reproduction["insemination"] + timedelta(days=280)
         user: Users = Users.query.get(1)
-        calving_preparation_time = int(user.setting["calving_preparation_time"])
+        calving_preparation_time = int(
+            user.setting["calving_preparation_time"])
         dry_time = int(user.setting["dry_time"])
 
         reproduction["dry"] = calving_date - timedelta(days=dry_time)
@@ -664,6 +675,22 @@ class CowUntils:
             raise ValueError(f"{id} n'existe pas.")
 
     @staticmethod
+    def reload_all_reproduction() -> None:
+        from .fonction import last
+
+        cows: list[Cow] = Cow.query.all()
+        for cow in cows:
+            if (last(cow.reproduction)
+                and cow.reproduction[-1].get("ultrasound")
+                    and not cow.reproduction[-1].get("calving")):
+
+                cow.reproduction[-1] = CowUntils.set_reproduction(
+                    cow.reproduction[-1])
+
+        db.session.commit()
+        lg.info("reproduction reload")
+
+    @staticmethod
     def get_valide_reproduction() -> dict[int, Reproduction]:
         """Retrieves the latest valid reproduction records for all cows with a confirmed ultrasound.
 
@@ -680,9 +707,8 @@ class CowUntils:
             if last(cow.reproduction) and cow.reproduction[-1].get("ultrasound") and not cow.reproduction[-1].get("calving")
         }
 
-
     @staticmethod
-    def validated_calving(cow_id: int, abortion: bool, info: str=None) -> None:
+    def validated_calving(cow_id: int, abortion: bool, info: str = None) -> None:
         """Validates the calving event for a cow and records whether it was an abortion.
 
         This function updates the latest reproduction record for the specified cow to indicate a calving event and whether it was an abortion. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -722,7 +748,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get(cow_id):
-            try :
+            try:
                 reproduction: Reproduction = cow.reproduction[-1]
                 reproduction["dry_status"] = True
                 cow.reproduction[-1] = reproduction
@@ -737,7 +763,6 @@ class CowUntils:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
-        
     @staticmethod
     def validated_calving_preparation(cow_id: int) -> None:
         """Validates the calving preparation for a cow.
@@ -762,7 +787,7 @@ class CowUntils:
         else:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
-    
+
     @staticmethod
     def update_cow_reproduction(
         cow_id: int,
@@ -884,7 +909,8 @@ class PrescriptionUntils:
             for prescription in Prescription.query.all()
         ]
         all_cares.pop(0)  # suprimer l'entete
-        all_cares.sort(key=lambda x: x[0], reverse=True)  # Tri décroissant sur la date
+        # Tri décroissant sur la date
+        all_cares.sort(key=lambda x: x[0], reverse=True)
         return all_cares
 
     @staticmethod
