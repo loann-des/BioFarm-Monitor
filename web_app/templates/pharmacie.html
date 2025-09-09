@@ -247,7 +247,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-export_stock" action="{{ url_for('download') }}" class="ajax-form php-email-form" method="POST" enctype="multipart/form-data">
+      <form id="form-export_stock" action="{{ url_for('download') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
           {# date de l'année à exporter #}
@@ -277,7 +277,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-download_remaining_care" action="{{ url_for('download_remaining_care') }}" class="ajax-form php-email-form" method="POST" enctype="multipart/form-data">
+      <form id="form-download_remaining_care" action="{{ url_for('download_remaining_care') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
           {# button download #}

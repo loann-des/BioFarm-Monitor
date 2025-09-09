@@ -11,8 +11,6 @@ from .views import app
 db = SQLAlchemy(app)
 
 
-
-
 # TODO gestion exeption
 # TODO gestion des log
 # TODO correction de dict[a : b] en dict[a, b]
@@ -416,6 +414,7 @@ class CowUntils:
             Tuple[int, date]: The number of remaining cares and the date of new available care.
         """
 
+        from .fonction import remaining_care_on_year, new_available_care
         # Ajouter le traitement à la liste
         cow.cow_cares.append(cow_care)
 
@@ -424,7 +423,7 @@ class CowUntils:
         lg.info(f"Care add to {id}.")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
-        return f.remaining_care_on_year(cow=cow), f.new_available_care(cow=cow)
+        return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
 
     @staticmethod
     def update_cow_care(

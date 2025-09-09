@@ -254,7 +254,7 @@ def init_stock():
 @app.route("/get_stock", methods=["GET"])
 def get_stock():
     try:
-        year = datetime.now().year  # on récupère l'année en paramètre
+        year = datetime.now().year  #on récupère l'année 
         stock_data = remaining_pharmacie_stock(year)
         return jsonify({"success": True, "stock": stock_data})
     except Exception as e:
@@ -299,7 +299,7 @@ def download_remaining_care():
             download_name="traitement.xlsx",
             as_attachment=True,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        ), jsonify({"success": True, "message": "telechargement"})
+        )
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 400

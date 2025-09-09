@@ -240,27 +240,54 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("form[id^='form-suppress-']").forEach(form => {
+  document.querySelectorAll("form").forEach(form => {
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const cowId = this.id.replace("form-suppress-", "");
-      const cowDiv = document.getElementById(`cow-block-${cowId}`);
-      const messageBox = document.getElementById(`message-form-suppress-${cowId}`);
+      const formId = this.id;
+      const messageBox = document.getElementById(`message-${formId}`);
+      if (!messageBox) return;
+
+      // reset
+      messageBox.className = "alert";
+      messageBox.style.display = "none";
 
       try {
         const response = await fetch(this.action, {
-          method: "POST",
+          method: this.method || "POST",
           body: new FormData(this),
         });
 
-        const result = await response.json();
+        const contentType = response.headers.get("Content-Type") || "";
 
-        if (result.success) {
-          cowDiv.remove();  // Supprime la div contenant la vache
+        if (contentType.includes("application/json")) {
+          // Réponse JSON → affiche status
+          const result = await response.json();
+          if (result.success) {
+            messageBox.classList.add("alert-success");
+            messageBox.textContent = result.message || "Succès.";
+          } else {
+            messageBox.classList.add("alert-danger");
+            messageBox.textContent = result.message || "Erreur.";
+          }
+          messageBox.style.display = "block";
         } else {
-          messageBox.classList.add("alert-danger");
-          messageBox.textContent = result.message || "Erreur lors de la suppression.";
+          // Réponse fichier → téléchargement
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            response.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") ||
+            "export";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+
+          // message succès
+          messageBox.classList.add("alert-success");
+          messageBox.textContent = "Téléchargement réussi.";
           messageBox.style.display = "block";
         }
       } catch (error) {
@@ -272,5 +299,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
 
 
