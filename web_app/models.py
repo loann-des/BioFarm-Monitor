@@ -74,6 +74,7 @@ class Cow(db.Model):
     reproduction = Column(
         MutableList.as_mutable(JSON), default=list, nullable=False
     )
+    is_calf = Column(Boolean, default=False, nullable=False)
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
@@ -89,6 +90,7 @@ class Cow(db.Model):
         in_farm: bool = True,
         born_date: date = None,
         reproduction: list[Reproduction] = None,
+        is_calf: bool = False
     ):
         if cow_cares is None :
             reproduction = []
@@ -103,6 +105,7 @@ class Cow(db.Model):
         self.in_farm = in_farm
         self.born_date = born_date
         self.reproduction = reproduction
+        self.is_calf = is_calf
 
 
 class Prescription(db.Model):
@@ -223,7 +226,6 @@ def init_db() -> None:
     db.create_all()
     db.session.add(Prescription(date=None, care={}, dlc_left=True))
     UserUtils.add_user()
-    db.session.add(Cow(1,1051,[{},{}]))
     db.session.commit()
     lg.warning("Database initialized!")
 
@@ -268,7 +270,7 @@ class CowUntils:
         return Cow.query.all()
 
     @staticmethod
-    def add_cow(id: int, born_date: date = None) -> None:
+    def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
         """Adds a new cow to the database if it does not already exist.
 
         If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
@@ -279,18 +281,18 @@ class CowUntils:
         Returns:
             None
         """
-        if not Cow.query.get(id):
+        if not Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
             new_cow = Cow(
-                id=id,
-                born_date=born_date,
-                reproduction=[None],
+                user_id=user_id,
+                cow_id=cow_id,
+                born_date=born_date
             )
             db.session.add(new_cow)
             db.session.commit()
-            lg.info(f"{id} : upload in database")
+            lg.info(f"(user :{user_id}, cow: {cow_id}) : upload in database")
         else:
-            lg.error(f"{id} : already in database")
-            raise ValueError(f"{id} : already in database")
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : already in database")
+            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : already in database")
 
     @staticmethod
     def update_cow(cow_id: int, **kwargs) -> None:
