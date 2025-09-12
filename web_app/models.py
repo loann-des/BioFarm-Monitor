@@ -243,7 +243,7 @@ class CowUntils:
     # general cow functions ------------------------------------------------
 
     @staticmethod
-    def get_cow(user_id, cow_id: int) -> Cow:
+    def get_cow(user_id : int, cow_id: int) -> Cow:
         """Retrieves a cow by its ID from the database.
 
         This function queries the database for a cow with the specified ID and returns the Cow object if found.
@@ -262,7 +262,7 @@ class CowUntils:
         raise ValueError(f"Cow with ID {cow_id} not found")
 
     @staticmethod
-    def get_all_cows() -> list[Cow]:
+    def get_all_cows(user_id : int) -> list[Cow]:
         """Retrieves all cows from the database.
 
         This function queries the database and returns a list of all Cow objects.
@@ -270,7 +270,7 @@ class CowUntils:
         Returns:
             list[Cow]: A list of all cows in the database.
         """
-        return Cow.query.all()
+        return Cow.query.get(user_id)
 
     @staticmethod
     def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
@@ -456,17 +456,20 @@ class CowUntils:
         cow: Cow
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             # Remplacement du soin dans la liste
-            if care_index >= len(cow.cow_cares) :
+            if care_index >= len(cow.cow_cares):
                 raise IndexError("index out of bouns")
+
             cow.cow_cares[care_index] = new_care
             db.session.commit()
-            
-            lg.info(f"(user :{user_id}, cow: {cow_id}) : care updated in database")
+
+            lg.info(
+                f"(user :{user_id}, cow: {cow_id}) : care updated in database")
         else:
-            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def delete_cow_care(cow_id, care_index):
+    def delete_cow_care(user_id: int, cow_id: int, care_index: int) -> None:
         """Deletes a specific care record from a cow's care list.
 
         This function removes the care record at the specified index from the cow's care list and commits the change to the database.
@@ -479,16 +482,16 @@ class CowUntils:
             None
         """
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             del cow.cow_cares[care_index]
             db.session.commit()
-            lg.info(f"{cow_id} : care deleted in database")
+            lg.info(f"(user :{user_id}, cow: {cow_id}) : care deleted in database")
         else:
-            lg.error(f"{cow_id} : not in database")
-            raise ValueError(f"{cow_id} : doesn't exist in database")
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
+            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def get_all_care() -> list[tuple[date, dict[str, int], int]]:
+    def get_all_care() -> list[tuple[Traitement, int]]:
         """Retrieves all non-empty care records for all cows, sorted by date in descending order.
 
         This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
@@ -497,18 +500,18 @@ class CowUntils:
             list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
         """
         cows: List[Cow] = Cow.query.all()
-        all_cares: List[Tuple[date, dict[str, int], int]] = [
-            (care_date, care_dict, cow.id)
-            for cow in cows
-            for care_date, care_dict, *_ in cow.cow_cares
-            if care_dict
+        all_cares: List[Traitement, int] = [
+            (care_dict, cow.cow_id)
+            for cow in cows    
+            for care_dict in cow.cow_cares
+            if bool(care_dict)
         ]
         # tri par date décroissante
-        all_cares.sort(key=lambda x: x[0], reverse=True)
+        all_cares.sort(key=lambda x: x[0]["date_traitement"], reverse=True)
         return all_cares
 
     @staticmethod
-    def get_care_by_id(id: int) -> Optional[list[Tuple[date, dict[str, int], str]]]:
+    def get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement]:
         """Retrieves the care records for a cow with the specified ID.
 
         Returns the list of care records for the cow if found, otherwise logs an error and returns None.
@@ -521,13 +524,13 @@ class CowUntils:
         """
         # Récupérer la vache depuis la BDD
         cow: Cow
-        if cow := Cow.query.get(id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return cow.cow_cares
-        lg.error(f"Cow with {id} not found.")
-        raise ValueError(f"{id} n'existe pas.")
+        lg.error(f"(user :{user_id}, cow: {cow_id}) : not found.")
+        raise ValueError(f"(user :{user_id}, cow: {cow_id}) : n'existe pas.")
 
     @staticmethod
-    def get_care_on_year(year: int) -> list[Tuple[date, dict[str, int], str]]:
+    def get_care_on_year(user_id : int , year: int) -> list[Traitement]:
         """Retrieves all care records for all cows that occurred in a specific year.
 
         This function iterates through all cows and collects care records whose date matches the specified year.
@@ -538,13 +541,13 @@ class CowUntils:
         Returns:
             list[Tuple[date, dict, str]]: A list of care records from the specified year.
         """
-        res = []
-        cow: Cow
-        for cow in Cow.query.all():
-            res.extend(
-                cow_care for cow_care in cow.cow_cares if cow_care[0].year == year
-            )
-        return res
+        cows : list[Cow]= Cow.query.get(user_id)
+        return [cow.cow_cares for cow in cows if cow.cow_cares["date_traitement"].year == year]
+        #for cow in Cow.query.all():
+        #    res.extend(
+        #        cow_care for cow_care in cow.cow_cares if cow_care[0].year == year
+        #    )
+        #return res
 
     @staticmethod
     def get_calf_care_on_year(year: int) -> list[Tuple[date, dict[str, int], str]]:

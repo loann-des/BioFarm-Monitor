@@ -25,6 +25,7 @@ from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 # TODO edit
 # TODO gestion des log
 # TODO historique commande
+# TODO reintroduction d'une vache
 
 # root
 
