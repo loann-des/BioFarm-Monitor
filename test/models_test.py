@@ -5,11 +5,11 @@ sys.path.insert(1, "../")
 import unittest
 import warnings
 
-from datetime import datetime, date
-from random import randint, sample
+from datetime import datetime
+from random import randint
 
 from web_app.views import app
-from web_app.models import Cow, CowUntils, init_db, db
+from web_app.models import Cow, CowUntils, init_db
 
 class WebAppUnitTests(unittest.TestCase):
     def setUp(self):
