@@ -1,5 +1,5 @@
 from typing import List, Optional, Tuple, TypedDict
-from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, extract
+from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, extract, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.ext.mutable import MutableList, MutableDict
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta
@@ -17,6 +17,15 @@ db = SQLAlchemy(app)
 # TODO remplacer id par cow_id
 # TODO Gestion du None dans la repro
 
+
+class Traitement(TypedDict):
+    date_traitement : date
+    medicaments: dict[str,int] #[medicament,dosage]
+    annotation: str
+
+class Note(TypedDict):
+    date_note : date
+    information : str 
 
 class Reproduction(TypedDict):
     """Represents the reproduction record for a cow, including key dates and outcomes.
@@ -51,49 +60,44 @@ class Cow(db.Model):
 
     This class stores all relevant information about a cow, such as its unique ID, care events, farm status, birth date, and reproduction records.
     """
-
-    id = Column(Integer, primary_key=True)  # numero Vache
+    
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    cow_id = Column(Integer, nullable=False)  # numero Vache
     # liste de (date de traitement, traitement, info complementaire)
-    cow_cares = Column(MutableList.as_mutable(
-        PickleType), default=list, nullable=False)
+    cow_cares = Column(MutableList.as_mutable(JSON), default=list, nullable=False) #TODO modifier access
     # liste de (date de l'annotation, annotation general)
-    info = Column(MutableList.as_mutable(PickleType),
+    info = Column(MutableList.as_mutable(JSON),
                   default=list, nullable=False)
     in_farm = Column(Boolean)  # faux si vache sortie expoitation
     born_date = Column(DATE)  # date de naissance de la vache
     # liste de Reproduction
     reproduction = Column(
-        MutableList.as_mutable(PickleType), default=list, nullable=False
+        MutableList.as_mutable(JSON), default=list, nullable=False
     )
-
+    __table_args__ = (
+        PrimaryKeyConstraint(
+            user_id,
+            cow_id), 
+        {})
+    
     def __init__(
         self,
-        id: int,
-        cow_cares: list[tuple[date, dict[str, int], str]] = None,
-        info: list[tuple[date, str]] = None,
+        user_id:int,
+        cow_id: int,
+        cow_cares: list[Traitement]=None,
+        info: list[Note] = None,
         in_farm: bool = True,
         born_date: date = None,
         reproduction: list[Reproduction] = None,
     ):
-        """Initializes a Cow object with the provided attributes.
-
-        This constructor sets the cow's unique ID, care records, annotations, farm status, birth date, and reproduction history.
-
-        Args:
-            id (int): The unique identifier for the cow.
-            cow_cares (list[tuple[date, dict[str, int], str]], optional): List of care records for the cow.
-            info (list[tuple[date, str]], optional): List of general annotations for the cow.
-            in_farm (bool, optional): Indicates if the cow is currently in the farm.
-            born_date (date, optional): The birth date of the cow.
-            reproduction (list[Reproduction], optional): List of reproduction records for the cow.
-        """
-        if cow_cares is None:
-            cow_cares = []
+        if cow_cares is None :
+            reproduction = []
         if info is None:
             info = []
         if reproduction is None:
             reproduction = []
-        self.id = id
+        self.user_id = user_id
+        self.cow_id =cow_id
         self.cow_cares = cow_cares
         self.info = info
         self.in_farm = in_farm
@@ -189,7 +193,8 @@ class Users(db.Model):
 
     This class stores user-specific configuration for managing cow care and reproduction cycles.
     """
-
+    __tablename__ = "users"
+    
     id = Column(Integer, primary_key=True)  # numero utilisateur
     setting = Column(
         MutableDict.as_mutable(JSON), default=dict, nullable=False
@@ -218,6 +223,7 @@ def init_db() -> None:
     db.create_all()
     db.session.add(Prescription(date=None, care={}, dlc_left=True))
     UserUtils.add_user()
+    db.session.add(Cow(1,1051,[{},{}]))
     db.session.commit()
     lg.warning("Database initialized!")
 
@@ -232,7 +238,7 @@ class CowUntils:
     # general cow functions ------------------------------------------------
 
     @staticmethod
-    def get_cow(cow_id: int) -> Cow:
+    def get_cow(user_id, cow_id: int) -> Cow:
         """Retrieves a cow by its ID from the database.
 
         This function queries the database for a cow with the specified ID and returns the Cow object if found.
@@ -246,7 +252,7 @@ class CowUntils:
         Raises:
             ValueError: If the cow with the given ID does not exist.
         """
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
             return cow
         raise ValueError(f"Cow with ID {cow_id} not found")
 
