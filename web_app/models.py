@@ -19,13 +19,15 @@ db = SQLAlchemy(app)
 
 
 class Traitement(TypedDict):
-    date_traitement : date
-    medicaments: dict[str,int] #[medicament,dosage]
+    date_traitement: date
+    medicaments: dict[str, int]  # [medicament,dosage]
     annotation: str
 
+
 class Note(TypedDict):
-    date_note : date
-    information : str 
+    date_note: date
+    information: str
+
 
 class Reproduction(TypedDict):
     """Represents the reproduction record for a cow, including key dates and outcomes.
@@ -60,11 +62,12 @@ class Cow(db.Model):
 
     This class stores all relevant information about a cow, such as its unique ID, care events, farm status, birth date, and reproduction records.
     """
-    
+
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     cow_id = Column(Integer, nullable=False)  # numero Vache
     # liste de (date de traitement, traitement, info complementaire)
-    cow_cares = Column(MutableList.as_mutable(JSON), default=list, nullable=False) #TODO modifier access
+    cow_cares = Column(MutableList.as_mutable(
+        JSON), default=list, nullable=False)  # TODO modifier access
     # liste de (date de l'annotation, annotation general)
     info = Column(MutableList.as_mutable(JSON),
                   default=list, nullable=False)
@@ -78,28 +81,28 @@ class Cow(db.Model):
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
-            cow_id), 
+            cow_id),
         {})
-    
+
     def __init__(
         self,
-        user_id:int,
+        user_id: int,
         cow_id: int,
-        cow_cares: list[Traitement]=None,
+        cow_cares: list[Traitement] = None,
         info: list[Note] = None,
         in_farm: bool = True,
         born_date: date = None,
         reproduction: list[Reproduction] = None,
         is_calf: bool = False
     ):
-        if cow_cares is None :
-            reproduction = []
+        if cow_cares is None:
+            cow_cares = []
         if info is None:
             info = []
         if reproduction is None:
             reproduction = []
         self.user_id = user_id
-        self.cow_id =cow_id
+        self.cow_id = cow_id
         self.cow_cares = cow_cares
         self.info = info
         self.in_farm = in_farm
@@ -197,7 +200,7 @@ class Users(db.Model):
     This class stores user-specific configuration for managing cow care and reproduction cycles.
     """
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True)  # numero utilisateur
     setting = Column(
         MutableDict.as_mutable(JSON), default=dict, nullable=False
@@ -254,7 +257,7 @@ class CowUntils:
         Raises:
             ValueError: If the cow with the given ID does not exist.
         """
-        if cow := Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return cow
         raise ValueError(f"Cow with ID {cow_id} not found")
 
@@ -281,7 +284,7 @@ class CowUntils:
         Returns:
             None
         """
-        if not Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
+        if not Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             new_cow = Cow(
                 user_id=user_id,
                 cow_id=cow_id,
@@ -292,10 +295,11 @@ class CowUntils:
             lg.info(f"(user :{user_id}, cow: {cow_id}) : upload in database")
         else:
             lg.error(f"(user :{user_id}, cow: {cow_id}) : already in database")
-            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : already in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}) : already in database")
 
     @staticmethod
-    def update_cow(user_id : int, cow_id: int, **kwargs) -> None:
+    def update_cow(user_id: int, cow_id: int, **kwargs) -> None:
         """Updates the attributes of a cow in the database.
 
         This function retrieves the cow with the specified ID and updates its attributes based on the provided keyword arguments.
@@ -307,17 +311,18 @@ class CowUntils:
         Returns:
             None
         """
-        if cow := Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             for key, value in kwargs.items():
                 setattr(cow, key, value)
             db.session.commit()
             lg.info(f"(user :{user_id}, cow: {cow_id}) : updated in database")
         else:
             lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
-            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def suppress_cow(user_id :int, cow_id: int) -> None:
+    def suppress_cow(user_id: int, cow_id: int) -> None:
         """Removes a cow from the database by its ID.
 
         This function deletes the cow with the specified ID from the database and commits the change. If the cow does not exist, an error is logged.
@@ -329,16 +334,17 @@ class CowUntils:
         Returns:
             None
         """
-        if cow := Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             db.session.delete(cow)
             db.session.commit()
             lg.info(f"(user :{user_id}, cow: {cow_id}) : delete in database")
         else:
             lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
-            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def remove_cow(user_id :int, cow_id: int) -> None:
+    def remove_cow(user_id: int, cow_id: int) -> None:
         """Marks a cow as no longer in the farm by updating its status.
 
         If the cow with the given ID exists, its status is updated and the change is committed. If the cow does not exist, a warning is logged.
@@ -350,16 +356,17 @@ class CowUntils:
             None
         """
         cow: Cow
-        if cow := Cow.query.get({"user_id": user_id, "cow_id" : cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             cow.in_farm = False
             db.session.commit()
             lg.info(f"(user :{user_id}, cow: {cow_id}): left the farm.")
         else:
             lg.warning(f"(user :{user_id}, cow: {cow_id}): not found.")
-            raise ValueError(f"(user :{user_id}, cow: {cow_id}): n'existe pas.")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}): n'existe pas.")
 
     @staticmethod
-    def add_calf(user_id : int ,calf_id: int, born_date: date = None) -> None:
+    def add_calf(user_id: int, calf_id: int, born_date: date = None) -> None:
         """Adds a new calf to the database if it does not already exist.
 
         If a calf with the given ID is not present, it is created and added to the database. Otherwise, an error is logged and a ValueError is raised.
@@ -371,7 +378,7 @@ class CowUntils:
         Returns:
             None
         """
-        if not Cow.query.get({"user_id": user_id, "cow_id" : calf_id}):
+        if not Cow.query.get({"user_id": user_id, "cow_id": calf_id}):
             new_cow = Cow(
                 user_id=user_id,
                 cow_id=calf_id,
@@ -382,15 +389,17 @@ class CowUntils:
             db.session.commit()
             lg.info(f"(user :{user_id}, cow: {calf_id}) : upload in database")
         else:
-            lg.error(f"(user :{user_id}, cow: {calf_id}) : already in database")
-            raise ValueError(f"(user :{user_id}, cow: {calf_id}) : already in database")
+            lg.error(
+                f"(user :{user_id}, cow: {calf_id}) : already in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {calf_id}) : already in database")
 
     # END general cow functions ------------------------------------------------
 
     # cow care functions ------------------------------------------------
     @staticmethod
     def add_cow_care(
-        id: int, cow_care: Tuple[date, dict[str, int], str]
+        user_id: int, cow_id: int,  cow_care: Traitement
     ) -> Optional[tuple[int, date]]:
         """Updates the care record for a cow with the specified ID.
 
@@ -406,14 +415,14 @@ class CowUntils:
 
         # Récupérer la vache depuis la BDD
         cow: Cow
-        if cow := Cow.query.get(id):
-            return CowUntils.add_care(cow, cow_care, id)
-        lg.error(f"Cow with id {id} not found.")
-        raise ValueError(f"{id} n'existe pas.")
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            return CowUntils.add_care(cow, cow_care)
+        lg.error(f"(user :{user_id}, cow: {cow_id})  not found.")
+        raise ValueError(f"(user :{user_id}, cow: {cow_id})  n'existe pas.")
 
     @staticmethod
     def add_care(
-        cow: Cow, cow_care: Tuple[date, dict[str, int], str], id: int
+        cow: Cow, cow_care: Traitement
     ) -> tuple[int, date]:
         """Adds a care record to the specified cow and returns updated care information.
 
@@ -435,23 +444,26 @@ class CowUntils:
 
         # Commit les changements
         db.session.commit()
-        lg.info(f"Care add to {id}.")
+        lg.info(f"Care add to (user :{cow.user_id}, cow: {cow.cow_id}).")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
         return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
 
     @staticmethod
     def update_cow_care(
-        cow_id: int, care_index: int, new_care: tuple[date, dict[str, int], str]
+        user_id: int, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             # Remplacement du soin dans la liste
+            if care_index >= len(cow.cow_cares) :
+                raise IndexError("index out of bouns")
             cow.cow_cares[care_index] = new_care
             db.session.commit()
-            lg.info(f"{cow_id} : care updated in database")
+            
+            lg.info(f"(user :{user_id}, cow: {cow_id}) : care updated in database")
         else:
-            raise ValueError(f"{cow_id} : doesn't exist in database")
+            raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
     def delete_cow_care(cow_id, care_index):
