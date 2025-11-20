@@ -270,7 +270,7 @@ class CowUntils:
         Returns:
             list[Cow]: A list of all cows in the database.
         """
-        return Cow.query.get(user_id)
+        return Cow.query.get({"user_id": user_id})
 
     @staticmethod
     def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
@@ -491,7 +491,7 @@ class CowUntils:
             raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def get_all_care() -> list[tuple[Traitement, int]]:
+    def get_all_care(user_id : int) -> list[Tuple[Traitement, int]]:
         """Retrieves all non-empty care records for all cows, sorted by date in descending order.
 
         This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
@@ -499,7 +499,7 @@ class CowUntils:
         Returns:
             list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
         """
-        cows: List[Cow] = Cow.query.all()
+        cows: List[Cow] = Cow.query.get({"user_id": user_id})
         all_cares: List[Traitement, int] = [
             (care_dict, cow.cow_id)
             for cow in cows    
@@ -541,7 +541,7 @@ class CowUntils:
         Returns:
             list[Tuple[date, dict, str]]: A list of care records from the specified year.
         """
-        cows : list[Cow]= Cow.query.get(user_id)
+        cows : list[Cow]= Cow.query.get({"user_id": user_id})
         return [cow.cow_cares for cow in cows if cow.cow_cares["date_traitement"].year == year]
         #for cow in Cow.query.all():
         #    res.extend(
@@ -550,7 +550,7 @@ class CowUntils:
         #return res
 
     @staticmethod
-    def get_calf_care_on_year(year: int) -> list[Tuple[date, dict[str, int], str]]:
+    def get_calf_care_on_year(user_id : int, year: int) -> list[Tuple[Traitement]]:
         """Retrieves all care records for calves that occurred in a specific year.
 
         This function collects care records for cows without reproduction records, or for cows whose care date is before or on their last insemination date, and returns those that match the specified year.
@@ -563,17 +563,17 @@ class CowUntils:
         """
         res = []
         cow: Cow
-        for cow in Cow.query.all():
+        for cow in Cow.query.get({"user_id": user_id}):
             has_no_repro = len(cow.reproduction) == 0
             last_repro = cow.reproduction[-1] if cow.reproduction else None
             last_insemination = last_repro.get(
                 "insemination") if last_repro else None
 
-            if has_no_repro:
+            if has_no_repro :
                 res.extend(
                     cow_care for cow_care in cow.cow_cares if cow_care[0].year == year
                 )
-            else:
+            else :
                 res.extend(
                     cow_care
                     for cow_care in cow.cow_cares
@@ -588,7 +588,7 @@ class CowUntils:
     # reproduction functions ------------------------------------------------
 
     @staticmethod
-    def add_insemination(id: int, insemination: date) -> None:
+    def add_insemination(user_id : int, cow_id: int, insemination: date) -> None:
         """Adds an insemination record to the specified cow.
 
         This function appends a new insemination event to the cow's reproduction history if the cow exists, otherwise logs an error and raises a ValueError.
@@ -601,7 +601,7 @@ class CowUntils:
             None
         """  # TODO Gestion doublon add_reproduction
         cow: Cow
-        if cow := Cow.query.get(id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             cow.reproduction.append(
                 {
                     "insemination": insemination,
@@ -614,13 +614,13 @@ class CowUntils:
                 },
             )
             db.session.commit()
-            lg.info(f"insemination on {date} add to {id}")
+            lg.info(f"insemination on {insemination} add to {cow_id}")
         else:
-            lg.error(f"Cow with {id} not found.")
-            raise ValueError(f"{id} n'existe pas.")
+            lg.error(f"Cow with {cow_id} not found.")
+            raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def validated_ultrasound(id: int, ultrasound: bool) -> None:
+    def validated_ultrasound(user_id : int, cow_id: int, ultrasound: bool) -> None:
         """Validates or invalidates the ultrasound result for the latest insemination of a cow.
 
         This function updates the ultrasound status in the cow's reproduction record and, if confirmed, updates related reproduction dates. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -634,24 +634,24 @@ class CowUntils:
         """
         # TODO gestion pas d'insemination reproduction_ultrasound
         cow: Cow
-        if cow := Cow.query.get(id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
 
                 cow.reproduction[-1] = CowUntils.set_reproduction(reproduction)
-                lg.info(f"insemination on {date} of {id} confirm")
+                lg.info(f"insemination on {date} of {cow_id} confirm")
             else:
-                lg.info(f"insemination on {date} of {id} invalidate")
+                lg.info(f"insemination on {date} of {cow_id} invalidate")
 
             db.session.commit()
         else:
-            lg.error(f"Cow with {id} not found.")
-            raise ValueError(f"{id} n'existe pas.")
+            lg.error(f"Cow with {cow_id} not found.")
+            raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def set_reproduction(reproduction: Reproduction) -> Reproduction:
+    def set_reproduction(reproduction: Reproduction) -> Reproduction: #TODO Pur calculatoir sortir ?
         """Calculates and sets the key reproduction dates for a cow based on insemination and user settings.
 
         This function updates the reproduction dictionary with calculated dry, calving preparation, and calving dates.
@@ -676,7 +676,7 @@ class CowUntils:
         return reproduction
 
     @staticmethod
-    def get_reproduction(id: int) -> Reproduction:
+    def get_reproduction(user_id : int, cow_id: int) -> Reproduction:
         """Retrieves the latest reproduction record for a cow by its ID.
 
         This function returns the most recent reproduction dictionary for the specified cow, or raises a ValueError if the cow does not exist.
@@ -691,16 +691,16 @@ class CowUntils:
             ValueError: If the cow with the given ID does not exist.
         """
         cow: Cow
-        if cow := Cow.query.get(id):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return cow.reproduction[-1]
         else:
-            raise ValueError(f"{id} n'existe pas.")
+            raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def reload_all_reproduction() -> None:
+    def reload_all_reproduction(user_id : int) -> None:
         from .fonction import last
 
-        cows: list[Cow] = Cow.query.all()
+        cows: list[Cow] = Cow.query.get({"user_id": user_id})
         for cow in cows:
             if (last(cow.reproduction)
                 and cow.reproduction[-1].get("ultrasound")
@@ -724,7 +724,7 @@ class CowUntils:
         from .fonction import last
         cows: list[Cow] = Cow.query.all()
         return {
-            cow.id: cow.reproduction[-1]
+            cow.cow_id: cow.reproduction[-1]
             for cow in cows
             if last(cow.reproduction) and cow.reproduction[-1].get("ultrasound") and not cow.reproduction[-1].get("calving")
         }
