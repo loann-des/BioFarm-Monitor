@@ -53,14 +53,15 @@ def cow_liste():
 @app.route("/user_setting", methods=["POST"])
 def user_setting():
     try:
+        user_id = 1  # TODO get user id from session
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
 
         UserUtils.set_user_setting(
-            dry_time=dry_time, calving_preparation=calving_preparation_time
-        )
+            user_id=user_id, dry_time=dry_time, calving_preparation=calving_preparation_time
+        ) 
         
-        CowUntils.reload_all_reproduction()
+        CowUntils.reload_all_reproduction(user_id=user_id)
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -319,6 +320,7 @@ def upload_cows():
             return "Aucun fichier reçu", 400
 
         try:
+            user_id = 1  # TODO get user id from session
             # Lire le fichier Excel directement en mémoire
             df = pd.read_excel(BytesIO(file.read()))
 
@@ -328,7 +330,7 @@ def upload_cows():
             added, skipped = 0, 0
             for cow_id in cow_ids:
                 try:
-                    CowUntils.add_cow(id=int(cow_id))
+                    CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id))
                     added += 1
                 except ValueError:
                     skipped += 1
@@ -341,12 +343,13 @@ def upload_cows():
 def add_cow():
     # TODO gestion veaux upload_cow
     try:
+        user_id = 1  # TODO get user id from session
         # Récupération des données du formulaire
         cow_id = int(request.form["id"])
 
         lg.info(f"Adding new cow {cow_id}...")
 
-        CowUntils.add_cow(id=cow_id)
+        CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id))
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}

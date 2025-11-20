@@ -263,6 +263,17 @@ class CowUntils:
 
     @staticmethod
     def get_all_cows(user_id : int) -> list[Cow]:
+        """Retrieves all of a user cows from the database.
+
+        This function queries the database and returns a list of all Cow objects.
+
+        Returns:
+            list[Cow]: A list for user of all his cows in the database.
+        """
+        return Cow.query.get({"user_id": user_id})
+    
+    @staticmethod
+    def get_all_cows() -> list[Cow]:
         """Retrieves all cows from the database.
 
         This function queries the database and returns a list of all Cow objects.
@@ -270,7 +281,7 @@ class CowUntils:
         Returns:
             list[Cow]: A list of all cows in the database.
         """
-        return Cow.query.get({"user_id": user_id})
+        return Cow.query.all()
 
     @staticmethod
     def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
@@ -700,7 +711,7 @@ class CowUntils:
     def reload_all_reproduction(user_id : int) -> None:
         from .fonction import last
 
-        cows: list[Cow] = Cow.query.get({"user_id": user_id})
+        cows: list[Cow] = Cow.query.filter_by(user_id= user_id).all()
         for cow in cows:
             if (last(cow.reproduction)
                 and cow.reproduction[-1].get("ultrasound")
@@ -1160,7 +1171,7 @@ class UserUtils:
         db.session.commit()
 
     @staticmethod
-    def set_user_setting(dry_time: int, calving_preparation: int) -> None:
+    def set_user_setting(user_id : int, dry_time: int, calving_preparation: int) -> None:
         """Updates the user's settings for dry time and calving preparation time.
 
         This function sets the dry time and calving preparation time values for the first user in the database and commits the changes.
@@ -1174,7 +1185,7 @@ class UserUtils:
         """
 
         user: Users
-        user = Users.query.first()
+        user = Users.query.get(user_id)
         user.setting["dry_time"] = dry_time
         user.setting["calving_preparation_time"] = calving_preparation
         db.session.commit()

@@ -6,7 +6,7 @@ import unittest
 import warnings
 
 from datetime import datetime
-from random import randint
+from random import randint, sample
 
 from web_app.views import app
 from web_app.models import Cow, CowUntils, init_db
@@ -20,6 +20,24 @@ class WebAppUnitTests(unittest.TestCase):
     def tearDown(self):
         self.app_context.pop()
 
+    """        
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+    TESTS FOR THE METHODS : CowUntils general methods :
+        - add_cow(user_id: int, cow_id: int, born_date: date = None) -> None
+        - get_cow(user_id: int, cow_id: int) -> Cow | None
+        - get_all_cows() -> list[Cow]
+        - get_all_cows(user_id : int) -> list[Cow]
+        - update_cow(user_id: int, cow_id: int, **kwargs) -> None
+        - suppress_cow(user_id: int, cow_id: int) -> None
+        - remove_cow(user_id: int, cow_id: int) -> None
+        - add_calf(user_id: int, calf_id: int, born_date: date = None) -> None
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    """    
+
     def test_add_cow(self):
         init_db()
 
@@ -30,7 +48,7 @@ class WebAppUnitTests(unittest.TestCase):
 
             CowUntils.add_cow(user_id, cow_id, birthdate)
 
-            c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
             self.assertIsNotNone(c)
 
             self.assertEqual(c.user_id, user_id)
@@ -52,7 +70,7 @@ class WebAppUnitTests(unittest.TestCase):
 
             CowUntils.add_cow(user_id, cow_id, birthdate)
 
-            c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
             self.assertIsNotNone(c)
 
             self.assertEqual(c.user_id, user_id)
@@ -64,106 +82,115 @@ class WebAppUnitTests(unittest.TestCase):
             self.assertListEqual(c.reproduction, [])
             self.assertFalse(c.is_calf)
 
-    # def test_get_all_cows(self):
-    #     init_db()
-    #
-    #     user_ids = sample([i for i in range(100)], 100)
-    #     cow_ids = sample([i for i in range(100)], 100)
-    #     birthdate = datetime.now().date()
-    #
-    #     for i in range(100):
-    #         CowUntils.add_cow(user_ids[i], cow_ids[i], birthdate)
-    #
-    #     cs = CowUntils.get_all_cows()
-    #     self.assertEqual(len(cs), 100)
-    #
-    #     for i in range(len(cs)):
-    #         self.assertEqual(cs[i].user_id, user_ids[i])
-    #         self.assertEqual(cs[i].cow_id, cow_ids[i])
-    #         self.assertListEqual(cs[i].cow_cares, [])
-    #         self.assertListEqual(cs[i].info, [])
-    #         self.assertTrue(cs[i].in_farm)
-    #         self.assertEqual(cs[i].born_date, birthdate)
-    #         self.assertListEqual(cs[i].reproduction, [])
-    #         self.assertFalse(cs[i].is_calf == False)
+    def test_get_all_cows(self):
+        init_db()
 
-    # def test_update_cow(self):
-    #     init_db()
-    #
-    #     user_id = randint(1, 9999)
-    #     cow_id = randint(1, 9999)
-    #
-    #     CowUntils.add_cow(user_id, cow_id, None)
-    #
-    #     c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
-    #     self.assertIsNotNone(c)
-    #
-    #     self.assertEqual(c.user_id, user_id)
-    #     self.assertEqual(c.cow_id, cow_id)
-    #     self.assertListEqual(c.cow_cares, [])
-    #     self.assertListEqual(c.info, [])
-    #     self.assertTrue(c.in_farm)
-    #     self.assertIsNone(c.born_date)
-    #     self.assertListEqual(c.reproduction, [])
-    #     self.assertFalse(c.is_calf)
-    #
-    #     birthdate = datetime.now().date()
-    #
-    #     CowUntils.update_cow(user_id, cow_id,
-    #             cow_cares = [{
-    #                 "date_traitement": datetime.now().date(),
-    #                 "medicaments": {"medicament", 1},
-    #                 "annotation": "Annotation"
-    #             }],
-    #             info = [{
-    #                 "date_note": birthdate,
-    #                 "information": "Information"
-    #             }],
-    #             in_farm = False,
-    #             born_date = birthdate,
-    #             reproduction = [{
-    #                 "insemination": birthdate,
-    #                 "ultrasound": True,
-    #                 "dry": birthdate,
-    #                 "dry_status": True,
-    #                 "calving_preparation": birthdate,
-    #                 "calving_preparation_status": True,
-    #                 "calving_date": birthdate,
-    #                 "calving": False,
-    #                 "abortion": False,
-    #                 "reproduction_details": "Details"
-    #             }],
-    #             is_calf = True)
-    #
-    #     c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
-    #     self.assertIsNotNone(c)
-    #
-    #     self.assertEqual(c.user_id == user_id)
-    #     self.assertEqual(c.cow_id == cow_id)
-    #     self.assertListEqual(c.cow_cares, [{
-    #             "date_traitement": datetime.now().date(),
-    #             "medicaments": {"medicament", 1},
-    #             "annotation": "Annotation"
-    #         }])
-    #     self.assertListEqual(c.info == [{
-    #             "date_note": birthdate,
-    #             "information": "Information"
-    #         }])
-    #     self.assertFalse(c.in_farm)
-    #     self.assertEqual(c.born_date, birthdate)
-    #     self.assertListEqual(c.reproduction, [{
-    #             "insemination": birthdate,
-    #             "ultrasound": True,
-    #             "dry": birthdate,
-    #             "dry_status": True,
-    #             "calving_preparation": birthdate,
-    #             "calving_preparation_status": True,
-    #             "calving_date": birthdate,
-    #             "calving": False,
-    #             "abortion": False,
-    #             "reproduction_details": "Details"
-    #         }])
-    #     self.assertTrue(c.is_calf)
+        user_ids = sample(list(range(100)), 100)
+        cow_ids = sample(list(range(100)), 100)
+        birthdate = datetime.now().date()
+
+        for i in range(100):
+            CowUntils.add_cow(user_ids[i], cow_ids[i], birthdate)
+
+        cs : list[Cow] = CowUntils.get_all_cows()
+        self.assertEqual(len(cs), 100)
+
+        for i in range(len(cs)):
+            self.assertEqual(cs[i].user_id, user_ids[i])
+            self.assertEqual(cs[i].cow_id, cow_ids[i])
+            self.assertListEqual(cs[i].cow_cares, [])
+            self.assertListEqual(cs[i].info, [])
+            self.assertTrue(cs[i].in_farm)
+            self.assertEqual(cs[i].born_date, birthdate)
+            self.assertListEqual(cs[i].reproduction, [])
+            self.assertFalse(cs[i].is_calf)
+
+    # TODO test get_all_cows(user_id : int) -> list[Cow]:
+    def test_get_all_cows_by_user(self):
+        pass
+
+    def test_update_cow(self):
+        # TODO: pass test_update_cow
+        init_db()
+    
+        user_id = randint(1, 9999)
+        cow_id = randint(1, 9999)
+    
+        CowUntils.add_cow(user_id, cow_id, None)
+    
+        c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+        self.assertIsNotNone(c)
+    
+        self.assertEqual(c.user_id, user_id)
+        self.assertEqual(c.cow_id, cow_id)
+        self.assertListEqual(c.cow_cares, [])
+        self.assertListEqual(c.info, [])
+        self.assertTrue(c.in_farm)
+        self.assertIsNone(c.born_date)
+        self.assertListEqual(c.reproduction, [])
+        self.assertFalse(c.is_calf)
+    
+        birthdate = datetime.now().date()
+    
+        CowUntils.update_cow(user_id, cow_id,
+                cow_cares = [{
+                    "date_traitement": datetime.now().date(),
+                    "medicaments": {"medicament", 1},
+                    "annotation": "Annotation"
+                }],
+                info = [{
+                    "date_note": birthdate,
+                    "information": "Information"
+                }],
+                in_farm = False,
+                born_date = birthdate,
+                reproduction = [{
+                    "insemination": birthdate,
+                    "ultrasound": True,
+                    "dry": birthdate,
+                    "dry_status": True,
+                    "calving_preparation": birthdate,
+                    "calving_preparation_status": True,
+                    "calving_date": birthdate,
+                    "calving": False,
+                    "abortion": False,
+                    "reproduction_details": "Details"
+                }],
+                is_calf = True)
+    
+        c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+        self.assertIsNotNone(c)
+    
+        self.assertEqual(c.user_id == user_id)
+        self.assertEqual(c.cow_id == cow_id)
+        self.assertListEqual(c.cow_cares, [{
+                "date_traitement": datetime.now().date(),
+                "medicaments": {"medicament", 1},
+                "annotation": "Annotation"
+            }])
+        self.assertListEqual(c.info == [{
+                "date_note": birthdate,
+                "information": "Information"
+            }])
+        self.assertFalse(c.in_farm)
+        self.assertEqual(c.born_date, birthdate)
+        self.assertListEqual(c.reproduction, [{
+                "insemination": birthdate,
+                "ultrasound": True,
+                "dry": birthdate,
+                "dry_status": True,
+                "calving_preparation": birthdate,
+                "calving_preparation_status": True,
+                "calving_date": birthdate,
+                "calving": False,
+                "abortion": False,
+                "reproduction_details": "Details"
+            }])
+        self.assertTrue(c.is_calf)
+
+    # TODO test suppress_cow(user_id: int, cow_id: int) -> None:
+    def test_suppress_cow(self):
+        pass
 
     def test_remove_cow(self):
         init_db()
@@ -193,7 +220,7 @@ class WebAppUnitTests(unittest.TestCase):
 
             CowUntils.add_calf(user_id, calf_id, birthdate)
 
-            c = Cow.query.get({"user_id": user_id, "cow_id" : calf_id})
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : calf_id})
             self.assertIsNotNone(c)
 
             self.assertEqual(c.user_id, user_id)
@@ -205,5 +232,55 @@ class WebAppUnitTests(unittest.TestCase):
             self.assertListEqual(c.reproduction, [])
             self.assertTrue(c.is_calf)
 
+    """
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+    TESTS FOR THE METHODS : CowUntils care methods :
+        - add_cow_care(user_id: int, cow_id: int,  cow_care: Traitement) -> Optional[tuple[int, date]]
+        - add_care(cow: Cow, cow_care: Traitement) -> tuple[int, date]
+        - update_cow_care(user_id: int, cow_id: int, care_index: int, new_care: Traitement) -> None
+        - delete_cow_care(user_id: int, cow_id: int, care_index: int) -> None
+        - get_all_care(user_id : int) -> list[Tuple[Traitement, int]]
+        - get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement]
+        - get_care_on_year(user_id : int , year: int) -> list[Traitement]
+        - get_calf_care_on_year(user_id : int, year: int) -> list[Tuple[Traitement]]:
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    """
+    def test_add_cow_care(self):
+        pass
+    
+    def test_add_care(self):
+        pass
+    
+    def test_update_cow_care(self):
+        pass
+    
+    def test_delete_cow_care(self):
+        pass
+    
+    def test_get_all_cares(self):
+        pass
+    
+    def test_get_care_by_id(self):
+        pass
+    
+    def test_get_care_on_year(self):
+        pass
+    
+    def test_get_calf_care_on_year(self):
+        pass
+    
+    """
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    TEST FOR THE METHODS : CowUntils reproduction methods
+    
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------    
+    """
 if (__name__ == "__main__"):
     unittest.main()
