@@ -1,4 +1,4 @@
-from web_app.views import app
+from web_app import app
 print(">>> Fichier app.py exécuté depuis :", __file__)
 
 if __name__ == '__main__':

@@ -1,4 +1,6 @@
-import os, csv, io
+import os
+import csv
+import io
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
@@ -19,21 +21,26 @@ import logging as lg
 basedir = os.path.abspath(os.path.dirname(__file__))
 URI = os.path.join(basedir, "txt")
 
+
 def first(lst: List) -> Optional[object]:
     """Returns the first element of a list or None if the list is empty."""
     return lst[0] if lst else None
+
 
 def last(lst: List) -> Optional[object]:
     """Returns the last element of a list or None if the list is empty."""
     return lst[-1] if lst else None
 
+
 def strftime(date: date) -> str:
     return date.strftime('%d %B %Y')
+
 
 def format_bool_fr(value: bool, true_str="Oui", false_str="Non") -> str:
     return true_str if value else false_str
 
-def parse_date(date_str : str) -> Optional[date]:    
+
+def parse_date(date_str: str) -> Optional[date]:
     """Parses a date string in the format 'YYYY-MM-DD' and returns a date object
     """
     return datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
@@ -57,7 +64,8 @@ def day_delta(date: date) -> int:
         int: The number of days between the given date and one year ago from today.
     """
     today = datetime.now().date()  # date du jour
-    one_year_ago = today - timedelta(days=365)  # date d'il y a un ans jour pour jour
+    # date d'il y a un ans jour pour jour
+    one_year_ago = today - timedelta(days=365)
     return (date - one_year_ago).days
 
 
@@ -286,7 +294,7 @@ def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
         list[tuple[date, dict[str:int], str]]: A list of tuples containing the date, medication dictionary, and event type label.
     """
 
-    # Récupère les données
+    # Récupère les données hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffffffffffffffffffffff
     care_raw = CowUntils.get_all_care() or []
     prescription_raw = PrescriptionUntils.get_all_prescription_cares() or []
 
@@ -395,7 +403,8 @@ def pharmacie_to_csv(year: int) -> str:
     # Écrire en CSV avec "prescription DATE" dans la première colonne pour bien identifier
     for date_str in sorted_dates:
         row = [date_str]
-        row.extend(prescriptions_per_date[date_str].get(med, 0) for med in all_meds)
+        row.extend(prescriptions_per_date[date_str].get(
+            med, 0) for med in all_meds)
         writer.writerow(row)
 
     # === FIN AJOUT ===
@@ -424,7 +433,8 @@ def remaining_care_to_excel() -> bytes:
     ws = wb.active
     ws.title = "Traitements Restants"
 
-    headers = ["Numéro Vache", "Nb Traitements Restants", "Date Renouvellement"]
+    headers = ["Numéro Vache",
+               "Nb Traitements Restants", "Date Renouvellement"]
     ws.append(headers)
 
     color_map = {
@@ -434,18 +444,21 @@ def remaining_care_to_excel() -> bytes:
         0: "000000",  # noir
     }
 
+    cow: Cow
     for cow in CowUntils.get_all_cows():
         cow_id = cow.id
         nb_remaining = remaining_care_on_year(cow)
         renewal_date = new_available_care(cow)
-        renewal_date_str = renewal_date.strftime("%d %b %Y") if renewal_date else "N/A"
+        renewal_date_str = renewal_date.strftime(
+            "%d %b %Y") if renewal_date else "N/A"
 
         ws.append([cow_id, nb_remaining, renewal_date_str])
         cell = ws.cell(row=ws.max_row, column=2)
         color = color_map.get(nb_remaining, "000000")
 
         # case coloré
-        cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+        cell.fill = PatternFill(
+            start_color=color, end_color=color, fill_type="solid")
         # texte en gras (optionnel)
         cell.font = Font(bold=True)
 
@@ -464,10 +477,10 @@ def get_all_dry_date() -> dict[int, date]:
     Returns:
         dict[int, date]: A dictionary mapping cow IDs to their dry dates, sorted by date.
     """
-    try :
+    try:
         dry_dates = {
             cow_id: reproduction["dry"]
-            for cow_id, reproduction in CowUntils.get_valide_reproduction().items() 
+            for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
             if not reproduction.get("dry_status", False)
         }
     except Exception as e:

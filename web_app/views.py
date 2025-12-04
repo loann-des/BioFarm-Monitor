@@ -4,6 +4,7 @@ import pandas as pd
 from time import strftime
 from flask import (
     Flask,
+    Blueprint,
     abort,
     flash,
     jsonify,
@@ -11,12 +12,21 @@ from flask import (
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 import logging as lg
+from flask_login import LoginManager, login_required, current_user
 
-app = Flask(__name__)
-app.config.from_object("config.config")
+views = Blueprint('views', __name__)
+
+# app = Flask(__name__)
+# app.config.from_object("config.config")
+
+# Configure Flask-Login
+# login_manager = LoginManager()
+# login_manager.login_view = 'auth.login'
+# login_manager.init_app(app)
 
 
 from .fonction import *
@@ -27,30 +37,40 @@ from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 # TODO historique commande
 # TODO reintroduction d'une vache
 
+
+# User loader function for Flask-Login
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return UserUtils.get_user(user_id=user_id)
+
+# # Register blueprints
+# from .auth import auth as auth_blueprint
+# app.register_blueprint(auth_blueprint)
+
 # root
 
-
-@app.route("/", methods=["GET"])
+@views.route("/", methods=["GET"])
+@login_required
 def index():
     return render_template("index.html")
 
 
-@app.route("/reproduction", methods=["GET"])
+@views.route("/reproduction", methods=["GET"])
 def reproduction():
     return render_template("reproduction.html")
 
 
-@app.route("/pharmacie", methods=["GET"])
+@views.route("/pharmacie", methods=["GET"])
 def pharmacie():
     return render_template("pharmacie.html")
 
 
-@app.route("/cow_liste", methods=["GET"])
+@views.route("/cow_liste", methods=["GET"])
 def cow_liste():
     return render_template("cow_liste.html")
 
 
-@app.route("/user_setting", methods=["POST"])
+@views.route("/user_setting", methods=["POST"])
 def user_setting():
     try:
         user_id = 1  # TODO get user id from session
@@ -73,7 +93,7 @@ def user_setting():
 # Pharmacie form
 
 
-@app.route("/update_care", methods=["POST"])
+@views.route("/update_care", methods=["POST"])
 def update_care():
     # TODO valider traitemment seulement si pas de bug (dernier opération)
     def extract_cares(form : dict, pharma_len : int):
@@ -116,7 +136,7 @@ def update_care():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/add_prescription", methods=["POST"])
+@views.route("/add_prescription", methods=["POST"])
 def add_prescription():
     try:
         # Récupère et parse la date
@@ -160,7 +180,7 @@ def add_prescription():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/add_dlc_left", methods=["POST"])
+@views.route("/add_dlc_left", methods=["POST"])
 def add_dlc_left():
 
     try:
@@ -198,7 +218,7 @@ def add_dlc_left():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/add_medic_in_pharma_list", methods=["POST"])
+@views.route("/add_medic_in_pharma_list", methods=["POST"])
 def add_medic_in_pharma_list():
 
     try:
@@ -216,7 +236,7 @@ def add_medic_in_pharma_list():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/init_stock", methods=["POST"])
+@views.route("/init_stock", methods=["POST"])
 def init_stock():
     try:
         # Récupère et parse la date
@@ -254,7 +274,7 @@ def init_stock():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/get_stock", methods=["GET"])
+@views.route("/get_stock", methods=["GET"])
 def get_stock():
     try:
         year = datetime.now().year  #on récupère l'année 
@@ -264,12 +284,12 @@ def get_stock():
         return jsonify({"success": False, "message": str(e)})
 
 
-@app.route("/stock_details", methods=["GET"])
+@views.route("/stock_details", methods=["GET"])
 def stock_details():
     return render_template("stock_details.html")
 
 
-@app.route("/download", methods=["GET", "POST"])
+@views.route("/download", methods=["GET", "POST"])
 def download():
     lg.info("export-stock")
     try:
@@ -292,7 +312,7 @@ def download():
         return jsonify({"success": False, "message": str(e)}), 400
 
 
-@app.route("/download_remaining_care", methods=["GET", "POST"])
+@views.route("/download_remaining_care", methods=["GET", "POST"])
 def download_remaining_care():
     try:
         excel_io = remaining_care_to_excel()
@@ -311,8 +331,7 @@ def download_remaining_care():
 # END Pharmacie form
 
 # Reproduction form
-
-@app.route("/upload_cow/", methods=["GET", "POST"])
+@views.route("/upload_cow/", methods=["GET", "POST"])
 def upload_cows():
     if request.method == "POST":
         file = request.files.get("file")
@@ -339,7 +358,7 @@ def upload_cows():
         except Exception as e:
             return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
-@app.route("/add_cow", methods=["POST"])
+@views.route("/add_cow", methods=["POST"])
 def add_cow():
     # TODO gestion veaux upload_cow
     try:
@@ -360,7 +379,7 @@ def add_cow():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/remove_cow", methods=["POST"])
+@views.route("/remove_cow", methods=["POST"])
 def remove_cow():
 
     try:
@@ -378,7 +397,7 @@ def remove_cow():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@app.route("/insemination", methods=["POST"])
+@views.route("/insemination", methods=["POST"])
 def insemination():
 
     try:
@@ -399,7 +418,7 @@ def insemination():
         return jsonify({"success": False, "message": f"Erreur :{e}"})
 
 
-@app.route("/ultrasound", methods=["POST"])
+@views.route("/ultrasound", methods=["POST"])
 def ultrasound():
     try:
         # Récupération de l'id de la vache
@@ -416,7 +435,7 @@ def ultrasound():
         return jsonify({"success": False, "message": f"Erreur :{e}"})
 
 
-@app.route("/show_dry")
+@views.route("/show_dry")
 def show_dry():
     #TODO valider dry
     try:
@@ -425,7 +444,7 @@ def show_dry():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
-@app.route("/validate_dry", methods=["POST"])
+@views.route("/validate_dry", methods=["POST"])
 def validate_dry():
     data = request.get_json()
     cow_id = data.get("cow_id")
@@ -440,7 +459,7 @@ def validate_dry():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     
-@app.route("/show_calving_preparation")
+@views.route("/show_calving_preparation")
 def show_calving_preparation():
     #TODO valider calving preparation
     try:
@@ -450,7 +469,7 @@ def show_calving_preparation():
         return jsonify({"success": False, "message": str(e)})
 
 
-@app.route("/show_calving_date")
+@views.route("/show_calving_date")
 def show_calving_date():
     try:
         calving_data = get_all_calving_date()
@@ -459,7 +478,7 @@ def show_calving_date():
         return jsonify({"success": False, "message": str(e)})
 
 
-@app.route("/upload_calf", methods=["POST"])
+@views.route("/upload_calf", methods=["POST"])
 def upload_calf():
     # TODO gestion veaux upload_cow
     try:
@@ -493,7 +512,7 @@ def upload_calf():
 # cow_liste form
 
 
-@app.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
+@views.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
 def view_cow(cow_id):
     if cow := CowUntils.get_cow(cow_id=cow_id):
         print("🐄 Vache récupérée :", cow)
@@ -502,12 +521,12 @@ def view_cow(cow_id):
         return "Vache introuvable", 404
 
 
-@app.route("/cow_liste/edit_cow/<int:cow_id>", methods=["GET", "POST"])
+@views.route("/cow_liste/edit_cow/<int:cow_id>", methods=["GET", "POST"])
 def edit_cow(cow_id):
     return render_template("cow_edit.html", cow=CowUntils.get_cow(cow_id=cow_id))
 
 
-@app.route("/cow_liste/suppress_cow/<int:cow_id>", methods=["POST"])
+@views.route("/cow_liste/suppress_cow/<int:cow_id>", methods=["POST"])
 def suppress_cow(cow_id):
     # TODO Ajout ms confirmation avant suppression
     lg.info(f"Suppression de la vache {cow_id}...")
@@ -525,7 +544,7 @@ def suppress_cow(cow_id):
 # cow_edit form
 
 
-@app.route("/update_cow_details/<int:cow_id>", methods=["POST"])
+@views.route("/update_cow_details/<int:cow_id>", methods=["POST"])
 def update_cow_details(cow_id):
     # Récupération des données du formulaire
     in_farm = bool(request.form.get("in_farm"))
@@ -557,7 +576,7 @@ def update_cow_details(cow_id):
 
     return redirect(url_for("edit_cow", cow_id=cow_id))
 
-@app.route("/update_cow_care/<int:cow_id>/<int:care_index>", methods=["POST"])
+@views.route("/update_cow_care/<int:cow_id>/<int:care_index>", methods=["POST"])
 def update_cow_care(cow_id, care_index):
 
     # Récupération des données du formulaire
@@ -580,7 +599,7 @@ def update_cow_care(cow_id, care_index):
     flash("Soin modifié avec succès", "success")
     return redirect(url_for("edit_cow", cow_id=cow_id))  # ou autre vue
 
-@app.route('/delete_cow_care/<int:cow_id>/<int:care_index>', methods=['POST'])
+@views.route('/delete_cow_care/<int:cow_id>/<int:care_index>', methods=['POST'])
 def delete_cow_care(cow_id, care_index):
     try:
         CowUntils.delete_cow_care(cow_id=cow_id, care_index=care_index)
@@ -589,7 +608,7 @@ def delete_cow_care(cow_id, care_index):
         flash("Soin introuvable.")
     return redirect(url_for('edit_cow', cow_id=cow_id))
 
-@app.route("/update_cow_reproduction/<int:cow_id>/<int:repro_index>", methods=["POST"])
+@views.route("/update_cow_reproduction/<int:cow_id>/<int:repro_index>", methods=["POST"])
 def update_cow_reproduction(cow_id, repro_index):
     # TODO recalculer sur modif
 
@@ -623,12 +642,12 @@ def update_cow_reproduction(cow_id, repro_index):
     except (ValueError, KeyError) as e:
         flash(f"Erreur lors de la mise à jour: {e}", "error")
     except Exception as e:
-        app.logger.exception("Unexpected error during cow reproduction update")
+        views.logger.exception("Unexpected error during cow reproduction update")
         raise
 
     return redirect(url_for("cow_details", cow_id=cow_id))
 
-@app.route('/delete_cow_reproduction/<int:cow_id>/<int:repro_index>', methods=['POST'])
+@views.route('/delete_cow_reproduction/<int:cow_id>/<int:repro_index>', methods=['POST'])
 def delete_cow_reproduction(cow_id, repro_index):
     try:
         CowUntils.delete_cow_reproduction(cow_id=cow_id, repro_index=repro_index)
@@ -641,11 +660,11 @@ def delete_cow_reproduction(cow_id, repro_index):
 
 # Jinja2 global functions
 
-app.jinja_env.globals.update(enumerate=enumerate)
-app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
-app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
-app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)
-app.jinja_env.globals.update(get_all_cows=CowUntils.get_all_cows)
-app.jinja_env.globals.update(strftime=strftime)
-app.jinja_env.globals.update(format_bool_fr=format_bool_fr)
+# views.jinja_env.globals.update(enumerate=enumerate)
+# views.jinja_env.globals.update(get_pharma_list=get_pharma_list)
+# views.jinja_env.globals.update(get_pharma_len=get_pharma_len)
+# views.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)
+# views.jinja_env.globals.update(get_all_cows=CowUntils.get_all_cows)
+# views.jinja_env.globals.update(strftime=strftime)
+# views.jinja_env.globals.update(format_bool_fr=format_bool_fr)
 

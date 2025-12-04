@@ -1,14 +1,15 @@
 from typing import List, Optional, Tuple, TypedDict
 from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, extract, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.ext.mutable import MutableList, MutableDict
-from flask_sqlalchemy import SQLAlchemy
+# from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta
 import logging as lg
 
-from .views import app
+# from .views import app
+from . import db
 
 # Create database connection object
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
 
 
 # TODO gestion exeption
@@ -1202,5 +1203,11 @@ class UserUtils:
         user: Users = Users.query.first()
         return user.setting
 
+    @staticmethod
+    def get_user(user_id):
+        if user := Users.query.get(user_id):
+            return user
+        else:
+            raise #TODO raise get_user mais peut etre pas apparament bug 
 
 # END USERS FONCTION

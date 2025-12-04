@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}
+  Login
+{% endblock %}
+{% block body_class %}
+  "Login-page"
+{% endblock %}
+
+{% block page_title %}
+  Login
+{% endblock %}
+{% block content %}
+  <section id="Login" class="contact section">
+    <div class="container section-title">
+      <h2>Login</h2>
+      <p>Connecter vous</p>
+    </div>
+    <div class="row justify-content-center">
+      <form id="form-user_login" action="{{ url_for('auth.login') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
+          {# selection Durée tarissement #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" name="email" id="email" class="form-control" placeholder="Your Email" autofocus="" required />
+          </div>
+
+          {# selection Durée prépa vêlage #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Your Password" required />
+          </div>
+
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label class="checkbox"><input type="checkbox" name="remember" />Remember me</label>
+          </div>
+
+          {# button submit #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Login</button>
+          </div>
+        </div>
+      </form>
+      <div id="message-form-user_login" class="alert" style="display: none;"></div>
+    </div>
+  </section>
+{% endblock %}
+{% block JS %}
+  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+{% endblock %}

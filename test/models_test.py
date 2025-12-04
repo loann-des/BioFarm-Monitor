@@ -7,8 +7,7 @@ import warnings
 
 from datetime import datetime
 from random import randint, sample
-
-from web_app.views import app
+from web_app import app
 from web_app.models import Cow, CowUntils, init_db
 
 class WebAppUnitTests(unittest.TestCase):
