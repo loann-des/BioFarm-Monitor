@@ -4,7 +4,7 @@ console.log("forms.js chargé");
 document.addEventListener("DOMContentLoaded", function () {
   document.querySelectorAll("form.ajax-form").forEach(function (form) {
     form.addEventListener("submit", async function (e) {
-      e.preventDefault(); // ← C'est ce qui empêche le rechargement / affichage JSON brut
+      e.preventDefault();
 
       const formData = new FormData(form);
       const action = form.getAttribute("action");
@@ -15,20 +15,27 @@ document.addEventListener("DOMContentLoaded", function () {
           body: formData,
         });
 
-        const result = await response.json();
+        const contentType = response.headers.get("Content-Type") || "";
 
-        // Affiche le message dans la section liée
-        const formId = form.getAttribute("id");
-        const messageElement = document.getElementById("message-" + formId);
-        messageElement.classList.remove("alert-success", "alert-danger");
-        messageElement.style.display = "block";
+        // Si la réponse est du JSON, on traite comme avant
+        if (contentType.includes("application/json")) {
+          const result = await response.json();
 
-        if (result.success) {
-          messageElement.classList.add("alert-success");
-          messageElement.textContent = result.message || "Succès";
+          const formId = form.getAttribute("id");
+          const messageElement = document.getElementById("message-" + formId);
+          messageElement.classList.remove("alert-success", "alert-danger");
+          messageElement.style.display = "block";
+
+          if (result.success) {
+            messageElement.classList.add("alert-success");
+            messageElement.textContent = result.message || "Succès";
+          } else {
+            messageElement.classList.add("alert-danger");
+            messageElement.textContent = result.message || "Erreur";
+          }
         } else {
-          messageElement.classList.add("alert-danger");
-          messageElement.textContent = result.message || "Erreur";
+          // Sinon, on suppose que c'est du HTML (login réussi) : on recharge la page ou on redirige
+          window.location = "/";
         }
       } catch (error) {
         console.error("Erreur AJAX :", error);

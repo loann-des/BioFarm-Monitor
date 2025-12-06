@@ -1,5 +1,11 @@
 import os
 import logging as lg
+
+class HTTP304Filter(lg.Filter):
+    def filter(self, record):
+        # Ignore les logs contenant " 304 " (code HTTP 304)
+        return " 304 " not in record.getMessage()
+    
 class config :
     
     # Configuration du logging pour toute l'application
@@ -8,7 +14,8 @@ class config :
         level=lg.INFO,       # Niveau de log (INFO, WARNING, ERROR, etc.)
         format='%(asctime)s %(levelname)s %(message)s'
     )
-
+    for handler in lg.getLogger().handlers:
+        handler.addFilter(HTTP304Filter())
     
     SECRET_KEY = '#d#JCqTTW\nilK\\7m\x0bp#\tj~#H'
 

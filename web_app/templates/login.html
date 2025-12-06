@@ -16,15 +16,15 @@
       <p>Connecter vous</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-user_login" action="{{ url_for('auth.login') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-user_login" action="{{ url_for('auth.login_post') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
-          {# selection Durée tarissement #}
+          {# Email #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="email" class="form-label">Email</label>
             <input type="email" name="email" id="email" class="form-control" placeholder="Your Email" autofocus="" required />
           </div>
 
-          {# selection Durée prépa vêlage #}
+          {# Password #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="password" class="form-label">Password</label>
             <input type="password" name="password" id="password" class="form-control" placeholder="Your Password" required />
@@ -38,6 +38,7 @@
           <div class="col d-flex flex-column align-items-center text-center">
             <button type="submit" class="btn btn-primary">Login</button>
           </div>
+
         </div>
       </form>
       <div id="message-form-user_login" class="alert" style="display: none;"></div>

@@ -50,8 +50,11 @@
               <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
               <h1 class="sitename">BioFarm-Monitor</h1>
               <span>.</span>
-            </a> 
+            </a>
           </div>
+          <ul>
+            <li><a href="{{url_for('auth.logout')}}" class="active">Logout<br></a></li>
+          </ul> 
         </div><!-- End Top Bar -->
 
         <div class="branding d-flex align-items-center">
@@ -65,6 +68,7 @@
                 <li><a href="/pharmacie">Pharmacie</a></li>
                 <li><a href="/reproduction">Reproduction</a></li>
                 <li><a href="/cow_liste">Liste des vaches</a></li>
+                
                 <!--
                 <li><a href="/blog">Articles</a></li>
                 <li><a href="/#contact">Contact</a></li>

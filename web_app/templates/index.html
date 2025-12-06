@@ -16,19 +16,19 @@
       <p>Rentrez ici vos paramètres</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-user_setting" action="{{ url_for('user_setting') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-user_setting" action="{{ url_for('views.user_setting') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
           
           {# selection Durée tarissement #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="dry_time" class="form-label">Durée tarissement</label>
-            <input type="number" name="dry_time" id="dry_time" class="form-control" required />
+            <input type="number" name="dry_time" id="dry_time" class="form-control" placeholder="{{user.setting["dry_time"]}}" required />
           </div>
 
           {# selection Durée prépa vêlage #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="calving_preparation_time" class="form-label">Durée prépa vêlage</label>
-            <input type="number" name="calving_preparation_time" id="calving_preparation_time" class="form-control" required />
+            <input type="number" name="calving_preparation_time" id="calving_preparation_time" class="form-control" placeholder="{{user.setting["calving_preparation_time"]}}" required />
           </div>
 
           {# button submit #}
@@ -50,7 +50,7 @@
       <p>Importer un fichier Excel (colonne ID de vache)</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-init_cow" action="{{ url_for('upload_cows') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-init_cow" action="{{ url_for('views.upload_cows') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
           
           {# selection fichier #}

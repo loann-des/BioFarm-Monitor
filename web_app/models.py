@@ -1,6 +1,8 @@
 from typing import List, Optional, Tuple, TypedDict
-from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, extract, ForeignKey, PrimaryKeyConstraint
+from flask_login import UserMixin
+from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, String, extract, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.ext.mutable import MutableList, MutableDict
+from werkzeug.security import generate_password_hash
 # from flask_sqlalchemy import SQLAlchemy
 from datetime import date, timedelta
 import logging as lg
@@ -195,7 +197,7 @@ class Pharmacie(db.Model):
         self.remaining_stock = remaining_stock
 
 
-class Users(db.Model):
+class Users(UserMixin, db.Model):
     """Represents a user in the database, including their settings for dry time and calving preparation time.
 
     This class stores user-specific configuration for managing cow care and reproduction cycles.
@@ -203,11 +205,13 @@ class Users(db.Model):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)  # numero utilisateur
+    email = Column(String(100), unique=True, nullable=False)
+    password = Column(String(200), nullable=False)
     setting = Column(
         MutableDict.as_mutable(JSON), default=dict, nullable=False
     )  # setting utilisateur
 
-    def __init__(self, setting: Setting):
+    def __init__(self, email : str, password : str, setting: Setting):
         """Initializes a Users object with the provided settings.
 
         This constructor sets the user's settings for dry time and calving preparation time.
@@ -215,7 +219,10 @@ class Users(db.Model):
         Args:
             setting (Setting): The user's settings containing dry time and calving preparation time.
         """
+        self.email = email
+        self.password = password
         self.setting = setting
+        
 
 
 def init_db() -> None:
@@ -229,7 +236,7 @@ def init_db() -> None:
     db.drop_all()
     db.create_all()
     db.session.add(Prescription(date=None, care={}, dlc_left=True))
-    UserUtils.add_user()
+    UserUtils.add_user(email="adm@mail.com", password=generate_password_hash(password="adm"))
     db.session.commit()
     lg.warning("Database initialized!")
 
@@ -1158,7 +1165,7 @@ class UserUtils:
     """
 
     @staticmethod
-    def add_user() -> None:
+    def add_user(email : str, password : str) -> None:
         """Adds a new user to the database with default settings.
 
         This function creates a user with default dry time and calving preparation time settings and commits it to the database.
@@ -1167,7 +1174,7 @@ class UserUtils:
             None
         """
 
-        user = Users(setting={"dry_time": 0, "calving_preparation_time": 0})
+        user = Users(email=email, password=password, setting={"dry_time": 0, "calving_preparation_time": 0})
         db.session.add(user)
         db.session.commit()
 

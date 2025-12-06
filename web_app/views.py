@@ -49,10 +49,10 @@ from .models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils
 
 # root
 
-@views.route("/", methods=["GET"])
+@views.route("/", methods=["GET","POST"])
 @login_required
 def index():
-    return render_template("index.html")
+    return render_template("index.html",user=current_user)
 
 
 @views.route("/reproduction", methods=["GET"])

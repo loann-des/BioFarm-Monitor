@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from .models import Users, db
@@ -15,14 +15,13 @@ def login_post():
     password = request.form.get('password')
     remember = bool(request.form.get('remember'))
 
-    user = Users.query.filter_by(email=email).first()
+    user : Users = Users.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
-        flash('Please check your login details and try again.')
-        return redirect(url_for('auth.login'))
+        return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
 
-    login_user(user, remember=remember)
-    return redirect(url_for('main.profile'))
+    login_user(user, remember=remember, force=True)
+    return redirect(url_for('views.index'))
 
 @auth.route('/signup')
 def signup():
@@ -48,4 +47,4 @@ def signup_post():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('main.index'))
+    return redirect(url_for('views.index'))
