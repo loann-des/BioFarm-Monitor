@@ -19,20 +19,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Si la réponse est du JSON, on traite comme avant
         if (contentType.includes("application/json")) {
-          const result = await response.json();
 
           const formId = form.getAttribute("id");
           const messageElement = document.getElementById("message-" + formId);
           messageElement.classList.remove("alert-success", "alert-danger");
           messageElement.style.display = "block";
-
+                    
+          // Réponse JSON → affiche status
+          const result = await response.json();
+          if (result.redirect) {
+            window.location = result.redirect;
+            return;
+          }
           if (result.success) {
             messageElement.classList.add("alert-success");
-            messageElement.textContent = result.message || "Succès";
+            messageElement.textContent = result.message || "Succès.";
           } else {
             messageElement.classList.add("alert-danger");
-            messageElement.textContent = result.message || "Erreur";
+            messageElement.textContent = result.message || "Erreur.";
           }
+          messageElement.style.display = "block";
         } else {
           // Sinon, on suppose que c'est du HTML (login réussi) : on recharge la page ou on redirige
           window.location = "/";
@@ -248,6 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("form").forEach(form => {
+    if (form.classList.contains("ajax-form")) return;
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
 

@@ -59,7 +59,6 @@ class Setting(TypedDict):
     dry_time: int  # Temps de tarrisement (en jour)
     calving_preparation_time: int  # Temps de prepa vellage (en jour)
 
-
 class Cow(db.Model):
     """Represents a cow in the database, including care records, annotations, status, birth date, and reproduction history.
 
@@ -121,6 +120,7 @@ class Prescription(db.Model):
     """
 
     id = Column(Integer, primary_key=True)  # id Prescription
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(DATE)  # date de la Prescription
 
     # Traitement stocké au format JSON en base
@@ -129,7 +129,7 @@ class Prescription(db.Model):
     dlc_left = Column(Boolean)
     # TODO pdf prescription scanné ?
 
-    def __init__(self, date: DATE, care: dict[str, int], dlc_left: bool):
+    def __init__(self, user_id : int, date: DATE, care: dict[str, int], dlc_left: bool):
         """Initializes a Prescription object with the provided date, care items, and DLC status.
 
         This constructor sets the prescription's date, care dictionary, and whether it was removed due to expired shelf life (DLC).
@@ -139,6 +139,7 @@ class Prescription(db.Model):
             care (dict[str, int]): The medications and their quantities for the prescription.
             dlc_left (bool): True if the prescription is for medication removed due to expired DLC, False otherwise.
         """
+        self.user_id = user_id
         self.date = date
         self.care = care
         self.dlc_left = dlc_left
@@ -149,9 +150,8 @@ class Pharmacie(db.Model):
 
     This class stores annual pharmacy data such as medication entries, usage, removals, and remaining stock for inventory management.
     """
-
-    year_id = Column(Integer, primary_key=True)
-
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    year_id = Column(Integer)
     total_enter = Column(MutableDict.as_mutable(JSON),
                          default=dict, nullable=False)
     total_used = Column(MutableDict.as_mutable(JSON),
@@ -164,9 +164,16 @@ class Pharmacie(db.Model):
                        default=dict, nullable=False)
     remaining_stock = Column(MutableDict.as_mutable(
         JSON), default=dict, nullable=False)
+    
+    __table_args__ = (
+        PrimaryKeyConstraint(
+            user_id,
+            year_id),
+        {})
 
     def __init__(
         self,
+        user_id : int,
         year_id: int,
         total_enter: dict[str, int],
         total_used: dict[str, int],
@@ -188,6 +195,7 @@ class Pharmacie(db.Model):
             total_out (dict[str, int]): Total medication taken out of the pharmacy.
             remaining_stock (dict[str, int]): Remaining stock of each medication at year end.
         """
+        self.user_id = user_id
         self.year_id = year_id
         self.total_enter = total_enter
         self.total_used = total_used
@@ -210,6 +218,7 @@ class Users(UserMixin, db.Model):
     setting = Column(
         MutableDict.as_mutable(JSON), default=dict, nullable=False
     )  # setting utilisateur
+    medic_list = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
 
     def __init__(self, email : str, password : str, setting: Setting):
         """Initializes a Users object with the provided settings.
@@ -222,6 +231,7 @@ class Users(UserMixin, db.Model):
         self.email = email
         self.password = password
         self.setting = setting
+        self.medic_list = {}
         
 
 
@@ -235,7 +245,7 @@ def init_db() -> None:
     """
     db.drop_all()
     db.create_all()
-    db.session.add(Prescription(date=None, care={}, dlc_left=True))
+    db.session.add(Prescription(user_id=1, date=None, care={}, dlc_left=True))
     UserUtils.add_user(email="adm@mail.com", password=generate_password_hash(password="adm"))
     db.session.commit()
     lg.warning("Database initialized!")
@@ -732,7 +742,7 @@ class CowUntils:
         lg.info("reproduction reload")
 
     @staticmethod
-    def get_valide_reproduction() -> dict[int, Reproduction]:
+    def get_valide_reproduction(user_id : int) -> dict[int, Reproduction]:
         """Retrieves the latest valid reproduction records for all cows with a confirmed ultrasound.
 
         This function returns a dictionary mapping cow IDs to their most recent reproduction record where the ultrasound is confirmed.
@@ -741,7 +751,7 @@ class CowUntils:
             dict[int, Reproduction]: A dictionary of cow IDs to their valid reproduction records.
         """
         from .fonction import last
-        cows: list[Cow] = Cow.query.all()
+        cows: list[Cow] = Cow.query.filter_by(user_id=user_id).all()
         return {
             cow.cow_id: cow.reproduction[-1]
             for cow in cows
@@ -749,7 +759,7 @@ class CowUntils:
         }
 
     @staticmethod
-    def validated_calving(cow_id: int, abortion: bool, info: str = None) -> None:
+    def validated_calving(cow_id: int, user_id : int, abortion: bool, info: str = None) -> None:
         """Validates the calving event for a cow and records whether it was an abortion.
 
         This function updates the latest reproduction record for the specified cow to indicate a calving event and whether it was an abortion. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -760,9 +770,11 @@ class CowUntils:
 
         Returns:
             None
-        """  # TODO gestion pas d'insemination reproduction_ultrasound calving
+        """  
+            #TODO gestion pas d'insemination reproduction_ultrasound calving
+            #TODO getstion info
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving"] = True
             reproduction["abortion"] = abortion
@@ -776,7 +788,7 @@ class CowUntils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def validated_dry(cow_id: int) -> None:
+    def validated_dry(user_id : int, cow_id: int) -> None:
         """Validates the dry for a cow.
 
         This function updates the latest reproduction record for the specified cow to indicate that the dry period has been completed. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -788,7 +800,7 @@ class CowUntils:
             None
         """
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             try:
                 reproduction: Reproduction = cow.reproduction[-1]
                 reproduction["dry_status"] = True
@@ -805,7 +817,7 @@ class CowUntils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def validated_calving_preparation(cow_id: int) -> None:
+    def validated_calving_preparation(user_id : int, cow_id: int) -> None:
         """Validates the calving preparation for a cow.
 
         This function updates the latest reproduction record for the specified cow to indicate that the calving preparation has been completed. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -817,7 +829,7 @@ class CowUntils:
             None
         """
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving_preparation_status"] = True
             cow.reproduction[-1] = reproduction
@@ -831,6 +843,7 @@ class CowUntils:
 
     @staticmethod
     def update_cow_reproduction(
+        user_id: int,
         cow_id: int,
         repro_index: int,
         new_repro: Reproduction,
@@ -848,7 +861,7 @@ class CowUntils:
             None
         """
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             cow.reproduction[repro_index] = new_repro
             db.session.commit()
             lg.info(f"{cow_id} : reproduction updated in database")
@@ -857,7 +870,7 @@ class CowUntils:
             raise ValueError(f"{cow_id} : doesn't exist in database")
 
     @staticmethod
-    def delete_cow_reproduction(cow_id: int, repro_index: int) -> None:
+    def delete_cow_reproduction(user_id: int, cow_id: int, repro_index: int) -> None:
         """Deletes a specific reproduction record from a cow's reproduction history.
 
         This function removes the reproduction record at the specified index and commits the change to the database. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -870,7 +883,7 @@ class CowUntils:
             None
         """
         cow: Cow
-        if cow := Cow.query.get(cow_id):
+        if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             del cow.reproduction[repro_index]
             db.session.commit()
             lg.info(f"{cow_id} : reproduction deleted in database")
@@ -892,7 +905,7 @@ class PrescriptionUntils:
     """
 
     @staticmethod
-    def add_prescription(date: date, care_items: dict[str, int]) -> None:
+    def add_prescription(user_id: int, date: date, care_items: dict[str, int]) -> None:
         """Adds a new prescription to the database with the specified date and care items.
 
         This function creates a new Prescription object, adds it to the database session, and commits the transaction.
@@ -904,12 +917,12 @@ class PrescriptionUntils:
         Returns:
             None
         """
-        prescription = Prescription(date=date, care=care_items, dlc_left=False)
+        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=False)
         db.session.add(prescription)
         db.session.commit()
 
     @staticmethod
-    def add_dlc_left(date: date, care_items: dict[str, int]) -> None:
+    def add_dlc_left(user_id: int, date: date, care_items: dict[str, int]) -> None:
         """Adds a new prescription to the database for medication removed due to expired shelf life (DLC).
 
         This function creates a new Prescription object with the DLC flag set to True, adds it to the database session, and commits the transaction.
@@ -921,12 +934,12 @@ class PrescriptionUntils:
         Returns:
             None
         """
-        prescription = Prescription(date=date, care=care_items, dlc_left=True)
+        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=True)
         db.session.add(prescription)
         db.session.commit()
 
     @staticmethod
-    def get_all_prescription() -> List[Prescription]:
+    def get_all_prescription(user_id: int) -> List[Prescription]:
         """Retrieves all prescriptions from the database.
 
         This function queries the database and returns a list of all Prescription objects.
@@ -934,10 +947,10 @@ class PrescriptionUntils:
         Returns:
             List[Prescription]: A list of all prescriptions in the database.
         """
-        return Prescription.query.all()
+        return Prescription.query.filter_by(user_id=user_id).all()
 
     @staticmethod
-    def get_all_prescription_cares() -> List[tuple[date, dict[str, int], bool]]:
+    def get_all_prescription_cares(user_id: int) -> List[tuple[date, dict[str, int], bool]]:
         """Retrieves all prescription care records, excluding the header, sorted by date in descending order.
 
         This function collects all prescription records, removes the first entry (assumed to be a header), and returns the remaining records as a list sorted by date, most recent first.
@@ -947,7 +960,7 @@ class PrescriptionUntils:
         """
         all_cares: List[Tuple[date, dict[str, int], bool]] = [
             (prescription.date, prescription.care, prescription.dlc_left)
-            for prescription in Prescription.query.all()
+            for prescription in (Prescription.query.filter_by(user_id=user_id).all())
         ]
         all_cares.pop(0)  # suprimer l'entete
         # Tri décroissant sur la date
@@ -955,7 +968,7 @@ class PrescriptionUntils:
         return all_cares
 
     @staticmethod
-    def get_year_prescription(year: int) -> List[Prescription]:
+    def get_year_prescription(user_id : int, year: int) -> List[Prescription]:
         """Retrieves all prescriptions from the database for a specific year.
 
         This function filters prescriptions by the given year and returns a list of matching Prescription objects.
@@ -966,13 +979,12 @@ class PrescriptionUntils:
         Returns:
             List[Prescription]: A list of prescriptions from the specified year.
         """
-        return Prescription.query.filter(
+        return Prescription.query.filter_by(user_id=user_id, dlc_left=False).filter(
             (extract("year", Prescription.date) == year)
-            & (Prescription.dlc_left == False)
         ).all()
 
     @staticmethod
-    def get_dlc_left_on_year(year: int) -> List[Prescription]:
+    def get_dlc_left_on_year(user_id: int, year: int) -> List[Prescription]:
         """Retrieves all prescriptions for which medication was removed to expired shelf life (DLC) in a specific year.
 
         This function filters prescriptions by the given year and returns those where the DLC (shelf life) has passed.
@@ -983,42 +995,9 @@ class PrescriptionUntils:
         Returns:
             List[Prescription]: A list of prescriptions with medication removed due to expired DLC in the specified year.
         """
-        return Prescription.query.filter(
+        return Prescription.query.filter_by(user_id=user_id, dlc_left=True).filter(
             (extract("year", Prescription.date) == year)
-            & (Prescription.dlc_left == True)
         ).all()
-
-    @staticmethod
-    def add_medic_in_pharma_list(medic: str) -> None:
-        """Adds a new medication to the pharmacy list if it does not already exist.
-
-        If the medication is not present in the pharmacy list, it is added and the change is committed. If it already exists, an error is logged.
-
-        Args:
-            medic (str): The name of the medication to add.
-
-        Returns:
-            None
-        """
-        pharma_liste: Prescription = Prescription.query.get(1)
-        if medic not in pharma_liste.care:
-            pharma_liste.care[medic] = 0  # ou None
-            db.session.commit()
-            lg.info(f"{medic} add in pharma list")
-        else:
-            lg.error(f"{medic} already in pharma list")
-
-    @staticmethod
-    def get_pharma_list() -> dict[str, int]:
-        """Retrieves the pharmacy medication list as a dictionary.
-
-        This function returns the care dictionary from the pharmacy Prescription entry in the database.
-
-        Returns:
-            dict[str, int]: A dictionary mapping medication names to their quantities.
-        """
-        pharma_list: Prescription = Prescription.query.get(1)
-        return pharma_list.care
 
 
 # END PRESCRIPTION FONCTION
@@ -1123,7 +1102,7 @@ class PharmacieUtils:
         db.session.commit()
 
     @staticmethod
-    def upload_pharmacie_year(year: int, remaining_stock: dict[str, int]) -> None:
+    def upload_pharmacie_year(user_id: int, year_id: int, remaining_stock: dict[str, int]) -> None:
         """Creates and saves a new pharmacy record for a specific year with the provided remaining stock.
 
         This function adds a new Pharmacie object for the given year with empty statistics except for the provided remaining stock. If a record for the year already exists, it raises a ValueError.
@@ -1138,11 +1117,12 @@ class PharmacieUtils:
         Raises:
             ValueError: If a pharmacy record for the given year already exists.
         """
-        if Pharmacie.query.get(year):
-            raise ValueError(f"{year} already existe.")
+        if Pharmacie.query.get({"user_id" : user_id, "year_id" : year_id}):
+            raise ValueError(f"{year_id} already existe.")
 
         pharmacie = Pharmacie(
-            year_id=year,
+            user_id=user_id,
+            year_id=year_id,
             total_enter={},
             total_used={},
             total_used_calf={},
@@ -1216,5 +1196,34 @@ class UserUtils:
             return user
         else:
             raise #TODO raise get_user mais peut etre pas apparament bug 
+    @staticmethod
+    def add_medic_in_pharma_list(user_id: int, medic: str, mesur: int) -> None:
+        """Adds a new medication to the pharmacy list if it does not already exist.
+
+        If the medication is not present in the pharmacy list, it is added and the change is committed. If it already exists, an error is logged.
+
+        Args:
+            medic (str): The name of the medication to add.
+
+        Returns:
+            None
+        """
+        user: Users = Users.query.get(user_id)
+        user.medic_list.setdefault(medic,mesur)
+        db.session.commit()
+        lg.info(f"{medic} add in pharma list")
+
+
+    @staticmethod
+    def get_pharma_list(user_id: int) -> list[str] :
+        """Retrieves the pharmacy medication list as a dictionary.
+
+        This function returns the care dictionary from the pharmacy Prescription entry in the database.
+
+        Returns:
+            dict[str, int]: A dictionary mapping medication names to their quantities.
+        """
+        user : Users = Users.query.get(user_id)
+        return user.medic_list
 
 # END USERS FONCTION

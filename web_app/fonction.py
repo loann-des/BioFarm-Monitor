@@ -15,6 +15,8 @@ from .models import (
     CowUntils,
     PrescriptionUntils,
     PharmacieUtils,
+    Traitement,
+    UserUtils,
 )
 import logging as lg
 
@@ -45,7 +47,9 @@ def parse_date(date_str: str) -> Optional[date]:
     """
     return datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
 
-
+def pars_date(value : str)->date:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    
 def parse_bool(value: str) -> Optional[bool]:
     if value is None or not value:
         return None
@@ -69,7 +73,7 @@ def day_delta(date: date) -> int:
     return (date - one_year_ago).days
 
 
-def nb_cares_years(id: int) -> int:
+def nb_cares_years(user_id: int, cow_id) -> int:
     """Counts the number of care events for a cow in the past year by cow ID.
 
     This function retrieves all care records for the specified cow and returns the count of those that occurred within the last 365 days.
@@ -80,9 +84,9 @@ def nb_cares_years(id: int) -> int:
     Returns:
         int: The number of care events in the past year.
     """
-    cares: List[Tuple[date, dict, str]] = CowUntils.get_care_by_id(id=id)
+    cares: List[Tuple[date, dict, str]] = CowUntils.get_care_by_id(user_id=user_id, cow_id=cow_id)
     return sum(
-        day_delta(care[0]) <= 365 for care in cares
+        day_delta(pars_date(care["date_traitement"])) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
 
 
@@ -97,9 +101,9 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
     Returns:
         int: The number of care events in the past year.
     """
-    cares: List[Tuple[date, dict, str]] = cow.cow_cares
+    cares: List[Traitement] = cow.cow_cares
     return sum(
-        day_delta(care[0]) <= 365 for care in cares
+        day_delta(pars_date(care["date_traitement"])) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
 
 
@@ -135,17 +139,17 @@ def new_available_care(cow: Cow) -> Optional[date]:
 
     if nb_care_year > 0 and len(cow.cow_cares) >= nb_care_year:
         # On prend la date du soin qui correspond à nb_care_year avant la fin de la liste
-        care_date = cow.cow_cares[-nb_care_year][0]
+        care_date = pars_date(cow.cow_cares[-nb_care_year]["date_traitement"])
         return care_date + timedelta(days=365)
     elif len(cow.cow_cares) > 0:
         # Si il y a moins ou autant de soins que nb_care_year, on prend la date du premier soin
-        return cow.cow_cares[0][0] + timedelta(days=365)
+        return pars_date(cow.cow_cares[0]["date_traitement"]) + timedelta(days=365)
     else:
         # Pas de soins, donc pas de date dispo
         return None
 
 
-def get_pharma_list() -> Optional[list[str]]:
+def get_pharma_list(user_id) -> Optional[list[str]]:
     """Returns a list of all medication names available in the pharmacy.
 
     This function retrieves the pharmacy list and extracts the medication names from each care item.
@@ -156,12 +160,12 @@ def get_pharma_list() -> Optional[list[str]]:
 
     return (
         pharma_list
-        if (pharma_list := list(PrescriptionUntils.get_pharma_list().keys()))
+        if (pharma_list := list(UserUtils.get_pharma_list(user_id)))
         else None
     )
 
 
-def get_pharma_len() -> int:
+def get_pharma_len(user_id: int) -> int:
     """Returns the number of medication available in the pharmacy.
 
     This function counts the total number of unique medications in the pharmacy list.
@@ -169,10 +173,10 @@ def get_pharma_len() -> int:
     Returns:
         int: The number of medication.
     """
-    return len(pharma_list) if (pharma_list := get_pharma_list()) else 0
+    return len(pharma_list) if (pharma_list := get_pharma_list(user_id)) else 0
 
 
-def sum_pharmacie_in(year: int) -> dict[str, int]:
+def sum_pharmacie_in(user_id: int,year: int) -> dict[str, int]:
     """Sums the quantities of each medication prescribed in a given year.
 
     This function iterates over all prescriptions for the specified year and accumulates the total quantity for each medication.
@@ -294,7 +298,7 @@ def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
         list[tuple[date, dict[str:int], str]]: A list of tuples containing the date, medication dictionary, and event type label.
     """
 
-    # Récupère les données hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuffffffffffffffffffffffffffffffffffffffffffffffff
+    # Récupère les données
     care_raw = CowUntils.get_all_care() or []
     prescription_raw = PrescriptionUntils.get_all_prescription_cares() or []
 

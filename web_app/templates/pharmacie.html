@@ -18,7 +18,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-care" action="{{ url_for('update_care') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-care" action="{{ url_for('pharma.update_care') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-4 g-3 justify-content-center">
 
           {# Numéro Vache #}
@@ -35,11 +35,11 @@
 
           {# traitement #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len()) %}
+            {% for nb_care in range(get_pharma_len(user.id)) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list() %}
+                  {% for care in get_pharma_list(user.id) %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>
@@ -74,7 +74,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-pharma" action="{{ url_for('add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-pharma" action="{{ url_for('pharma.add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
 
           {# medic a ajouter a la list #}
@@ -112,7 +112,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-prescription" action="{{ url_for('add_prescription') }}" method="POST" class="ajax-form php-email-form">
+      <form id="form-prescription" action="{{ url_for('pharma.add_prescription') }}" method="POST" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
           
           {# date de l'ordonnance #}
@@ -123,11 +123,11 @@
 
           {# medicament sur l'ordonnance #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len()) %}
+            {% for nb_care in range(get_pharma_len(user.id)) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list() %}
+                  {% for care in get_pharma_list(user.id) %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>
@@ -156,7 +156,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-dlc_left" action="{{ url_for('add_dlc_left') }}" method="POST" class="ajax-form php-email-form">
+      <form id="form-dlc_left" action="{{ url_for('pharma.add_dlc_left') }}" method="POST" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
             
           {# date de la sortie #}
@@ -167,11 +167,11 @@
 
           {# medicament sortie #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len()) %}
+            {% for nb_care in range(get_pharma_len(user.id)) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list() %}
+                  {% for care in get_pharma_list(user.id) %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>
@@ -231,7 +231,7 @@
 
         {# button redirection #}
         <div class="col d-flex flex-column align-items-center text-center">
-          <a href="{{ url_for('stock_details') }}"><button class="btn btn-primary" type="submit">Afficher l'historique des stocks</button></a>
+          <a href="{{ url_for('pharma.stock_details') }}"><button class="btn btn-primary" type="submit">Afficher l'historique des stocks</button></a>
         </div>
 
       </div>
@@ -247,7 +247,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-export_stock" action="{{ url_for('download') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
+      <form id="form-export_stock" action="{{ url_for('pharma.download') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
           {# date de l'année à exporter #}
@@ -277,7 +277,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-download_remaining_care" action="{{ url_for('download_remaining_care') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
+      <form id="form-download_remaining_care" action="{{ url_for('pharma.download_remaining_care') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
           {# button download #}
@@ -301,7 +301,7 @@
     </div>
 
     <div class="row justify-content-center">
-      <form id="form-init_stock" action="{{ url_for('init_stock') }}" method="POST" class="ajax-form php-email-form">
+      <form id="form-init_stock" action="{{ url_for('pharma.init_stock') }}" method="POST" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
 
           {# date de l'année précédente #}
@@ -312,11 +312,11 @@
 
           {# Médicament stock #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len()) %}
+            {% for nb_care in range(get_pharma_len(user.id)) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list() %}
+                  {% for care in get_pharma_list(user.id) %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>

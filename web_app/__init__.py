@@ -28,11 +28,17 @@ def create_app():
         return Users.query.get(int(user_id))
     
     # Register blueprints
-    from .auth import auth as auth_blueprint
+    from .modul.auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
     
-    from .views import views as views_blueprint
+    from .modul.views import views as views_blueprint
     app.register_blueprint(views_blueprint)
+    
+    from .modul.pharmacie import pharma as pharma_blueprint
+    app.register_blueprint(pharma_blueprint)
+    
+    from .modul.reproduction import repro as repro_blueprint
+    app.register_blueprint(repro_blueprint)
     
     # Jinja2 global functions
     from .fonction import get_pharma_list, get_pharma_len, get_hystory_pharmacie, strftime, format_bool_fr

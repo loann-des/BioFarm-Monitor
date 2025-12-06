@@ -20,7 +20,7 @@
       <p>Ajouter ici les nouvelles vaches</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-new_cow" action="{{ url_for('add_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-new_cow" action="{{ url_for('repro.add_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
 
           {# ID de la vache #}
@@ -48,7 +48,7 @@
       <p>Supprimer ici les vaches</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-remove_cow" action="{{ url_for('remove_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-remove_cow" action="{{ url_for('repro.remove_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
           
           {# ID de la vache à supprimer #}
@@ -76,7 +76,7 @@
       <p>Ajoutez ici les inséminations</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-insemination" action="{{ url_for('insemination') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-insemination" action="{{ url_for('repro.insemination') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
 
           {# date de l'insemination#}
@@ -110,7 +110,7 @@
       <p>Ajoutez ici les échographies</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-ultrasound" action="{{ url_for('ultrasound') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-ultrasound" action="{{ url_for('repro.ultrasound') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="id" class="form-label">Numéro :</label>
@@ -205,7 +205,7 @@
       <p>Ajoutez ici les naissances</p>
     </div>
     <div class="row justify-content-center">
-      <form id="form-new_calf" action="{{ url_for('upload_calf') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+      <form id="form-new_calf" action="{{ url_for('repro.upload_calf') }}" method="POST" enctype="multipart/form-data" class=" php-email-form">
         <div class="row row-cols-1 row-cols-lg-4 g-3 justify-content-center">
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="borning" class="form-label">Naissances :</label>
