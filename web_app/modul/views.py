@@ -11,10 +11,10 @@ from flask import (
     url_for,
 )
 import logging as lg
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user, AnonymousUserMixin
+import pandas as pd
 
 views = Blueprint('views', __name__)
-
 
 from ..fonction import *
 from ..models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils, Users
@@ -30,6 +30,8 @@ current_user : Users
 @login_required
 @views.route("/", methods=["GET","POST"])
 def index():
+    if current_user.__class__ is AnonymousUserMixin : 
+        return redirect(url_for('auth.logout'))
     return render_template("index.html",user=current_user)
 
 
@@ -70,7 +72,32 @@ def user_setting():
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
+@login_required
+@views.route("/upload_cow/", methods=["POST"])
+def upload_cows():
+    file = request.files.get("file")
+    if not file:
+        return "Aucun fichier reçu", 400
 
+    try:
+        user_id = current_user.id
+        # Lire le fichier Excel directement en mémoire
+        df = pd.read_excel(BytesIO(file.read()))
+
+        # Lire uniquement la première colonne (ex: ID de la vache)
+        cow_ids = df.iloc[:, 0].dropna().unique()
+
+        added, skipped = 0, 0
+        for cow_id in cow_ids:
+            try:
+                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id))
+                added += 1
+            except ValueError:
+                skipped += 1
+
+        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
 
 # cow_liste form

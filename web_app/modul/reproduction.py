@@ -16,32 +16,7 @@ repro = Blueprint('repro', __name__)
 current_user : Users
 
 # Reproduction form
-@login_required
-@repro.route("/upload_cow/", methods=["POST"])
-def upload_cows():
-    file = request.files.get("file")
-    if not file:
-        return "Aucun fichier reçu", 400
 
-    try:
-        user_id = current_user.id
-        # Lire le fichier Excel directement en mémoire
-        df = pd.read_excel(BytesIO(file.read()))
-
-        # Lire uniquement la première colonne (ex: ID de la vache)
-        cow_ids = df.iloc[:, 0].dropna().unique()
-
-        added, skipped = 0, 0
-        for cow_id in cow_ids:
-            try:
-                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id))
-                added += 1
-            except ValueError:
-                skipped += 1
-
-        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
 @login_required
 @repro.route("/add_cow", methods=["POST"])
@@ -91,7 +66,7 @@ def insemination():
     try:
         # Récupère et parse la date
         dlc_left_date_str = request.form["prescription_date"]
-        date_obj = datetime.strptime(dlc_left_date_str, "%Y-%m-%d").date()
+        date_obj = datetime.strptime(dlc_left_date_str, "%Y-%m-%d").date().strftime('%d %B %Y')
 
         # Récupération de l'id de la vache
         cow_id = int(request.form["id"])

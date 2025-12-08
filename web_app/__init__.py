@@ -1,10 +1,8 @@
-from flask import Flask
+from datetime import timedelta
+from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 
-# from .views import app
-# from .models import db
-# from .fonction import *
 
 # Initialize SQLAlchemy instance (outside create_app for import access)
 db = SQLAlchemy()
@@ -19,6 +17,7 @@ def create_app():
     # Configure Flask-Login
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
+    login_manager
     login_manager.init_app(app)
     
     # User loader function for Flask-Login
@@ -26,6 +25,13 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return Users.query.get(int(user_id))
+    
+    @app.before_request
+    def before_request():
+        session.permanent = True
+        app.permanent_session_lifetime = timedelta(minutes=1)
+        session.modified = True
+        g.user = current_user
     
     # Register blueprints
     from .modul.auth import auth as auth_blueprint
@@ -61,9 +67,7 @@ app = create_app()
 def init_db():
     from .models import init_db
     init_db()
-    # models.init_db()
     
-# @app.cli.command("get_all")
-# def get_all():
     
-#     print(fonction.get_AllArticle())
+
+

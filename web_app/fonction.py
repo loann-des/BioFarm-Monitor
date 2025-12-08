@@ -190,13 +190,13 @@ def sum_pharmacie_in(user_id: int,year: int) -> dict[str, int]:
 
     res = {f"{x}": 0 for x in get_pharma_list()}
     prescription: Prescription
-    for prescription in PrescriptionUntils.get_year_prescription(year):
+    for prescription in PrescriptionUntils.get_year_prescription(user_id=user_id, year=year):
         for medic, quantity in prescription.care.items():
             res[medic] += quantity
     return res
 
 
-def sum_pharmacie_used(year: int) -> dict[str, int]:
+def sum_pharmacie_used(user_id: int, year: int) -> dict[str, int]:
     """Sums the quantities of each medication actually used (administered to cows) in a given year.
 
     This function iterates over all care records for the specified year and accumulates the total quantity used for each medication.
@@ -208,7 +208,7 @@ def sum_pharmacie_used(year: int) -> dict[str, int]:
         dict[str, int]: A dictionary mapping medication names to their total used quantities for the year.
     """
 
-    res = {f"{x}": 0 for x in get_pharma_list()}
+    res = {f"{x}": 0 for x in get_pharma_list(user_id=user_id)}
     cow_care: Tuple[date, dict, str]
     for cow_care in CowUntils.get_care_on_year(year):
         for medic, quantity in cow_care[1].items():
@@ -216,7 +216,7 @@ def sum_pharmacie_used(year: int) -> dict[str, int]:
     return res
 
 
-def sum_calf_used(year: int) -> dict[str, int]:
+def sum_calf_used(user_id: int, year: int) -> dict[str, int]:
     """Sums the quantities of each medication used for calves in a given year.
 
     This function iterates over all calf care records for the specified year and accumulates the total quantity used for each medication.
@@ -230,13 +230,13 @@ def sum_calf_used(year: int) -> dict[str, int]:
 
     res = {f"{x}": 0 for x in get_pharma_list()}
     cow_care: Tuple[date, dict[str, int], str]
-    for cow_care in CowUntils.get_calf_care_on_year(year):
+    for cow_care in CowUntils.get_calf_care_on_year(user_id=user_id, year=year):
         for medic, quantity in cow_care[1].items():
             res[medic] += quantity
     return res
 
 
-def sum_dlc_left(year: int) -> dict[str, int]:
+def sum_dlc_left(user_id: int, year: int) -> dict[str, int]:
     """Sums the quantities of each medication removed due to expired shelf life (DLC) in a given year.
 
     This function iterates over all medication removal records for expired DLC in the specified year and accumulates the total quantity removed for each medication.
@@ -250,13 +250,13 @@ def sum_dlc_left(year: int) -> dict[str, int]:
 
     res = {f"{x}": 0 for x in get_pharma_list()}
     cow_care: Prescription
-    for cow_care in PrescriptionUntils.get_dlc_left_on_year(year):
+    for cow_care in PrescriptionUntils.get_dlc_left_on_year(user_id=user_id, year=year):
         for medic, quantity in cow_care.care.items():
             res[medic] += quantity
     return res
 
 
-def sum_pharmacie_left(year: int) -> dict[str, int]:
+def sum_pharmacie_left(user_id: int, year: int) -> dict[str, int]:
     """Sums all medications taken out of the pharmacy cabinet in a given year.
 
     This function adds together the quantities of medications used (administered) and those removed due to expired shelf life (DLC) to give the total quantity of each medication taken out of the pharmacy for the year.
@@ -267,10 +267,10 @@ def sum_pharmacie_left(year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total quantities taken out of the pharmacy for the year.
     """
-    return dict(Counter(sum_pharmacie_used(year)) + Counter(sum_dlc_left(year)))
+    return dict(Counter(sum_pharmacie_used(user_id=user_id,year=year)) + Counter(sum_dlc_left(user_id=user_id, year=year)))
 
 
-def remaining_pharmacie_stock(year: int) -> dict[str, int]:
+def remaining_pharmacie_stock(user_id: int, year: int) -> dict[str, int]:
     """Calculates the remaining stock of each medication in the pharmacy for a given year.
 
     This function computes the current year's stock by adding the medications prescribed this year and the previous year's remaining stock, then subtracting all medications taken out of the pharmacy this year.
@@ -283,13 +283,13 @@ def remaining_pharmacie_stock(year: int) -> dict[str, int]:
     """
 
     return dict(
-        Counter(sum_pharmacie_in(year))
-        + Counter(PharmacieUtils.get_pharmacie_year(year - 1).remaining_stock)
-        - Counter(sum_pharmacie_left(year))
+        Counter(sum_pharmacie_in(user_id=user_id, year=year))
+        + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
+        - Counter(sum_pharmacie_left(user_id=user_id, year=year))
     )
 
 
-def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
+def get_hystory_pharmacie(user_id : int) -> list[tuple[date, dict[str:int], str]]:
     """Builds a chronological history of all pharmacy-related events.
 
     This function combines care and prescription records, labels them, and returns a list sorted by date in descending order.
@@ -299,7 +299,7 @@ def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
     """
 
     # Récupère les données
-    care_raw = CowUntils.get_all_care() or []
+    care_raw = CowUntils.get_all_care(user_id=user_id) or []
     prescription_raw = PrescriptionUntils.get_all_prescription_cares() or []
 
     care_data = [(d, medics, f"care {id}") for d, medics, id in care_raw]
@@ -315,7 +315,7 @@ def get_hystory_pharmacie() -> list[tuple[date, dict[str:int], str]]:
     return full_history
 
 
-def update_pharmacie_year(year: int) -> Pharmacie:
+def update_pharmacie_year(user_id : int, year: int) -> Pharmacie:
     """Updates or creates the pharmacy record for a given year with all relevant medication statistics.
 
     This function calculates and aggregates medication entries, usages, removals, and remaining stock for the specified year, then updates or creates the corresponding pharmacy record.
@@ -327,14 +327,14 @@ def update_pharmacie_year(year: int) -> Pharmacie:
         Pharmacie: The updated or newly created pharmacy record for the year.
     """
 
-    total_enter = sum_pharmacie_in(year)
-    total_used_calf = sum_calf_used(year)
-    total_out_dlc = sum_dlc_left(year)
-    total_used = sum_pharmacie_used(year)
+    total_enter = sum_pharmacie_in(user_id=user_id, year=year)
+    total_used_calf = sum_calf_used(user_id=user_id, year=year)
+    total_out_dlc = sum_dlc_left(user_id=user_id, year=year)
+    total_used = sum_pharmacie_used(user_id=user_id, year=year)
     total_out = dict(Counter(total_used) + Counter(total_out_dlc))
     remaining_stock = dict(
         Counter(total_enter)
-        + Counter(PharmacieUtils.get_pharmacie_year(year - 1).remaining_stock)
+        + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
         - Counter(total_out)
     )
     pharmacie = Pharmacie(
@@ -346,10 +346,10 @@ def update_pharmacie_year(year: int) -> Pharmacie:
         total_out=total_out,
         remaining_stock=remaining_stock,
     )
-    return PharmacieUtils.updateOrDefault_pharmacie_year(year=year, default=pharmacie)
+    return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=user_id, year=year, default=pharmacie)
 
 
-def pharmacie_to_csv(year: int) -> str:
+def pharmacie_to_csv(user_id: int, year: int) -> str:
     """Generates a CSV report of pharmacy medication statistics for a given year.
 
     This function compiles medication stock, usage, and prescription data into a CSV format, including previous year's stock and per-date prescription details.
@@ -361,7 +361,7 @@ def pharmacie_to_csv(year: int) -> str:
         str: The generated CSV content as a string.
     """
 
-    pharmacie = update_pharmacie_year(year)
+    pharmacie = update_pharmacie_year(user_id=user_id, year=year)
 
     # Liste des champs à exporter
     fields = [
@@ -375,11 +375,11 @@ def pharmacie_to_csv(year: int) -> str:
     ]
 
     # Récupère les données de l'année précédente
-    prev_pharmacie = PharmacieUtils.get_pharmacie_year(year - 1)
+    prev_pharmacie = PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1)
     remaining_stock_last_year = getattr(prev_pharmacie, "remaining_stock", {})
 
     # Obtenir tous les médicaments à partir des données
-    all_meds = sorted(get_pharma_list())
+    all_meds = sorted(get_pharma_list(user_id=user_id))
 
     output = io.StringIO()
     writer = csv.writer(output)
@@ -417,7 +417,7 @@ def pharmacie_to_csv(year: int) -> str:
     for field in fields[1:]:  # on saute 'remaining_stock_last_year' car déjà écrit
         row = [field]
         field_data = getattr(pharmacie, field, {})
-        row.extend(field_data.get(med, 0) for med in all_meds)
+        row.extend(field_data.get(med, 0) for med in all_meds)#TODO Verif le get
         writer.writerow(row)
 
     result = output.getvalue()
@@ -425,7 +425,7 @@ def pharmacie_to_csv(year: int) -> str:
     return result
 
 
-def remaining_care_to_excel() -> bytes:
+def remaining_care_to_excel(user_id: int) -> bytes:
     """Generates an Excel file summarizing the remaining care treatments for each cow.
 
     This function creates an Excel spreadsheet listing each cow's ID, the number of remaining treatments, and the next renewal date, with color-coded formatting for easy interpretation.
@@ -449,7 +449,7 @@ def remaining_care_to_excel() -> bytes:
     }
 
     cow: Cow
-    for cow in CowUntils.get_all_cows():
+    for cow in CowUntils.get_all_cows(user_id=user_id):
         cow_id = cow.id
         nb_remaining = remaining_care_on_year(cow)
         renewal_date = new_available_care(cow)
@@ -473,7 +473,7 @@ def remaining_care_to_excel() -> bytes:
     return excel_io
 
 
-def get_all_dry_date() -> dict[int, date]:
+def get_all_dry_date(user_id: int) -> dict[int, date]:
     """Retrieves and sorts the dry dates for all cows with valid reproduction records.
 
     This function collects the 'dry' date for each cow and returns a dictionary sorted by date.
@@ -484,7 +484,7 @@ def get_all_dry_date() -> dict[int, date]:
     try:
         dry_dates = {
             cow_id: reproduction["dry"]
-            for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+            for cow_id, reproduction in CowUntils.get_valide_reproduction(user_id=user_id).items()
             if not reproduction.get("dry_status", False)
         }
     except Exception as e:
@@ -494,7 +494,7 @@ def get_all_dry_date() -> dict[int, date]:
     return dict(sorted(dry_dates.items(), key=lambda item: item[1]))
 
 
-def get_all_calving_preparation_date() -> dict[int, date]:
+def get_all_calving_preparation_date(user_id: int) -> dict[int, date]:
     """Retrieves and sorts the calving preparation dates for all cows with valid reproduction records.
 
     This function collects the 'calving_preparation' date for each cow and returns a dictionary sorted by date.
@@ -505,14 +505,14 @@ def get_all_calving_preparation_date() -> dict[int, date]:
 
     calving_preparation_dates = {
         cow_id: reproduction["calving_preparation"]
-        for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+        for cow_id, reproduction in CowUntils.get_valide_reproduction(user_id=user_id).items()
         if not reproduction["calving_preparation_status"]
     }
 
     return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1]))
 
 
-def get_all_calving_date() -> dict[int, date]:
+def get_all_calving_date(user_id: int) -> dict[int, date]:
     """Retrieves and sorts the calving dates for all cows with valid reproduction records.
 
     This function collects the 'calving_date' for each cow and returns a dictionary sorted by date.
@@ -523,7 +523,7 @@ def get_all_calving_date() -> dict[int, date]:
 
     calving_dates = {
         cow_id: reproduction["calving_date"]
-        for cow_id, reproduction in CowUntils.get_valide_reproduction().items()
+        for cow_id, reproduction in CowUntils.get_valide_reproduction(user_id=user_id).items()
     }
 
     return dict(sorted(calving_dates.items(), key=lambda item: item[1]))

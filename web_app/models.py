@@ -280,26 +280,17 @@ class CowUntils:
         raise ValueError(f"Cow with ID {cow_id} not found")
 
     @staticmethod
-    def get_all_cows(user_id : int) -> list[Cow]:
+    def get_all_cows(user_id : int = None) -> list[Cow]:
         """Retrieves all of a user cows from the database.
 
         This function queries the database and returns a list of all Cow objects.
 
         Returns:
             list[Cow]: A list for user of all his cows in the database.
+            
         """
-        return Cow.query.get({"user_id": user_id})
-    
-    @staticmethod
-    def get_all_cows() -> list[Cow]:
-        """Retrieves all cows from the database.
-
-        This function queries the database and returns a list of all Cow objects.
-
-        Returns:
-            list[Cow]: A list of all cows in the database.
-        """
-        return Cow.query.all()
+        return Cow.query.get({"user_id": user_id}) if user_id else Cow.query.all()
+        
 
     @staticmethod
     def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
@@ -386,6 +377,8 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            if not cow.in_farm :
+                raise ValueError(f"user :{user_id}, cow: {cow_id}: deja supprimé.")
             cow.in_farm = False
             db.session.commit()
             lg.info(f"(user :{user_id}, cow: {cow_id}): left the farm.")
@@ -631,6 +624,7 @@ class CowUntils:
         """  # TODO Gestion doublon add_reproduction
         cow: Cow
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction.append(
                 {
                     "insemination": insemination,
@@ -664,6 +658,7 @@ class CowUntils:
         # TODO gestion pas d'insemination reproduction_ultrasound
         cow: Cow
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["ultrasound"] = ultrasound
 
@@ -720,16 +715,16 @@ class CowUntils:
             ValueError: If the cow with the given ID does not exist.
         """
         cow: Cow
-        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
-            return cow.reproduction[-1]
-        else:
+        if not (cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id})):
             raise ValueError(f"{cow_id} n'existe pas.")
+        if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+        return cow.reproduction[-1]
 
     @staticmethod
     def reload_all_reproduction(user_id : int) -> None:
         from .fonction import last
 
-        cows: list[Cow] = Cow.query.filter_by(user_id= user_id).all()
+        cows: list[Cow] = Cow.query.filter_by(user_id= user_id, in_farm=True).all()
         for cow in cows:
             if (last(cow.reproduction)
                 and cow.reproduction[-1].get("ultrasound")
@@ -751,7 +746,7 @@ class CowUntils:
             dict[int, Reproduction]: A dictionary of cow IDs to their valid reproduction records.
         """
         from .fonction import last
-        cows: list[Cow] = Cow.query.filter_by(user_id=user_id).all()
+        cows: list[Cow] = Cow.query.filter_by(user_id=user_id, in_farm=True).all()
         return {
             cow.cow_id: cow.reproduction[-1]
             for cow in cows
@@ -775,6 +770,8 @@ class CowUntils:
             #TODO getstion info
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving"] = True
             reproduction["abortion"] = abortion
@@ -801,6 +798,8 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+
             try:
                 reproduction: Reproduction = cow.reproduction[-1]
                 reproduction["dry_status"] = True
@@ -830,6 +829,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer") 
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving_preparation_status"] = True
             cow.reproduction[-1] = reproduction
@@ -862,6 +862,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction[repro_index] = new_repro
             db.session.commit()
             lg.info(f"{cow_id} : reproduction updated in database")
@@ -884,6 +885,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             del cow.reproduction[repro_index]
             db.session.commit()
             lg.info(f"{cow_id} : reproduction deleted in database")
@@ -1011,7 +1013,7 @@ class PharmacieUtils:
     """
 
     @staticmethod
-    def get_pharmacie_year(year: int) -> Pharmacie:
+    def get_pharmacie_year(user_id: int, year: int) -> Pharmacie:
         """Retrieves the pharmacy record for a specific year.
 
         This function returns the Pharmacie object for the given year if it exists, otherwise raises a ValueError.
@@ -1025,12 +1027,12 @@ class PharmacieUtils:
         Raises:
             ValueError: If the pharmacy record for the given year does not exist.
         """
-        if pharmacie := Pharmacie.query.get(year):
+        if pharmacie := Pharmacie.query.get({"user_id" : user_id, "year_id" : year }):
             return pharmacie
         raise ValueError(f"{year} doesn't exist.")
 
     @staticmethod
-    def updateOrDefault_pharmacie_year(year: int, default: Pharmacie) -> Pharmacie:
+    def updateOrDefault_pharmacie_year(user_id: int, year: int, default: Pharmacie) -> Pharmacie:
         """Updates the pharmacy record for a given year if it exists, or creates it with default values if not.
 
         This function updates all attributes of the existing pharmacy record for the specified year, or adds a new record with the provided default if none exists.
@@ -1042,7 +1044,7 @@ class PharmacieUtils:
         Returns:
             Pharmacie: The updated or newly created pharmacy record for the year.
         """
-        pharmacie_db = Pharmacie.query.get(year)
+        pharmacie_db = Pharmacie.query.get({"user_id" : user_id, "year_id" : year })
 
         if pharmacie_db:
             for attr in default.__dict__:
@@ -1056,7 +1058,7 @@ class PharmacieUtils:
         return pharmacie_db
 
     @staticmethod
-    def get_all_pharmacie() -> List[Pharmacie]:
+    def get_all_pharmacie(user_id: int) -> List[Pharmacie]:
         """Retrieves all pharmacy records from the database.
 
         This function queries the database and returns a list of all Pharmacie objects.
@@ -1064,10 +1066,11 @@ class PharmacieUtils:
         Returns:
             List[Pharmacie]: A list of all pharmacy records in the database.
         """
-        return Pharmacie.query.all()
+        return Pharmacie.query.filter_by(user_id=user_id).all()
 
     @staticmethod
     def set_pharmacie_year(
+        user_id: int,
         year_id: int,
         total_used: dict[str, int],
         total_used_calf: dict[str, int],
@@ -1091,6 +1094,7 @@ class PharmacieUtils:
             None
         """
         pharmacie = Pharmacie(
+            user_id=user_id,
             year_id=year_id,
             total_used=total_used,
             total_used_calf=total_used_calf,
@@ -1179,7 +1183,7 @@ class UserUtils:
         db.session.commit()
 
     @staticmethod
-    def get_user_setting() -> Setting:
+    def get_user_setting(user_id : int) -> Setting:
         """Retrieves the current user's settings for dry time and calving preparation time.
 
         This function returns the settings dictionary for the first user in the database.
@@ -1187,7 +1191,7 @@ class UserUtils:
         Returns:
             Setting: The user's settings containing dry time and calving preparation time.
         """
-        user: Users = Users.query.first()
+        user: Users = Users.query.get(user_id)
         return user.setting
 
     @staticmethod
