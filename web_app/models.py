@@ -160,30 +160,46 @@ class Cow(db.Model):
 
 
 class Prescription(db.Model):
-    """Represents a prescription record in the database, including date, care items, and DLC status.
-
-    This class stores information about a prescription, such as its date, the medications prescribed, and whether it was removed due to expired shelf life (DLC).
+    """Représente un traitement dans la base de données. Sont inclus la date de
+    prescription, le contenu du traitement, et la date limite de consommation.
     """
 
-    id = Column(Integer, primary_key=True)  # id Prescription
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    date = Column(DATE)  # date de la Prescription
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    """Identifiant du traitement."""
+
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+            nullable=False)
+
+    # TODO: Determine exact type annotation for date
+    date = mapped_column(Date)
+    """Date de la prescription."""
 
     # Traitement stocké au format JSON en base
-    care = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+    care: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Informations sur le traitement, stocké au format JSON dans la base de
+    données."""
 
-    dlc_left = Column(Boolean)
+    dlc_left: Mapped[bool] = mapped_column(Boolean)
+    """True si la date limite de consommation est dépassée, False sinon."""
+
     # TODO pdf prescription scanné ?
 
-    def __init__(self, user_id : int, date: DATE, care: dict[str, int], dlc_left: bool):
-        """Initializes a Prescription object with the provided date, care items, and DLC status.
+    def __init__(self,
+        user_id: int,
+        date: DATE,
+        care: dict[str, int],
+        dlc_left: bool
+    ):
+        """Initialise un objet Prescription représentant un traitement avec les
+        date de prescription, le contenu et la date de consommation fournis.
 
-        This constructor sets the prescription's date, care dictionary, and whether it was removed due to expired shelf life (DLC).
-
-        Args:
-            date (DATE): The date of the prescription.
-            care (dict[str, int]): The medications and their quantities for the prescription.
-            dlc_left (bool): True if the prescription is for medication removed due to expired DLC, False otherwise.
+        Arguments:
+            * date (DATE): La date de la prescription
+            * care (dict[str, int]): Le contenu et les doses prévus par la
+            prescription
+            * dlc_left (bool): True si la date de consommation est atteinte,
+            False sinon.
         """
         self.user_id = user_id
         self.date = date
@@ -192,25 +208,53 @@ class Prescription(db.Model):
 
 
 class Pharmacie(db.Model):
-    """Represents a pharmacy record for a specific year, including medication statistics and remaining stock.
+    """Représente le bilan de la pharmacie pour une année. Inclut les
+    statistiques des médicaments et l'état des stocks.
 
-    This class stores annual pharmacy data such as medication entries, usage, removals, and remaining stock for inventory management.
+    Cette classe stocke les données annuelles de la pharmacie telles que les
+    entrées, utilisations et retraits de traitements et les stocks restants pour
+    le bilan.
     """
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    year_id = Column(Integer)
-    total_enter = Column(MutableDict.as_mutable(JSON),
-                         default=dict, nullable=False)
-    total_used = Column(MutableDict.as_mutable(JSON),
-                        default=dict, nullable=False)
-    total_used_calf = Column(MutableDict.as_mutable(
-        JSON), default=dict, nullable=False)
-    total_out_dlc = Column(MutableDict.as_mutable(JSON),
-                           default=dict, nullable=False)
-    total_out = Column(MutableDict.as_mutable(JSON),
-                       default=dict, nullable=False)
-    remaining_stock = Column(MutableDict.as_mutable(
-        JSON), default=dict, nullable=False)
 
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+            nullable=False)
+
+    # XXX: Is 'year_id' a relevant variable name? Seems to me 'year' would be
+    # clearer.
+    year_id: Mapped[int] = mapped_column(Integer)
+    """Année du bilan de pharmacie."""
+
+    total_enter: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de traitements entrés dans la pharmacie au cours de l'année.
+    Forme un dictionnaire {<nom>: <quantité entrée>}."""
+
+    total_used: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de traitements utilisés au cours de l'année. Forme un
+    dictionnaire {<nom>: <quantité utilisée>}."""
+
+    total_used_calf: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de traitement utilisés sur des veaux au cours de l'année. Forme
+    un dictionnaire {<nom>: <quantité utilisée>}."""
+
+    total_out_dlc: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de médicaments périmés éliminés au cours de l'année. Forme un
+    dictionnaire {<nom<: <quantité éliminée>}."""
+
+    total_out: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de médicaments retirés de la pharmacie au cours de l'année.
+    Forme un dictionnaire {<nom>: <quantité retirée>}."""
+
+    remaining_stock: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Stocks restants à la fin de l'année. Forme un dictionnaire
+    {<nom>: <quantité>}."""
+
+    # TODO: Determine exact type annotation for __table_args__
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
@@ -228,18 +272,23 @@ class Pharmacie(db.Model):
         total_out: dict[str, int],
         remaining_stock: dict[str, int],
     ):
-        """Initializes a Pharmacie object with the provided annual medication statistics and stock.
+        """Initialise un objet Pharmacie à partir des statistiques et stocks
+        fournis.
+        Ce constructeur initialise l'année, les entrées, usages et retraits de
+        traitements et les stocks restants pour l'inventaire.
 
-        This constructor sets the year, medication entries, usage, removals, and remaining stock for the pharmacy record.
-
-        Args:
-            year_id (int): The year for the pharmacy record.
-            total_enter (dict[str, int]): Total medication entered in the year.
-            total_used (dict[str, int]): Total medication used in the year.
-            total_used_calf (dict[str, int]): Total medication used for calves in the year.
-            total_out_dlc (dict[str, int]): Total medication removed due to expired shelf life (DLC).
-            total_out (dict[str, int]): Total medication taken out of the pharmacy.
-            remaining_stock (dict[str, int]): Remaining stock of each medication at year end.
+        Arguments:
+            * year_id (int): Année du bilan de pharmacie
+            * total_enter (dict[str, int]): Total des entrées de médicaments
+            au cours de l'année
+            * total_used (dict[str, int]): Quantité de médicaments utilisée au
+            cours de l'année
+            * total_used_calf (dict[str, int]): Quantité de médicaments utilisée
+            sur des veaux au cours de l'année
+            * total_out_dlc (dict[str, int]): Quantité de médicaments périmés
+            éliminés au cours de l'année
+            * total_out (dict[str, int]): Quantité de médicaments retirés du
+            stock au cours de l'année
         """
         self.user_id = user_id
         self.year_id = year_id
