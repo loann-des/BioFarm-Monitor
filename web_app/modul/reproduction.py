@@ -90,7 +90,7 @@ def ultrasound():
 
         ultrasound = bool(request.form["ultrasound"])
 
-        CowUntils.validated_ultrasound(id=cow_id, ultrasound=ultrasound)
+        CowUntils.validated_ultrasound(user_id=current_user.id, cow_id=cow_id, ultrasound=ultrasound)
 
         success_message = f"l'echographie de {cow_id} a été {'valider' if ultrasound else 'invalider'} avec succes"
         return jsonify({"success": True, "message": success_message})
@@ -104,7 +104,7 @@ def ultrasound():
 def show_dry():
     #TODO valider dry
     try:
-        dry_data = get_all_dry_date()
+        dry_data = get_all_dry_date(user_id=current_user.id)
         return jsonify({"success": True, "dry": dry_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -119,7 +119,7 @@ def validate_dry():
         return jsonify({"success": False, "message": "Aucune vache spécifiée."}), 400
 
     try:
-        CowUntils.validated_dry(cow_id=cow_id)
+        CowUntils.validated_dry(user_id=current_user.id, cow_id=cow_id)
 
         return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
     except Exception as e:
@@ -130,7 +130,7 @@ def validate_dry():
 def show_calving_preparation():
     #TODO valider calving preparation
     try:
-        calving_preparation = get_all_calving_preparation_date()
+        calving_preparation = get_all_calving_preparation_date(user_id=current_user.id)
         return jsonify({"success": True, "calving_preparation": calving_preparation})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -140,7 +140,7 @@ def show_calving_preparation():
 @repro.route("/show_calving_date")
 def show_calving_date():
     try:
-        calving_data = get_all_calving_date()
+        calving_data = get_all_calving_date(user_id=current_user.id)
         return jsonify({"success": True, "calving": calving_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})

@@ -4,8 +4,9 @@ from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, String,
 from sqlalchemy.ext.mutable import MutableList, MutableDict
 from werkzeug.security import generate_password_hash
 # from flask_sqlalchemy import SQLAlchemy
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import logging as lg
+
 
 # from .views import app
 from . import db
@@ -40,15 +41,14 @@ class Reproduction(TypedDict):
 
     insemination: date
     ultrasound: Optional[bool]
-    dry: date
-    dry_status: bool  # status du tarrisement
-    calving_preparation: date
-    calving_preparation_status: bool  # status de prepa vellage
-    calving_date: date
-    calving: bool  # status du vellage
-    abortion: bool
-    reproduction_details: Optional[str]  # détails sur la reproduction
-
+    dry: date = None
+    dry_status: bool = False # status du tarrisement
+    calving_preparation: date = None
+    calving_preparation_status: bool = False # status de prepa vellage
+    calving_date: date = None
+    calving: bool = False # status du vellage
+    abortion: bool = False
+    reproduction_details: Optional[str] = None # détails sur la reproduction
 
 class Setting(TypedDict):
     """Represents user settings for dry time and calving preparation time.
@@ -629,12 +629,15 @@ class CowUntils:
                 {
                     "insemination": insemination,
                     "ultrasound": None,
-                    "dry": None,  # À remplir plus tard
-                    "calving_preparation": None,
-                    "calving_date": None,
-                    "calving": False,
+                    "dry":  None,
+                    "dry_status":  False, # status du tarrisement
+                    "calving_preparation":  None,
+                    "calving_preparation_status": False, # status de prepa vellage
+                    "calving_date":  None,
+                    "calving":  False, # status du vellage
                     "abortion": False,
-                },
+                    "reproduction_details": None # détails sur la reproduction
+                }
             )
             db.session.commit()
             lg.info(f"insemination on {insemination} add to {cow_id}")
@@ -656,15 +659,17 @@ class CowUntils:
             None
         """
         # TODO gestion pas d'insemination reproduction_ultrasound
+        from web_app.fonction import last
         cow: Cow
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
-            reproduction: Reproduction = cow.reproduction[-1]
+            reproduction: Reproduction = last(cow.reproduction)
+            if not reproduction : raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
 
-                cow.reproduction[-1] = CowUntils.set_reproduction(reproduction)
+                cow.reproduction[-1] = CowUntils.set_reproduction(user_id,reproduction)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
             else:
                 lg.info(f"insemination on {date} of {cow_id} invalidate")
@@ -675,7 +680,7 @@ class CowUntils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def set_reproduction(reproduction: Reproduction) -> Reproduction: #TODO Pur calculatoir sortir ?
+    def set_reproduction(user_id: int, reproduction: Reproduction) -> Reproduction: #TODO Pur calculatoir sortir ?
         """Calculates and sets the key reproduction dates for a cow based on insemination and user settings.
 
         This function updates the reproduction dictionary with calculated dry, calving preparation, and calving dates.
@@ -686,16 +691,11 @@ class CowUntils:
         Returns:
             Reproduction: The updated reproduction record with calculated dates.
         """
-        calving_date: date = reproduction["insemination"] + timedelta(days=280)
-        user: Users = Users.query.get(1)
-        calving_preparation_time = int(
-            user.setting["calving_preparation_time"])
-        dry_time = int(user.setting["dry_time"])
-
-        reproduction["dry"] = calving_date - timedelta(days=dry_time)
-        reproduction["calving_preparation"] = calving_date - timedelta(
-            days=calving_preparation_time
-        )
+        from web_app.fonction import substract_date_to_str, sum_date_to_str
+        user: Users = UserUtils.get_user(user_id=user_id)
+        calving_date: str = sum_date_to_str(reproduction["insemination"],280)
+        reproduction["dry"] = substract_date_to_str(calving_date, int(user.setting["dry_time"]))
+        reproduction["calving_preparation"] = substract_date_to_str(calving_date, int(user.setting["calving_preparation_time"]))
         reproduction["calving_date"] = calving_date
         return reproduction
 

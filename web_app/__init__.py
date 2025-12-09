@@ -31,7 +31,7 @@ def create_app():
         session.permanent = True
         app.permanent_session_lifetime = timedelta(minutes=1)
         session.modified = True
-        g.user = current_user
+        # g.user = current_user
     
     # Register blueprints
     from .modul.auth import auth as auth_blueprint

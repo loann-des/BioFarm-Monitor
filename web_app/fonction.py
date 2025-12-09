@@ -37,6 +37,19 @@ def last(lst: List) -> Optional[object]:
 def strftime(date: date) -> str:
     return date.strftime('%d %B %Y')
 
+def sum_date_to_str(date_from : date|str, delta_day :int) -> str :
+    return strftime(
+            date_from + timedelta(days=delta_day)
+            if date_from.__class__ is date.__class__ 
+            else datetime.strptime(date_from, "%d %B %Y").date() +  timedelta(days=delta_day)
+            )
+    
+def substract_date_to_str(date_from : date|str, delta_day :int) -> str :
+    return strftime(
+            date_from - timedelta(days=delta_day)
+            if date_from.__class__ is date.__class__ 
+            else datetime.strptime(date_from, "%d %B %Y").date() -  timedelta(days=delta_day)
+            )
 
 def format_bool_fr(value: bool, true_str="Oui", false_str="Non") -> str:
     return true_str if value else false_str
