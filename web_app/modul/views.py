@@ -30,7 +30,7 @@ current_user : Users
 @login_required
 @views.route("/", methods=["GET","POST"])
 def index():
-    if current_user.__class__ is AnonymousUserMixin : 
+    if current_user.__class__ is AnonymousUserMixin :
         return redirect(url_for('auth.logout'))
     return render_template("index.html",user=current_user)
 
@@ -62,8 +62,8 @@ def user_setting():
 
         UserUtils.set_user_setting(
             user_id=user_id, dry_time=dry_time, calving_preparation=calving_preparation_time
-        ) 
-        
+        )
+
         CowUntils.reload_all_reproduction(user_id=user_id)
 
         return jsonify({"success": True, "message": "setting mis a jours."})
@@ -141,7 +141,7 @@ def update_cow_details(cow_id):
     in_farm = bool(request.form.get("in_farm"))
     born_date_str = request.form.get("born_date")
     born_date = datetime.strptime(born_date_str, "%Y-%m-%d").date()
-        
+
     # Préparation des kwargs à passer à la fonction update_cow
     update_data = {
         "in_farm": in_farm,

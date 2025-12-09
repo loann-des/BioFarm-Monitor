@@ -40,14 +40,14 @@ def strftime(date: date) -> str:
 def sum_date_to_str(date_from : date|str, delta_day :int) -> str :
     return strftime(
             date_from + timedelta(days=delta_day)
-            if date_from.__class__ is date.__class__ 
+            if date_from.__class__ is date.__class__
             else datetime.strptime(date_from, "%d %B %Y").date() +  timedelta(days=delta_day)
             )
-    
+
 def substract_date_to_str(date_from : date|str, delta_day :int) -> str :
     return strftime(
             date_from - timedelta(days=delta_day)
-            if date_from.__class__ is date.__class__ 
+            if date_from.__class__ is date.__class__
             else datetime.strptime(date_from, "%d %B %Y").date() -  timedelta(days=delta_day)
             )
 
@@ -62,7 +62,7 @@ def parse_date(date_str: str) -> Optional[date]:
 
 def pars_date(value : str)->date:
         return datetime.strptime(value, "%Y-%m-%d").date()
-    
+
 def parse_bool(value: str) -> Optional[bool]:
     if value is None or not value:
         return None

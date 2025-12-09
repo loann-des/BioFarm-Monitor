@@ -210,7 +210,7 @@ class Pharmacie(db.Model):
                        default=dict, nullable=False)
     remaining_stock = Column(MutableDict.as_mutable(
         JSON), default=dict, nullable=False)
-    
+
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
@@ -278,7 +278,7 @@ class Users(UserMixin, db.Model):
         self.password = password
         self.setting = setting
         self.medic_list = {}
-        
+
 
 
 def init_db() -> None:
@@ -333,10 +333,10 @@ class CowUntils:
 
         Returns:
             list[Cow]: A list for user of all his cows in the database.
-            
+
         """
         return Cow.query.get({"user_id": user_id}) if user_id else Cow.query.all()
-        
+
 
     @staticmethod
     def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
@@ -570,7 +570,7 @@ class CowUntils:
         cows: List[Cow] = Cow.query.get({"user_id": user_id})
         all_cares: List[Traitement, int] = [
             (care_dict, cow.cow_id)
-            for cow in cows    
+            for cow in cows
             for care_dict in cow.cow_cares
             if bool(care_dict)
         ]
@@ -811,7 +811,7 @@ class CowUntils:
 
         Returns:
             None
-        """  
+        """
             #TODO gestion pas d'insemination reproduction_ultrasound calving
             #TODO getstion info
         cow: Cow
@@ -875,7 +875,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer") 
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving_preparation_status"] = True
             cow.reproduction[-1] = reproduction
@@ -1245,7 +1245,7 @@ class UserUtils:
         if user := Users.query.get(user_id):
             return user
         else:
-            raise #TODO raise get_user mais peut etre pas apparament bug 
+            raise #TODO raise get_user mais peut etre pas apparament bug
     @staticmethod
     def add_medic_in_pharma_list(user_id: int, medic: str, mesur: int) -> None:
         """Adds a new medication to the pharmacy list if it does not already exist.

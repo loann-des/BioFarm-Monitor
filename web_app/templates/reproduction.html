@@ -50,13 +50,13 @@
     <div class="row justify-content-center">
       <form id="form-remove_cow" action="{{ url_for('repro.remove_cow') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
-          
+
           {# ID de la vache à supprimer #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="id" class="form-label">Numéro :</label>
             <input type="number" name="id" id="id" class="form-control" required />
           </div>
-          
+
           {# button submit #}
           <div class="col d-flex flex-column align-items-center text-center">
             <button type="submit" class="btn btn-primary">Supprimer</button>

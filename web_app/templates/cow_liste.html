@@ -39,7 +39,7 @@
               <button type="submit" class="btn btn-primary">edit</button>
             </form>
           </div>
-          
+
           <div class="col d-flex flex-column align-items-center text-center">
             <form id="form-suppress-{{ cow.id }}" action="{{ url_for('suppress_cow', cow_id=cow.id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
               <button type="submit" class="btn btn-danger">Supprimer</button>

@@ -19,10 +19,10 @@ class WebAppUnitTests(unittest.TestCase):
     def tearDown(self):
         self.app_context.pop()
 
-    """        
+    """
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        
+
     TESTS FOR THE METHODS : CowUntils general methods :
         - add_cow(user_id: int, cow_id: int, born_date: date = None) -> None
         - get_cow(user_id: int, cow_id: int) -> Cow | None
@@ -35,7 +35,7 @@ class WebAppUnitTests(unittest.TestCase):
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    """    
+    """
 
     def test_add_cow(self):
         init_db()
@@ -111,15 +111,15 @@ class WebAppUnitTests(unittest.TestCase):
     def test_update_cow(self):
         # TODO: pass test_update_cow
         init_db()
-    
+
         user_id = randint(1, 9999)
         cow_id = randint(1, 9999)
-    
+
         CowUntils.add_cow(user_id, cow_id, None)
-    
+
         c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
         self.assertIsNotNone(c)
-    
+
         self.assertEqual(c.user_id, user_id)
         self.assertEqual(c.cow_id, cow_id)
         self.assertListEqual(c.cow_cares, [])
@@ -128,9 +128,9 @@ class WebAppUnitTests(unittest.TestCase):
         self.assertIsNone(c.born_date)
         self.assertListEqual(c.reproduction, [])
         self.assertFalse(c.is_calf)
-    
+
         birthdate = datetime.now().date()
-    
+
         CowUntils.update_cow(user_id, cow_id,
                 cow_cares = [{
                     "date_traitement": datetime.now().date(),
@@ -156,10 +156,10 @@ class WebAppUnitTests(unittest.TestCase):
                     "reproduction_details": "Details"
                 }],
                 is_calf = True)
-    
+
         c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
         self.assertIsNotNone(c)
-    
+
         self.assertEqual(c.user_id == user_id)
         self.assertEqual(c.cow_id == cow_id)
         self.assertListEqual(c.cow_cares, [{
@@ -234,7 +234,7 @@ class WebAppUnitTests(unittest.TestCase):
     """
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        
+
     TESTS FOR THE METHODS : CowUntils care methods :
         - add_cow_care(user_id: int, cow_id: int,  cow_care: Traitement) -> Optional[tuple[int, date]]
         - add_care(cow: Cow, cow_care: Traitement) -> tuple[int, date]
@@ -250,36 +250,36 @@ class WebAppUnitTests(unittest.TestCase):
     """
     def test_add_cow_care(self):
         pass
-    
+
     def test_add_care(self):
         pass
-    
+
     def test_update_cow_care(self):
         pass
-    
+
     def test_delete_cow_care(self):
         pass
-    
+
     def test_get_all_cares(self):
         pass
-    
+
     def test_get_care_by_id(self):
         pass
-    
+
     def test_get_care_on_year(self):
         pass
-    
+
     def test_get_calf_care_on_year(self):
         pass
-    
+
     """
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     TEST FOR THE METHODS : CowUntils reproduction methods
-    
+
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------    
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     """
 if (__name__ == "__main__"):
     unittest.main()
