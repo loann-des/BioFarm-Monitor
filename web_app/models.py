@@ -1,19 +1,30 @@
-from typing import List, Optional, Tuple, TypedDict
-from flask_login import UserMixin
-from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, String, extract, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.ext.mutable import MutableList, MutableDict
-from werkzeug.security import generate_password_hash
-# from flask_sqlalchemy import SQLAlchemy
-from datetime import date, datetime, timedelta
+# Standard
 import logging as lg
+from typing import List, Optional, Tuple, TypedDict, Any
 
+# Third-party
+from datetime import date, datetime, timedelta
+from flask_login import UserMixin
 
-# from .views import app
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    ForeignKey,
+    Integer,
+    PickleType,
+    PrimaryKeyConstraint,
+    String,
+    DATE,
+    JSON,
+    extract)
+
+from sqlalchemy.ext.mutable import MutableList, MutableDict
+from sqlalchemy.orm import Mapped, mapped_column
+from werkzeug.security import generate_password_hash
+
+# Local
 from . import db
-
-# Create database connection object
-# db = SQLAlchemy(app)
-
 
 # TODO gestion exeption
 # TODO gestion des log
@@ -34,52 +45,86 @@ class Note(TypedDict):
 
 
 class Reproduction(TypedDict):
-    """Represents the reproduction record for a cow, including key dates and outcomes.
-
-    This class stores insemination, ultrasound, dry period, calving preparation, calving date, and abortion status for a cow's reproductive cycle.
+    """Représente le statut reproductif d'une  vache.
     """
 
     insemination: date
-    ultrasound: Optional[bool]
-    dry: date = None
-    dry_status: bool = False # status du tarrisement
-    calving_preparation: date = None
-    calving_preparation_status: bool = False # status de prepa vellage
-    calving_date: date = None
-    calving: bool = False # status du vellage
-    abortion: bool = False
-    reproduction_details: Optional[str] = None # détails sur la reproduction
+    """Date d'insémination"""
+
+    ultrasound: bool | None
+    """Résultats de l'échographie. True si la vache porte un veau, False
+    sinon."""
+
+    dry: date
+    """Date de tarissement"""
+
+    dry_status: bool # status du tarrisement
+    """Tarissement d'une vache. True si la vache est en tarissement, False
+    sinon."""
+
+    calving_preparation: date
+    """Date de préparation au vêlage"""
+
+    calving_preparation_status: bool # status de prepa vellage
+    """"""
+
+    calving_date: date
+    """Date de vêlage"""
+
+    calving: bool # status du vellage
+    """"""
+    abortion: bool
+    """Avortement. True si un avortement a eu lieu, False sinon."""
+
+    reproduction_details: str | None # détails sur la reproduction
+    """Détails sur la reproduction"""
+
 
 class Setting(TypedDict):
-    """Represents user settings for dry time and calving preparation time.
-
-    This class stores the number of days for the dry period and the calving preparation period for a user.
+    """Stocke des réglages utilisateur, en l'occurrence les durées de
+    tarissement et de préparation au vêlage.
     """
 
     dry_time: int  # Temps de tarrisement (en jour)
     calving_preparation_time: int  # Temps de prepa vellage (en jour)
 
+
 class Cow(db.Model):
-    """Represents a cow in the database, including care records, annotations, status, birth date, and reproduction history.
+    """Représente une vache dans la base de données, incluant ses traitements,
+    des notes générales, son statut, sa date de naissance et son historique de
+    reproduction."""
 
-    This class stores all relevant information about a cow, such as its unique ID, care events, farm status, birth date, and reproduction records.
-    """
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+            nullable=False)
+    cow_id: Mapped[int] = mapped_column(Integer, nullable=False)  # numero Vache
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    cow_id = Column(Integer, nullable=False)  # numero Vache
-    # liste de (date de traitement, traitement, info complementaire)
-    cow_cares = Column(MutableList.as_mutable(
-        JSON), default=list, nullable=False)  # TODO modifier access
-    # liste de (date de l'annotation, annotation general)
-    info = Column(MutableList.as_mutable(JSON),
-                  default=list, nullable=False)
-    in_farm = Column(Boolean)  # faux si vache sortie expoitation
-    born_date = Column(DATE)  # date de naissance de la vache
-    # liste de Reproduction
-    reproduction = Column(
-        MutableList.as_mutable(JSON), default=list, nullable=False
-    )
-    is_calf = Column(Boolean, default=False, nullable=False)
+    cow_cares: Mapped[Any] = mapped_column(
+            MutableList.as_mutable(JSON),
+            default=list,
+            nullable=False)  # TODO modifier access
+    """Liste de traitements. Forme un tuple (date de traitement,
+    traitement, notes)."""
+
+    info: Mapped[Any] = mapped_column(MutableList.as_mutable(JSON),
+            default=list, nullable=False)
+    """Notes générales. Forme une liste de tuples (date, contenu)."""
+
+    in_farm: Mapped[bool] = mapped_column(Boolean)
+    """True si la vache se trouve dans la ferme, False si elle en est sortie."""
+
+    # TODO: Determine exact type annotation for born_date
+    born_date = mapped_column(Date)
+    """Date de naissance de la vache."""
+
+    reproduction: Mapped[Any] = mapped_column(MutableList.as_mutable(JSON),
+            default=list, nullable=False)
+    """Liste des reproductions de la vache."""
+
+    is_calf: Mapped[bool] = mapped_column(Boolean, default=False,
+            nullable=False)
+    """True si la vache est une génisse, False sinon."""
+
+    # TODO: Determine exact type annotation for __table_args__
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
@@ -90,11 +135,11 @@ class Cow(db.Model):
         self,
         user_id: int,
         cow_id: int,
-        cow_cares: list[Traitement] = None,
-        info: list[Note] = None,
+        cow_cares: list[Traitement] | None = None,
+        info: list[Note] | None = None,
         in_farm: bool = True,
-        born_date: date = None,
-        reproduction: list[Reproduction] = None,
+        born_date: date | None = None,
+        reproduction: list[Reproduction] | None = None,
         is_calf: bool = False
     ):
         if cow_cares is None:
@@ -103,6 +148,7 @@ class Cow(db.Model):
             info = []
         if reproduction is None:
             reproduction = []
+
         self.user_id = user_id
         self.cow_id = cow_id
         self.cow_cares = cow_cares
