@@ -6,7 +6,7 @@ import logging as lg
 from flask_login import login_required, current_user
 
 
-from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock
+from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, strftime
 from web_app.models import CowUntils, PharmacieUtils, PrescriptionUntils, Traitement, UserUtils, Users
 
 
@@ -39,7 +39,12 @@ def update_care():
         cow_id = request.form["id"]
         care : Traitement = Traitement()
         care["medicaments"] = extract_cares(request.form)
+        # print(request.form["care_date"])
+        # date_obj = datetime.strptime(request.form["care_date"], "%Y-%m-%d").date()
         care["date_traitement"] = request.form["care_date"]
+        # print(date_obj)
+        # print(datetime.now())
+        # print(datetime.now().strftime("%Y-%m-%d"))
         care["annotation"] = request.form["care_info"]
 
 
@@ -66,7 +71,7 @@ def add_prescription():
 
         # Récupère les médicaments et quantités
         cares: dict[str, int] = {}
-        for nb_care in range(get_pharma_len()):
+        for nb_care in range(get_pharma_len(user_id=current_user.id)):
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
 
@@ -92,7 +97,7 @@ def add_prescription():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PrescriptionUntils.add_prescription(date=date_obj, care_items=cares)
+        PrescriptionUntils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Ordonnance ajoutée avec succès."})
 
@@ -112,7 +117,7 @@ def add_dlc_left():
 
         # Récupère les médicaments et quantités
         cares: dict[str, int] = {}
-        for nb_care in range(get_pharma_len()):
+        for nb_care in range(get_pharma_len(user_id=current_user.id)):
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
 
@@ -131,7 +136,7 @@ def add_dlc_left():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PrescriptionUntils.add_dlc_left(date=date_obj, care_items=cares)
+        PrescriptionUntils.add_dlc_left(user_id=current_user.id, date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Medicament sortie avec succès."})
 
@@ -140,7 +145,7 @@ def add_dlc_left():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@login_required
+@login_required #TODO bougé sur le home pour l'init
 @pharma.route("/add_medic_in_pharma_list", methods=["POST"])
 def add_medic_in_pharma_list():
 
@@ -164,7 +169,7 @@ def add_medic_in_pharma_list():
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
 
-@login_required
+@login_required #TODO bougé sur le home pour l'init
 @pharma.route("/init_stock", methods=["POST"])
 def init_stock():
     try:
@@ -192,7 +197,7 @@ def init_stock():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year_id=year, remaining_stock=remaining_stock)
+        PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year=year, remaining_stock=remaining_stock)
 
         return jsonify(
             {"success": True, "message": "pharmacie initialiser avec succès."}
@@ -208,7 +213,7 @@ def init_stock():
 def get_stock():
     try:
         year = datetime.now().year  #on récupère l'année
-        stock_data = remaining_pharmacie_stock(year)
+        stock_data = remaining_pharmacie_stock(user_id=current_user.id, year=year)
         return jsonify({"success": True, "stock": stock_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -226,7 +231,7 @@ def download():
     lg.info("export-stock")
     try:
         year = int(request.form["export_year"])  # CHAMP CORRIGÉ ICI
-        csv_str = pharmacie_to_csv(year)
+        csv_str = pharmacie_to_csv(user_id=current_user.id, year=year)
 
         # Encodage du CSV en bytes pour envoi en tant que fichier
         csv_bytes = BytesIO(csv_str.encode("utf-8"))

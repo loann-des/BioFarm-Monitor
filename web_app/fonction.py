@@ -54,14 +54,13 @@ def substract_date_to_str(date_from : date|str, delta_day :int) -> str :
 def format_bool_fr(value: bool, true_str="Oui", false_str="Non") -> str:
     return true_str if value else false_str
 
-
 def parse_date(date_str: str) -> Optional[date]:
     """Parses a date string in the format 'YYYY-MM-DD' and returns a date object
     """
     return datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
 
-def pars_date(value : str)->date:
-        return datetime.strptime(value, "%Y-%m-%d").date()
+# def parse_date(value : str)->date:
+#         return datetime.strptime(value, "%Y-%m-%d").date()
 
 def parse_bool(value: str) -> Optional[bool]:
     if value is None or not value:
@@ -97,9 +96,9 @@ def nb_cares_years(user_id: int, cow_id) -> int:
     Returns:
         int: The number of care events in the past year.
     """
-    cares: List[Tuple[date, dict, str]] = CowUntils.get_care_by_id(user_id=user_id, cow_id=cow_id)
+    cares: List[Traitement] = CowUntils.get_care_by_id(user_id=user_id, cow_id=cow_id)
     return sum(
-        day_delta(pars_date(care["date_traitement"])) <= 365 for care in cares
+        day_delta(parse_date(care["date_traitement"])) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
 
 
@@ -116,7 +115,7 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
     """
     cares: List[Traitement] = cow.cow_cares
     return sum(
-        day_delta(pars_date(care["date_traitement"])) <= 365 for care in cares
+        day_delta(parse_date(care["date_traitement"])) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
 
 
@@ -152,17 +151,17 @@ def new_available_care(cow: Cow) -> Optional[date]:
 
     if nb_care_year > 0 and len(cow.cow_cares) >= nb_care_year:
         # On prend la date du soin qui correspond à nb_care_year avant la fin de la liste
-        care_date = pars_date(cow.cow_cares[-nb_care_year]["date_traitement"])
+        care_date = parse_date(cow.cow_cares[-nb_care_year]["date_traitement"])
         return care_date + timedelta(days=365)
     elif len(cow.cow_cares) > 0:
         # Si il y a moins ou autant de soins que nb_care_year, on prend la date du premier soin
-        return pars_date(cow.cow_cares[0]["date_traitement"]) + timedelta(days=365)
+        return parse_date(cow.cow_cares[0]["date_traitement"]) + timedelta(days=365)
     else:
         # Pas de soins, donc pas de date dispo
         return None
 
 
-def get_pharma_list(user_id) -> Optional[list[str]]:
+def get_pharma_list(user_id: int) -> Optional[list[str]]:
     """Returns a list of all medication names available in the pharmacy.
 
     This function retrieves the pharmacy list and extracts the medication names from each care item.
@@ -173,7 +172,7 @@ def get_pharma_list(user_id) -> Optional[list[str]]:
 
     return (
         pharma_list
-        if (pharma_list := list(UserUtils.get_pharma_list(user_id)))
+        if (pharma_list := list(UserUtils.get_pharma_list(user_id=user_id)))
         else None
     )
 
@@ -186,7 +185,7 @@ def get_pharma_len(user_id: int) -> int:
     Returns:
         int: The number of medication.
     """
-    return len(pharma_list) if (pharma_list := get_pharma_list(user_id)) else 0
+    return len(pharma_list) if (pharma_list := get_pharma_list(user_id=user_id)) else 0
 
 
 def sum_pharmacie_in(user_id: int,year: int) -> dict[str, int]:
@@ -200,13 +199,15 @@ def sum_pharmacie_in(user_id: int,year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total prescribed quantities for the year.
     """
-
-    res = {f"{x}": 0 for x in get_pharma_list()}
-    prescription: Prescription
-    for prescription in PrescriptionUntils.get_year_prescription(user_id=user_id, year=year):
-        for medic, quantity in prescription.care.items():
-            res[medic] += quantity
-    return res
+    try :
+        res = {f"{x}": 0 for x in get_pharma_list(user_id=user_id)}
+        prescription: Prescription
+        for prescription in PrescriptionUntils.get_year_prescription(user_id=user_id, year=year):
+            for medic, quantity in prescription.care.items():
+                res[medic] += quantity
+        return res
+    except Exception as e :
+        lg.warning(f"(fuction) sum_pharmacie_in : {str(e)}")
 
 
 def sum_pharmacie_used(user_id: int, year: int) -> dict[str, int]:
@@ -220,13 +221,15 @@ def sum_pharmacie_used(user_id: int, year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total used quantities for the year.
     """
-
-    res = {f"{x}": 0 for x in get_pharma_list(user_id=user_id)}
-    cow_care: Tuple[date, dict, str]
-    for cow_care in CowUntils.get_care_on_year(year):
-        for medic, quantity in cow_care[1].items():
-            res[medic] += quantity
-    return res
+    try :
+        res = {f"{x}": 0 for x in get_pharma_list(user_id=user_id)}
+        cow_care: Traitement
+        for cow_care in CowUntils.get_care_on_year(user_id=user_id, year=year):
+            for medic, quantity in cow_care["medicaments"].items():
+                res[medic] += quantity
+        return res
+    except Exception as e :
+        lg.warning(f"(fuction) sum_pharmacie_used : {str(e)}")
 
 
 def sum_calf_used(user_id: int, year: int) -> dict[str, int]:
@@ -240,14 +243,17 @@ def sum_calf_used(user_id: int, year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total used quantities for calves in the year.
     """
-
-    res = {f"{x}": 0 for x in get_pharma_list()}
-    cow_care: Tuple[date, dict[str, int], str]
-    for cow_care in CowUntils.get_calf_care_on_year(user_id=user_id, year=year):
-        for medic, quantity in cow_care[1].items():
-            res[medic] += quantity
-    return res
-
+    try :
+        res = {str(x): 0 for x in get_pharma_list(user_id=user_id)}
+        cow_care: Traitement
+        for cow_care in CowUntils.get_calf_care_on_year(user_id=user_id, year=year):
+            lg.info(cow_care)
+            for medic, quantity in cow_care["medicaments"].items():
+                res[medic] += quantity
+        return res
+    except Exception as e :
+        lg.warning(f"(fuction) sum_calf_used : {str(e)}")
+    
 
 def sum_dlc_left(user_id: int, year: int) -> dict[str, int]:
     """Sums the quantities of each medication removed due to expired shelf life (DLC) in a given year.
@@ -260,13 +266,15 @@ def sum_dlc_left(user_id: int, year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total quantities removed due to expired DLC for the year.
     """
-
-    res = {f"{x}": 0 for x in get_pharma_list()}
-    cow_care: Prescription
-    for cow_care in PrescriptionUntils.get_dlc_left_on_year(user_id=user_id, year=year):
-        for medic, quantity in cow_care.care.items():
-            res[medic] += quantity
-    return res
+    try :
+        res = {f"{x}": 0 for x in get_pharma_list(user_id=user_id)}
+        cow_care: Prescription
+        for cow_care in PrescriptionUntils.get_dlc_left_on_year(user_id=user_id, year=year):
+            for medic, quantity in cow_care.care.items():
+                res[medic] += quantity
+        return res
+    except Exception as e :
+        lg.warning(f"(fuction) sum_dlc_left : {str(e)}")
 
 
 def sum_pharmacie_left(user_id: int, year: int) -> dict[str, int]:
@@ -280,8 +288,10 @@ def sum_pharmacie_left(user_id: int, year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their total quantities taken out of the pharmacy for the year.
     """
-    return dict(Counter(sum_pharmacie_used(user_id=user_id,year=year)) + Counter(sum_dlc_left(user_id=user_id, year=year)))
-
+    try :
+        return dict(Counter(sum_pharmacie_used(user_id=user_id,year=year)) + Counter(sum_dlc_left(user_id=user_id, year=year)))
+    except Exception as e :
+        lg.warning(f"(fuction) sum_pharmacie_left : {str(e)}")
 
 def remaining_pharmacie_stock(user_id: int, year: int) -> dict[str, int]:
     """Calculates the remaining stock of each medication in the pharmacy for a given year.
@@ -294,12 +304,17 @@ def remaining_pharmacie_stock(user_id: int, year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their remaining quantities for the year.
     """
-
-    return dict(
-        Counter(sum_pharmacie_in(user_id=user_id, year=year))
-        + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
-        - Counter(sum_pharmacie_left(user_id=user_id, year=year))
-    )
+    #TODO renvoyer le sum de la pharmatie actuel et precedente 
+    try :
+        return dict(
+            Counter(sum_pharmacie_in(user_id=user_id, year=year))
+            + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
+            - Counter(sum_pharmacie_left(user_id=user_id, year=year))
+        )
+    except Exception as e :
+        lg.warning(f"(fuction) remaining_pharmacie_stock : {str(e)}")
+    
+#TODO def remaining_pharmacie_stock_calcul a fair que sur : traitement + prescription
 
 
 def get_hystory_pharmacie(user_id : int) -> list[tuple[date, dict[str:int], str]]:
@@ -312,13 +327,13 @@ def get_hystory_pharmacie(user_id : int) -> list[tuple[date, dict[str:int], str]
     """
 
     # Récupère les données
-    care_raw = CowUntils.get_all_care(user_id=user_id) or []
-    prescription_raw = PrescriptionUntils.get_all_prescription_cares() or []
+    care_raw : list[tuple[Traitement,int]] = CowUntils.get_all_care(user_id=user_id) or []
+    prescription_raw : List[tuple[date, dict[str, int], bool]]= PrescriptionUntils.get_all_prescription_cares(user_id=user_id) or []
 
-    care_data = [(d, medics, f"care {id}") for d, medics, id in care_raw]
+    care_data = [(parse_date(traitement["date_traitement"]), traitement["medicaments"], f"care {cow_id}") for traitement, cow_id in care_raw]
     prescription_data = [
-        (d, medics, "dlc left" if dlc_left else "prescription")
-        for d, medics, dlc_left in prescription_raw
+        (parse_date(date), medics, "dlc left" if dlc_left else "prescription")
+        for date, medics, dlc_left in prescription_raw
     ]
 
     # Fusionne et trie par date décroissante
@@ -339,27 +354,30 @@ def update_pharmacie_year(user_id : int, year: int) -> Pharmacie:
     Returns:
         Pharmacie: The updated or newly created pharmacy record for the year.
     """
-
-    total_enter = sum_pharmacie_in(user_id=user_id, year=year)
-    total_used_calf = sum_calf_used(user_id=user_id, year=year)
-    total_out_dlc = sum_dlc_left(user_id=user_id, year=year)
-    total_used = sum_pharmacie_used(user_id=user_id, year=year)
-    total_out = dict(Counter(total_used) + Counter(total_out_dlc))
-    remaining_stock = dict(
-        Counter(total_enter)
-        + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
-        - Counter(total_out)
-    )
-    pharmacie = Pharmacie(
-        year_id=year,
-        total_enter=total_enter,
-        total_used=total_used,
-        total_used_calf=total_used_calf,
-        total_out_dlc=total_out_dlc,
-        total_out=total_out,
-        remaining_stock=remaining_stock,
-    )
-    return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=user_id, year=year, default=pharmacie)
+    try :
+        total_enter = sum_pharmacie_in(user_id=user_id, year=year)
+        total_used_calf = sum_calf_used(user_id=user_id, year=year)
+        total_out_dlc = sum_dlc_left(user_id=user_id, year=year)
+        total_used = sum_pharmacie_used(user_id=user_id, year=year)
+        total_out = dict(Counter(total_used) + Counter(total_out_dlc))
+        remaining_stock = dict(
+            Counter(total_enter)
+            + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
+            - Counter(total_out)
+        )
+        pharmacie = Pharmacie(
+            user_id=user_id,
+            year=year,
+            total_enter=total_enter,
+            total_used=total_used,
+            total_used_calf=total_used_calf,
+            total_out_dlc=total_out_dlc,
+            total_out=total_out,
+            remaining_stock=remaining_stock,
+        )
+        return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=user_id, year=year, default=pharmacie)
+    except Exception as e:
+        lg.warning(f"(fuction) update_pharmacie_year : {str(e)}")
 
 
 def pharmacie_to_csv(user_id: int, year: int) -> str:
@@ -409,7 +427,7 @@ def pharmacie_to_csv(user_id: int, year: int) -> str:
     # Construire dict : date_str -> med -> qty
     prescriptions_per_date = {
         pres.date.strftime("%d %b %Y"): pres.care
-        for pres in PrescriptionUntils.get_year_prescription(year)
+        for pres in PrescriptionUntils.get_year_prescription(user_id=user_id,year=year)
     }
 
     # Trier les dates
