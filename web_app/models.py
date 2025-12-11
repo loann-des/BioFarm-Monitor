@@ -1,19 +1,30 @@
-from typing import List, Optional, Tuple, TypedDict
-from flask_login import UserMixin
-from sqlalchemy import Column, Integer, PickleType, DATE, Boolean, JSON, String, extract, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.ext.mutable import MutableList, MutableDict
-from werkzeug.security import generate_password_hash
-# from flask_sqlalchemy import SQLAlchemy
-from datetime import date, datetime, timedelta
+# Standard
 import logging as lg
+from typing import List, Optional, Tuple, TypedDict, Any
 
+# Third-party
+from datetime import date, datetime, timedelta
+from flask_login import UserMixin
 
-# from .views import app
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    ForeignKey,
+    Integer,
+    PickleType,
+    PrimaryKeyConstraint,
+    String,
+    DATE,
+    JSON,
+    extract)
+
+from sqlalchemy.ext.mutable import MutableList, MutableDict
+from sqlalchemy.orm import Mapped, mapped_column
+from werkzeug.security import generate_password_hash
+
+# Local
 from . import db
-
-# Create database connection object
-# db = SQLAlchemy(app)
-
 
 # TODO gestion exeption
 # TODO gestion des log
@@ -34,52 +45,86 @@ class Note(TypedDict):
 
 
 class Reproduction(TypedDict):
-    """Represents the reproduction record for a cow, including key dates and outcomes.
-
-    This class stores insemination, ultrasound, dry period, calving preparation, calving date, and abortion status for a cow's reproductive cycle.
+    """Représente le statut reproductif d'une  vache.
     """
 
     insemination: date
-    ultrasound: Optional[bool]
-    dry: date = None
-    dry_status: bool = False # status du tarrisement
-    calving_preparation: date = None
-    calving_preparation_status: bool = False # status de prepa vellage
-    calving_date: date = None
-    calving: bool = False # status du vellage
-    abortion: bool = False
-    reproduction_details: Optional[str] = None # détails sur la reproduction
+    """Date d'insémination"""
+
+    ultrasound: bool | None
+    """Résultats de l'échographie. True si la vache porte un veau, False
+    sinon."""
+
+    dry: date
+    """Date de tarissement"""
+
+    dry_status: bool # status du tarrisement
+    """Tarissement d'une vache. True si la vache est en tarissement, False
+    sinon."""
+
+    calving_preparation: date
+    """Date de préparation au vêlage"""
+
+    calving_preparation_status: bool # status de prepa vellage
+    """"""
+
+    calving_date: date
+    """Date de vêlage"""
+
+    calving: bool # status du vellage
+    """"""
+    abortion: bool
+    """Avortement. True si un avortement a eu lieu, False sinon."""
+
+    reproduction_details: str | None # détails sur la reproduction
+    """Détails sur la reproduction"""
+
 
 class Setting(TypedDict):
-    """Represents user settings for dry time and calving preparation time.
-
-    This class stores the number of days for the dry period and the calving preparation period for a user.
+    """Stocke des réglages utilisateur, en l'occurrence les durées de
+    tarissement et de préparation au vêlage.
     """
 
     dry_time: int  # Temps de tarrisement (en jour)
     calving_preparation_time: int  # Temps de prepa vellage (en jour)
 
+
 class Cow(db.Model):
-    """Represents a cow in the database, including care records, annotations, status, birth date, and reproduction history.
+    """Représente une vache dans la base de données, incluant ses traitements,
+    des notes générales, son statut, sa date de naissance et son historique de
+    reproduction."""
 
-    This class stores all relevant information about a cow, such as its unique ID, care events, farm status, birth date, and reproduction records.
-    """
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+            nullable=False)
+    cow_id: Mapped[int] = mapped_column(Integer, nullable=False)  # numero Vache
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    cow_id = Column(Integer, nullable=False)  # numero Vache
-    # liste de (date de traitement, traitement, info complementaire)
-    cow_cares = Column(MutableList.as_mutable(
-        JSON), default=list, nullable=False)  # TODO modifier access
-    # liste de (date de l'annotation, annotation general)
-    info = Column(MutableList.as_mutable(JSON),
-                  default=list, nullable=False)
-    in_farm = Column(Boolean)  # faux si vache sortie expoitation
-    born_date = Column(DATE)  # date de naissance de la vache
-    # liste de Reproduction
-    reproduction = Column(
-        MutableList.as_mutable(JSON), default=list, nullable=False
-    )
-    is_calf = Column(Boolean, default=False, nullable=False)
+    cow_cares: Mapped[Any] = mapped_column(
+            MutableList.as_mutable(JSON),
+            default=list,
+            nullable=False)  # TODO modifier access
+    """Liste de traitements. Forme un tuple (date de traitement,
+    traitement, notes)."""
+
+    info: Mapped[Any] = mapped_column(MutableList.as_mutable(JSON),
+            default=list, nullable=False)
+    """Notes générales. Forme une liste de tuples (date, contenu)."""
+
+    in_farm: Mapped[bool] = mapped_column(Boolean)
+    """True si la vache se trouve dans la ferme, False si elle en est sortie."""
+
+    # TODO: Determine exact type annotation for born_date
+    born_date = mapped_column(Date)
+    """Date de naissance de la vache."""
+
+    reproduction: Mapped[Any] = mapped_column(MutableList.as_mutable(JSON),
+            default=list, nullable=False)
+    """Liste des reproductions de la vache."""
+
+    is_calf: Mapped[bool] = mapped_column(Boolean, default=False,
+            nullable=False)
+    """True si la vache est une génisse, False sinon."""
+
+    # TODO: Determine exact type annotation for __table_args__
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
@@ -90,11 +135,11 @@ class Cow(db.Model):
         self,
         user_id: int,
         cow_id: int,
-        cow_cares: list[Traitement] = None,
-        info: list[Note] = None,
+        cow_cares: list[Traitement] | None = None,
+        info: list[Note] | None = None,
         in_farm: bool = True,
-        born_date: date = None,
-        reproduction: list[Reproduction] = None,
+        born_date: date | None = None,
+        reproduction: list[Reproduction] | None = None,
         is_calf: bool = False
     ):
         if cow_cares is None:
@@ -103,6 +148,7 @@ class Cow(db.Model):
             info = []
         if reproduction is None:
             reproduction = []
+
         self.user_id = user_id
         self.cow_id = cow_id
         self.cow_cares = cow_cares
@@ -114,30 +160,46 @@ class Cow(db.Model):
 
 
 class Prescription(db.Model):
-    """Represents a prescription record in the database, including date, care items, and DLC status.
-
-    This class stores information about a prescription, such as its date, the medications prescribed, and whether it was removed due to expired shelf life (DLC).
+    """Représente un traitement dans la base de données. Sont inclus la date de
+    prescription, le contenu du traitement, et la date limite de consommation.
     """
 
-    id = Column(Integer, primary_key=True)  # id Prescription
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    date = Column(DATE)  # date de la Prescription
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    """Identifiant du traitement."""
+
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+            nullable=False)
+
+    # TODO: Determine exact type annotation for date
+    date = mapped_column(Date)
+    """Date de la prescription."""
 
     # Traitement stocké au format JSON en base
-    care = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+    care: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Informations sur le traitement, stocké au format JSON dans la base de
+    données."""
 
-    dlc_left = Column(Boolean)
+    dlc_left: Mapped[bool] = mapped_column(Boolean)
+    """True si la date limite de consommation est dépassée, False sinon."""
+
     # TODO pdf prescription scanné ?
 
-    def __init__(self, user_id : int, date: DATE, care: dict[str, int], dlc_left: bool):
-        """Initializes a Prescription object with the provided date, care items, and DLC status.
+    def __init__(self,
+        user_id: int,
+        date: DATE,
+        care: dict[str, int],
+        dlc_left: bool
+    ):
+        """Initialise un objet Prescription représentant un traitement avec les
+        date de prescription, le contenu et la date de consommation fournis.
 
-        This constructor sets the prescription's date, care dictionary, and whether it was removed due to expired shelf life (DLC).
-
-        Args:
-            date (DATE): The date of the prescription.
-            care (dict[str, int]): The medications and their quantities for the prescription.
-            dlc_left (bool): True if the prescription is for medication removed due to expired DLC, False otherwise.
+        Arguments:
+            * date (DATE): La date de la prescription
+            * care (dict[str, int]): Le contenu et les doses prévus par la
+            prescription
+            * dlc_left (bool): True si la date de consommation est atteinte,
+            False sinon.
         """
         self.user_id = user_id
         self.date = date
@@ -146,25 +208,53 @@ class Prescription(db.Model):
 
 
 class Pharmacie(db.Model):
-    """Represents a pharmacy record for a specific year, including medication statistics and remaining stock.
+    """Représente le bilan de la pharmacie pour une année. Inclut les
+    statistiques des médicaments et l'état des stocks.
 
-    This class stores annual pharmacy data such as medication entries, usage, removals, and remaining stock for inventory management.
+    Cette classe stocke les données annuelles de la pharmacie telles que les
+    entrées, utilisations et retraits de traitements et les stocks restants pour
+    le bilan.
     """
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    year_id = Column(Integer)
-    total_enter = Column(MutableDict.as_mutable(JSON),
-                         default=dict, nullable=False)
-    total_used = Column(MutableDict.as_mutable(JSON),
-                        default=dict, nullable=False)
-    total_used_calf = Column(MutableDict.as_mutable(
-        JSON), default=dict, nullable=False)
-    total_out_dlc = Column(MutableDict.as_mutable(JSON),
-                           default=dict, nullable=False)
-    total_out = Column(MutableDict.as_mutable(JSON),
-                       default=dict, nullable=False)
-    remaining_stock = Column(MutableDict.as_mutable(
-        JSON), default=dict, nullable=False)
-    
+
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+            nullable=False)
+
+    # XXX: Is 'year_id' a relevant variable name? Seems to me 'year' would be
+    # clearer.
+    year_id: Mapped[int] = mapped_column(Integer)
+    """Année du bilan de pharmacie."""
+
+    total_enter: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de traitements entrés dans la pharmacie au cours de l'année.
+    Forme un dictionnaire {<nom>: <quantité entrée>}."""
+
+    total_used: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de traitements utilisés au cours de l'année. Forme un
+    dictionnaire {<nom>: <quantité utilisée>}."""
+
+    total_used_calf: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de traitement utilisés sur des veaux au cours de l'année. Forme
+    un dictionnaire {<nom>: <quantité utilisée>}."""
+
+    total_out_dlc: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de médicaments périmés éliminés au cours de l'année. Forme un
+    dictionnaire {<nom<: <quantité éliminée>}."""
+
+    total_out: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Quantité de médicaments retirés de la pharmacie au cours de l'année.
+    Forme un dictionnaire {<nom>: <quantité retirée>}."""
+
+    remaining_stock: Mapped[Any] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
+    """Stocks restants à la fin de l'année. Forme un dictionnaire
+    {<nom>: <quantité>}."""
+
+    # TODO: Determine exact type annotation for __table_args__
     __table_args__ = (
         PrimaryKeyConstraint(
             user_id,
@@ -182,18 +272,23 @@ class Pharmacie(db.Model):
         total_out: dict[str, int],
         remaining_stock: dict[str, int],
     ):
-        """Initializes a Pharmacie object with the provided annual medication statistics and stock.
+        """Initialise un objet Pharmacie à partir des statistiques et stocks
+        fournis.
+        Ce constructeur initialise l'année, les entrées, usages et retraits de
+        traitements et les stocks restants pour l'inventaire.
 
-        This constructor sets the year, medication entries, usage, removals, and remaining stock for the pharmacy record.
-
-        Args:
-            year_id (int): The year for the pharmacy record.
-            total_enter (dict[str, int]): Total medication entered in the year.
-            total_used (dict[str, int]): Total medication used in the year.
-            total_used_calf (dict[str, int]): Total medication used for calves in the year.
-            total_out_dlc (dict[str, int]): Total medication removed due to expired shelf life (DLC).
-            total_out (dict[str, int]): Total medication taken out of the pharmacy.
-            remaining_stock (dict[str, int]): Remaining stock of each medication at year end.
+        Arguments:
+            * year_id (int): Année du bilan de pharmacie
+            * total_enter (dict[str, int]): Total des entrées de médicaments
+            au cours de l'année
+            * total_used (dict[str, int]): Quantité de médicaments utilisée au
+            cours de l'année
+            * total_used_calf (dict[str, int]): Quantité de médicaments utilisée
+            sur des veaux au cours de l'année
+            * total_out_dlc (dict[str, int]): Quantité de médicaments périmés
+            éliminés au cours de l'année
+            * total_out (dict[str, int]): Quantité de médicaments retirés du
+            stock au cours de l'année
         """
         self.user_id = user_id
         self.year_id = year_id
@@ -232,7 +327,7 @@ class Users(UserMixin, db.Model):
         self.password = password
         self.setting = setting
         self.medic_list = {}
-        
+
 
 
 def init_db() -> None:
@@ -287,10 +382,10 @@ class CowUntils:
 
         Returns:
             list[Cow]: A list for user of all his cows in the database.
-            
+
         """
         return Cow.query.get({"user_id": user_id}) if user_id else Cow.query.all()
-        
+
 
     @staticmethod
     def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
@@ -524,7 +619,7 @@ class CowUntils:
         cows: List[Cow] = Cow.query.get({"user_id": user_id})
         all_cares: List[Traitement, int] = [
             (care_dict, cow.cow_id)
-            for cow in cows    
+            for cow in cows
             for care_dict in cow.cow_cares
             if bool(care_dict)
         ]
@@ -765,7 +860,7 @@ class CowUntils:
 
         Returns:
             None
-        """  
+        """
             #TODO gestion pas d'insemination reproduction_ultrasound calving
             #TODO getstion info
         cow: Cow
@@ -829,7 +924,7 @@ class CowUntils:
         """
         cow: Cow
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer") 
+            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving_preparation_status"] = True
             cow.reproduction[-1] = reproduction
@@ -1199,7 +1294,7 @@ class UserUtils:
         if user := Users.query.get(user_id):
             return user
         else:
-            raise #TODO raise get_user mais peut etre pas apparament bug 
+            raise #TODO raise get_user mais peut etre pas apparament bug
     @staticmethod
     def add_medic_in_pharma_list(user_id: int, medic: str, mesur: int) -> None:
         """Adds a new medication to the pharmacy list if it does not already exist.

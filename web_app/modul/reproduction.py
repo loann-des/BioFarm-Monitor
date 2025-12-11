@@ -124,7 +124,7 @@ def validate_dry():
         return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-    
+
 @login_required
 @repro.route("/show_calving_preparation")
 def show_calving_preparation():

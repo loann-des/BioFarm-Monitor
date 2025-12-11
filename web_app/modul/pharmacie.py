@@ -41,8 +41,8 @@ def update_care():
         care["medicaments"] = extract_cares(request.form)
         care["date_traitement"] = request.form["care_date"]
         care["annotation"] = request.form["care_info"]
-        
-        
+
+
 
         lg.info(f"update care{cow_id}...")
 
@@ -158,7 +158,7 @@ def add_medic_in_pharma_list():
             "message": f"{medic} a été ajouté à l'armoire à pharmacie.",
             "redirect": url_for("views.pharmacie")
         })
-        
+
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
@@ -207,7 +207,7 @@ def init_stock():
 @pharma.route("/get_stock", methods=["GET"])
 def get_stock():
     try:
-        year = datetime.now().year  #on récupère l'année 
+        year = datetime.now().year  #on récupère l'année
         stock_data = remaining_pharmacie_stock(year)
         return jsonify({"success": True, "stock": stock_data})
     except Exception as e:

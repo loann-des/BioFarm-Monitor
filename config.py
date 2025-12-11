@@ -5,9 +5,9 @@ class HTTP304Filter(lg.Filter):
     def filter(self, record):
         # Ignore les logs contenant " 304 " (code HTTP 304)
         return " 304 " not in record.getMessage()
-    
+
 class config :
-    
+
     # Configuration du logging pour toute l'application
     lg.basicConfig(
         filename='app.log',  # Nom du fichier log
@@ -16,7 +16,7 @@ class config :
     )
     for handler in lg.getLogger().handlers:
         handler.addFilter(HTTP304Filter())
-    
+
     SECRET_KEY = '#d#JCqTTW\nilK\\7m\x0bp#\tj~#H'
 
     APP_G_ID = 1200420960103822

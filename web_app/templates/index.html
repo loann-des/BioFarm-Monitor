@@ -7,7 +7,7 @@
 {% endblock body_class %}
 
 {% block page_title %}Accueil{% endblock page_title %}
-{% block content %}  
+{% block content %}
 
   <!-- set_user_setting Section -->
   <section id="user_setting" class="contact section">
@@ -18,7 +18,7 @@
     <div class="row justify-content-center">
       <form id="form-user_setting" action="{{ url_for('views.user_setting') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
-          
+
           {# selection Durée tarissement #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="dry_time" class="form-label">Durée tarissement</label>
@@ -52,13 +52,13 @@
     <div class="row justify-content-center">
       <form id="form-init_cow" action="{{ url_for('views.upload_cows') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
         <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
-          
+
           {# selection fichier #}
           <div class="col d-flex flex-column align-items-center text-center">
             <label for="file" class="form-label">Fichier</label>
             <input type="file" name="file" accept=".xls,.xlsx" class="form-control" required>
           </div>
-          
+
           {# button submit #}
           <div class="col d-flex flex-column align-items-center text-center">
             <button type="submit" class="btn btn-primary">Importer</button>
