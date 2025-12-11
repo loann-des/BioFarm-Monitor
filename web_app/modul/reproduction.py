@@ -134,6 +134,24 @@ def show_calving_preparation():
         return jsonify({"success": True, "calving_preparation": calving_preparation})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+    
+@login_required
+@repro.route("/validate_calving_preparation")
+def validate_calving_preparation():
+    # TODO validate_dry
+    data = request.get_json()
+    cow_id = data.get("cow_id")
+
+    if not cow_id:
+        return jsonify({"success": False, "message": "Aucune vache spécifiée."}), 400
+
+    try:
+        CowUntils.validated_dry(user_id=current_user.id, cow_id=cow_id)
+
+        return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 @login_required
@@ -157,14 +175,14 @@ def upload_calf():
         calf_id = request.form["calf_id"]
         calving_date = request.form["calving_date"]
         if borning == "abortion":
-            CowUntils.validated_calving(cow_id=mother_id, abortion=True)
+            CowUntils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True)
             success_message = f"avortement de {mother_id} rensegné, courage"
 
         elif calf_id and calving_date:
             lg.info(f"Adding new calf {calf_id}...")
-            CowUntils.validated_calving(cow_id=mother_id, abortion=False)
+            CowUntils.validated_calving(user_id=current_user.id, cow_id=mother_id, abortion=False)
             calving_date = datetime.strptime(calving_date, "%Y-%m-%d").date()
-            CowUntils.add_calf(calf_id=calf_id, born_date=calving_date)
+            CowUntils.add_calf(user_id=current_user.id, calf_id=calf_id, born_date=calving_date)
             success_message = f"naissance de {calf_id} confirmé"
         else:
             raise ValueError('Renségner "Numéro Veau" et  "Date de velage"')
