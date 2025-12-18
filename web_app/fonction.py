@@ -34,33 +34,43 @@ def last(lst: List) -> Optional[object]:
     return lst[-1] if lst else None
 
 
-def strftime(date: date) -> str:
-    return date.strftime('%d %B %Y')
+def my_strftime(date_obj: date|str) -> str:
+    
+    return (date_obj if isinstance(date_obj, date)
+                else datetime.strptime(date_obj, "%Y-%m-%d").date()
+                ).strftime('%Y-%m-%d')
 
-def sum_date_to_str(date_from : date|str, delta_day :int) -> str :
-    return strftime(
-            date_from + timedelta(days=delta_day)
-            if date_from.__class__ is date.__class__
-            else datetime.strptime(date_from, "%d %B %Y").date() +  timedelta(days=delta_day)
+def parse_date(date_obj: date|str) -> Optional[date]:
+    """Parses a date string in the format 'YYYY-MM-DD' and returns a date object
+    """
+    try :
+        return (None if not date_obj 
+                else date_obj if isinstance(date_obj, date) 
+                else datetime.strptime(date_obj, "%Y-%m-%d").date())
+    except Exception as e:
+        
+        print((f"{e.with_traceback} : {date_obj.__class__}"))
+
+def date_to_str(date_obj : date|str) -> str:
+    return (date_obj
+            if isinstance(date_obj, date)
+            else datetime.strptime(date_obj, "%Y-%m-%d").date()
+            ).strftime('%d %B %Y')
+
+def sum_date_to_str(date_obj : date|str, delta_day :int) -> str :
+    print("sum_date_to_str")
+    return my_strftime(
+                parse_date(date_obj) +  timedelta(days=delta_day)
             )
 
-def substract_date_to_str(date_from : date|str, delta_day :int) -> str :
-    return strftime(
-            date_from - timedelta(days=delta_day)
-            if date_from.__class__ is date.__class__
-            else datetime.strptime(date_from, "%d %B %Y").date() -  timedelta(days=delta_day)
+def substract_date_to_str(date_obj : date|str, delta_day :int) -> str :
+    return my_strftime(
+                parse_date(date_obj) -  timedelta(days=delta_day)
             )
 
 def format_bool_fr(value: bool, true_str="Oui", false_str="Non") -> str:
     return true_str if value else false_str
 
-def parse_date(date_str: str) -> Optional[date]:
-    """Parses a date string in the format 'YYYY-MM-DD' and returns a date object
-    """
-    return datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else None
-
-# def parse_date(value : str)->date:
-#         return datetime.strptime(value, "%Y-%m-%d").date()
 
 def parse_bool(value: str) -> Optional[bool]:
     if value is None or not value:

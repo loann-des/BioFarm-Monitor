@@ -560,6 +560,7 @@ class CowUntils:
 
         # Commit les changements
         db.session.commit()
+
         lg.info(f"Care add to (user :{cow.user_id}, cow: {cow.cow_id}).")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
@@ -708,7 +709,7 @@ class CowUntils:
     # reproduction functions ------------------------------------------------
 
     @staticmethod
-    def add_insemination(user_id : int, cow_id: int, insemination: date) -> None:
+    def add_insemination(user_id : int, cow_id: int, insemination: str) -> None:
         """Adds an insemination record to the specified cow.
 
         This function appends a new insemination event to the cow's reproduction history if the cow exists, otherwise logs an error and raises a ValueError.
@@ -757,7 +758,6 @@ class CowUntils:
         Returns:
             None
         """
-        # TODO gestion pas d'insemination reproduction_ultrasound
         from web_app.fonction import last
         cow: Cow
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
@@ -793,7 +793,9 @@ class CowUntils:
         from web_app.fonction import substract_date_to_str, sum_date_to_str
         user: Users = UserUtils.get_user(user_id=user_id)
         calving_date: str = sum_date_to_str(reproduction["insemination"],280)
+        print("calving_date ok")
         reproduction["dry"] = substract_date_to_str(calving_date, int(user.setting["dry_time"]))
+        print("dry ok")
         reproduction["calving_preparation"] = substract_date_to_str(calving_date, int(user.setting["calving_preparation_time"]))
         reproduction["calving_date"] = calving_date
         return reproduction

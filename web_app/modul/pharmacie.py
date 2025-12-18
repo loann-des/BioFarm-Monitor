@@ -6,7 +6,7 @@ import logging as lg
 from flask_login import login_required, current_user
 
 
-from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, strftime
+from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, date_to_str
 from web_app.models import CowUntils, PharmacieUtils, PrescriptionUntils, Traitement, UserUtils, Users
 
 
@@ -39,12 +39,9 @@ def update_care():
         cow_id = request.form["id"]
         care : Traitement = Traitement()
         care["medicaments"] = extract_cares(request.form)
-        # print(request.form["care_date"])
-        # date_obj = datetime.strptime(request.form["care_date"], "%Y-%m-%d").date()
+
         care["date_traitement"] = request.form["care_date"]
-        # print(date_obj)
-        # print(datetime.now())
-        # print(datetime.now().strftime("%Y-%m-%d"))
+
         care["annotation"] = request.form["care_info"]
 
 
@@ -53,7 +50,7 @@ def update_care():
 
         remain_care = CowUntils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care)
 
-        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {remain_care[1]} pour {cow_id}."
+        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {date_to_str(remain_care[1])} pour {cow_id}."
         return jsonify({"success": True, "message": success_message})
 
     except Exception as e:

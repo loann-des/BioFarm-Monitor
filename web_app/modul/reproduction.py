@@ -7,7 +7,7 @@ import logging as lg
 from flask_login import login_required, current_user
 
 
-from web_app.fonction import get_all_calving_date, get_all_calving_preparation_date, get_all_dry_date, get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock
+from web_app.fonction import get_all_calving_date, get_all_calving_preparation_date, get_all_dry_date, get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, my_strftime
 from web_app.models import CowUntils, PharmacieUtils, PrescriptionUntils, UserUtils, Users
 
 
@@ -64,10 +64,8 @@ def remove_cow():
 def insemination():
 
     try:
-        # Récupère et parse la date
-        dlc_left_date_str = request.form["prescription_date"]
-        date_obj = datetime.strptime(dlc_left_date_str, "%Y-%m-%d").date().strftime('%d %B %Y')
-
+        # Récupère la date
+        date_obj = request.form["prescription_date"]
         # Récupération de l'id de la vache
         cow_id = int(request.form["id"])
 

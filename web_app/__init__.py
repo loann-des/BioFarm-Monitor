@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 
 
+
 # Initialize SQLAlchemy instance (outside create_app for import access)
 db = SQLAlchemy()
 
@@ -47,14 +48,14 @@ def create_app():
     app.register_blueprint(repro_blueprint)
 
     # Jinja2 global functions
-    from .fonction import get_pharma_list, get_pharma_len, get_hystory_pharmacie, strftime, format_bool_fr
+    from .fonction import get_pharma_list, get_pharma_len, get_hystory_pharmacie, format_bool_fr, date_to_str
     from .models import CowUntils
     app.jinja_env.globals.update(enumerate=enumerate)
     app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
     app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
     app.jinja_env.globals.update(get_hystory_pharmacie=get_hystory_pharmacie)
     app.jinja_env.globals.update(get_all_cows=CowUntils.get_all_cows)
-    app.jinja_env.globals.update(strftime=strftime)
+    app.jinja_env.globals.update(strftime=date_to_str)
     app.jinja_env.globals.update(format_bool_fr=format_bool_fr)
 
     return app
