@@ -35,13 +35,13 @@ from . import db
 
 
 class Traitement(TypedDict):
-    date_traitement: date
+    date_traitement: str  # date au format 'YYYY-MM-DD'
     medicaments: dict[str, int]  # [medicament,dosage]
     annotation: str
 
 
 class Note(TypedDict):
-    date_note: date
+    date_note: str  # date au format 'YYYY-MM-DD'
     information: str
 
 
@@ -49,28 +49,28 @@ class Reproduction(TypedDict):
     """Représente le statut reproductif d'une  vache.
     """
 
-    insemination: date
-    """Date d'insémination"""
+    insemination: str
+    """Date d'insémination au format 'YYYY-MM-DD'."""
 
     ultrasound: bool | None
     """Résultats de l'échographie. True si la vache porte un veau, False
     sinon."""
 
-    dry: date
-    """Date de tarissement"""
+    dry: str | None
+    """Date de tarissement au format 'YYYY-MM-DD'."""
 
     dry_status: bool # status du tarrisement
     """Tarissement d'une vache. True si la vache est en tarissement, False
     sinon."""
 
-    calving_preparation: date
-    """Date de préparation au vêlage"""
+    calving_preparation: str | None
+    """Date de préparation au vêlage au format 'YYYY-MM-DD'."""
 
     calving_preparation_status: bool # status de prepa vellage
     """"""
 
-    calving_date: date
-    """Date de vêlage"""
+    calving_date: str | None
+    """Date de vêlage au format 'YYYY-MM-DD'."""
 
     calving: bool # status du vellage
     """"""
@@ -176,7 +176,7 @@ class Prescription(db.Model):
     """Date de la prescription."""
 
     # Traitement stocké au format JSON en base
-    care: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    care: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Informations sur le traitement, stocké au format JSON dans la base de
     données."""
@@ -223,32 +223,32 @@ class Pharmacie(db.Model):
     year: Mapped[int] = mapped_column(Integer)
     """Année du bilan de pharmacie."""
 
-    total_enter: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    total_enter: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Quantité de traitements entrés dans la pharmacie au cours de l'année.
     Forme un dictionnaire {<nom>: <quantité entrée>}."""
 
-    total_used: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    total_used: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Quantité de traitements utilisés au cours de l'année. Forme un
     dictionnaire {<nom>: <quantité utilisée>}."""
 
-    total_used_calf: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    total_used_calf: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Quantité de traitement utilisés sur des veaux au cours de l'année. Forme
     un dictionnaire {<nom>: <quantité utilisée>}."""
 
-    total_out_dlc: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    total_out_dlc: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Quantité de médicaments périmés éliminés au cours de l'année. Forme un
-    dictionnaire {<nom<: <quantité éliminée>}."""
+    dictionnaire {<nom>: <quantité éliminée>}."""
 
-    total_out: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    total_out: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Quantité de médicaments retirés de la pharmacie au cours de l'année.
     Forme un dictionnaire {<nom>: <quantité retirée>}."""
 
-    remaining_stock: Mapped[dict[str : int]] = mapped_column(MutableDict.as_mutable(JSON),
+    remaining_stock: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
             default=dict, nullable=False)
     """Stocks restants à la fin de l'année. Forme un dictionnaire
     {<nom>: <quantité>}."""
@@ -341,6 +341,7 @@ def init_db() -> None:
     db.create_all()
     # db.session.add(Prescription(user_id=1, date=None, care={}, dlc_left=True))
     UserUtils.add_user(email="adm@mail.com", password=generate_password_hash(password="adm"))
+    UserUtils.add_user(email="adm2@mail.com", password=generate_password_hash(password="adm"))
     db.session.commit()
     lg.warning("Database initialized!")
 
@@ -374,7 +375,7 @@ class CowUntils:
         raise ValueError(f"Cow with ID {cow_id} not found")
 
     @staticmethod
-    def get_all_cows(user_id : int = None) -> list[Cow]:
+    def get_all_cows(user_id: Optional[int] = None) -> list[Cow]:
         """Retrieves all of a user cows from the database.
 
         This function queries the database and returns a list of all Cow objects.
@@ -386,7 +387,7 @@ class CowUntils:
         return Cow.query.filter_by(user_id=user_id).all() if user_id else Cow.query.all()
 
     @staticmethod
-    def add_cow(user_id: int, cow_id, born_date: date = None) -> None:
+    def add_cow(user_id: int, cow_id, born_date: Optional[date] = None) -> None:
         """Adds a new cow to the database if it does not already exist.
 
         If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
@@ -468,7 +469,7 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm :
                 raise ValueError(f"user :{user_id}, cow: {cow_id}: deja supprimé.")
@@ -481,7 +482,7 @@ class CowUntils:
                 f"(user :{user_id}, cow: {cow_id}): n'existe pas.")
 
     @staticmethod
-    def add_calf(user_id: int, calf_id: int, born_date: date = None) -> None:
+    def add_calf(user_id: int, calf_id: int, born_date: Optional[date] = None) -> None:
         """Adds a new calf to the database if it does not already exist.
 
         If a calf with the given ID is not present, it is created and added to the database. Otherwise, an error is logged and a ValueError is raised.
@@ -529,7 +530,7 @@ class CowUntils:
         """
 
         # Récupérer la vache depuis la BDD
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return CowUntils.add_care(cow, cow_care)
         lg.error(f"(user :{user_id}, cow: {cow_id})  not found.")
@@ -570,12 +571,11 @@ class CowUntils:
     def update_cow_care(
         user_id: int, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             # Remplacement du soin dans la liste
             if care_index >= len(cow.cow_cares):
-                raise IndexError("index out of bouns")
-
+                raise IndexError("index out of bounds")
             cow.cow_cares[care_index] = new_care
             db.session.commit()
 
@@ -598,7 +598,7 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             del cow.cow_cares[care_index]
             db.session.commit()
@@ -641,7 +641,7 @@ class CowUntils:
             Optional[Tuple[date, dict, str]]: The list of care records for the cow, or None if the cow is not found.
         """
         # Récupérer la vache depuis la BDD
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return cow.cow_cares
         lg.error(f"(user :{user_id}, cow: {cow_id}) : not found.")
@@ -681,28 +681,24 @@ class CowUntils:
             list[Tuple[date, dict[str, int], str]]: A list of calf care records from the specified year.
         """
         from web_app.fonction import parse_date
-        try:
-            res : list[Traitement] = []
-            cow: Cow
-            for cow in Cow.query.filter_by(user_id=user_id).all(): 
-                # TODO verif integrité is_calf
-                if cow.is_calf :
-                    res.append(cow_care 
-                        for cow_care  in cow.cow_cares
-                        if parse_date(cow_care["date_traitement"]).year == year
-                    )
-                else :
-                    last_insemination = parse_date(cow.reproduction[-1]["insemination"]) if cow.reproduction else None
-                    res.append(
-                        cow_care
-                        for cow_care in cow.cow_cares
-                        if parse_date(cow_care["date_traitement"]).year == year
-                        and last_insemination
-                        and parse_date(cow_care["date_traitement"]) <= last_insemination
-                    )
-            return res
-        except Exception as e:
-            lg.warning(f"(models) get_calf_care_on_year : {e}")
+        res : list[Traitement] = []
+        cow: Cow
+        for cow in Cow.query.filter_by(user_id=user_id).all(): 
+            # TODO verif integrité is_calf
+            if cow.is_calf :
+                res.append(cow_care 
+                    for cow_care  in cow.cow_cares
+                    if parse_date(cow_care["date_traitement"]).year == year # type: ignore
+                )
+            else :
+                last_insemination = parse_date(cow.reproduction[-1]["insemination"]) if cow.reproduction else None
+                res.append(
+                    cow_care
+                    for cow_care in cow.cow_cares
+                    if parse_date(cow_care["date_traitement"]).year == year
+                    and parse_date(cow_care["date_traitement"]) <= last_insemination # type: ignore
+                ) if last_insemination else None
+        return res
 
     # END cow care functions ------------------------------------------------
 
@@ -721,7 +717,7 @@ class CowUntils:
         Returns:
             None
         """  # TODO Gestion doublon add_reproduction
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction.append(
@@ -759,10 +755,10 @@ class CowUntils:
             None
         """
         from web_app.fonction import last
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
-            reproduction: Reproduction = last(cow.reproduction)
+            reproduction: Reproduction = last(cow.reproduction) # type: ignore
             if not reproduction : raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
             reproduction["ultrasound"] = ultrasound
 
@@ -794,9 +790,9 @@ class CowUntils:
         user: Users = UserUtils.get_user(user_id=user_id)
         calving_date: str = sum_date_to_str(reproduction["insemination"],280)
         print("calving_date ok")
-        reproduction["dry"] = substract_date_to_str(calving_date, int(user.setting["dry_time"]))
+        reproduction["dry"] = substract_date_to_str(calving_date, int(user.setting["dry_time"])) # type: ignore
         print("dry ok")
-        reproduction["calving_preparation"] = substract_date_to_str(calving_date, int(user.setting["calving_preparation_time"]))
+        reproduction["calving_preparation"] = substract_date_to_str(calving_date, int(user.setting["calving_preparation_time"])) # type: ignore
         reproduction["calving_date"] = calving_date
         return reproduction
 
@@ -815,7 +811,7 @@ class CowUntils:
         Raises:
             ValueError: If the cow with the given ID does not exist.
         """
-        cow: Cow
+        cow: Optional[Cow]
         if not (cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id})):
             raise ValueError(f"{cow_id} n'existe pas.")
         if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
@@ -832,6 +828,7 @@ class CowUntils:
                     and not cow.reproduction[-1].get("calving")):
 
                 cow.reproduction[-1] = CowUntils.set_reproduction(
+                    user_id,
                     cow.reproduction[-1])
 
         db.session.commit()
@@ -855,7 +852,7 @@ class CowUntils:
         }
 
     @staticmethod
-    def validated_calving(cow_id: int, user_id : int, abortion: bool, info: str = None) -> None:
+    def validated_calving(cow_id: int, user_id : int, abortion: bool, info: Optional[str] = None) -> None:
         """Validates the calving event for a cow and records whether it was an abortion.
 
         This function updates the latest reproduction record for the specified cow to indicate a calving event and whether it was an abortion. If the cow does not exist, an error is logged and a ValueError is raised.
@@ -869,7 +866,7 @@ class CowUntils:
         """
             #TODO gestion pas d'insemination reproduction_ultrasound calving
             #TODO getstion info
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
 
@@ -897,7 +894,7 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
 
@@ -928,7 +925,7 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = cow.reproduction[-1]
@@ -961,7 +958,7 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction[repro_index] = new_repro
@@ -984,7 +981,7 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Cow
+        cow: Optional[Cow]
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             del cow.reproduction[repro_index]
@@ -1020,7 +1017,7 @@ class PrescriptionUntils:
         Returns:
             None
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=False)
+        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=False)  # type: ignore
         db.session.add(prescription)
         db.session.commit()
 
@@ -1037,7 +1034,7 @@ class PrescriptionUntils:
         Returns:
             None
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=True)
+        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=True) # type: ignore
         db.session.add(prescription)
         db.session.commit()
 
@@ -1084,7 +1081,7 @@ class PrescriptionUntils:
             List[Prescription]: A list of prescriptions from the specified year.
         """
         return Prescription.query.filter_by(user_id=user_id, dlc_left=False).filter(
-            (extract("year", Prescription.date) == year)
+            (extract("year", Prescription.date) == year) # type: ignore
         ).all()
 
     @staticmethod
@@ -1100,7 +1097,7 @@ class PrescriptionUntils:
             List[Prescription]: A list of prescriptions with medication removed due to expired DLC in the specified year.
         """
         return Prescription.query.filter_by(user_id=user_id, dlc_left=True).filter(
-            (extract("year", Prescription.date) == year)
+            (extract("year", Prescription.date) == year) # type: ignore
         ).all()
 
 
@@ -1174,6 +1171,7 @@ class PharmacieUtils:
     def set_pharmacie_year(
         user_id: int,
         year: int,
+        total_enter: dict[str, int],
         total_used: dict[str, int],
         total_used_calf: dict[str, int],
         total_out_dlc: dict[str, int],
@@ -1198,6 +1196,7 @@ class PharmacieUtils:
         pharmacie = Pharmacie(
             user_id=user_id,
             year=year,
+            total_enter=total_enter,
             total_used=total_used,
             total_used_calf=total_used_calf,
             total_out_dlc=total_out_dlc,
@@ -1278,10 +1277,9 @@ class UserUtils:
             None
         """
 
-        user: Users
-        user = Users.query.get(user_id)
-        user.setting["dry_time"] = dry_time
-        user.setting["calving_preparation_time"] = calving_preparation
+        user: Users = Users.query.get(user_id) # type: ignore
+        user.setting["dry_time"] = dry_time # type: ignore
+        user.setting["calving_preparation_time"] = calving_preparation # type: ignore
         db.session.commit()
 
     @staticmethod
@@ -1293,8 +1291,8 @@ class UserUtils:
         Returns:
             Setting: The user's settings containing dry time and calving preparation time.
         """
-        user: Users = Users.query.get(user_id)
-        return user.setting
+        user: Users = Users.query.get(user_id) # type: ignore
+        return user.setting # type: ignore
 
     @staticmethod
     def get_user(user_id):
@@ -1314,7 +1312,7 @@ class UserUtils:
         Returns:
             None
         """
-        user: Users = Users.query.get(user_id)
+        user: Users = Users.query.get(user_id) # type: ignore
         user.medic_list.setdefault(medic,mesur)
         db.session.commit()
         lg.info(f"{medic} add in pharma list")
@@ -1329,7 +1327,7 @@ class UserUtils:
         Returns:
             dict[str, int]: A dictionary mapping medication names to their quantities.
         """
-        user : Users = Users.query.get(user_id)
-        return user.medic_list
+        user : Users = Users.query.get(user_id) # type: ignore
+        return user.medic_list # type: ignore
 
 # END USERS FONCTION

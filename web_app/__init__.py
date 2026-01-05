@@ -18,7 +18,6 @@ def create_app():
     # Configure Flask-Login
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
-    login_manager
     login_manager.init_app(app)
 
     # User loader function for Flask-Login

@@ -4,3 +4,5 @@ __pycache__
 .venv/
 app.log
 app.db
+.vscode/
+/.vscode

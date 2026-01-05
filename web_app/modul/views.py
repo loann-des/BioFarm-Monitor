@@ -11,7 +11,7 @@ from flask import (
     url_for,
 )
 import logging as lg
-from flask_login import login_required, current_user, logout_user, AnonymousUserMixin
+from flask_login import login_required, current_user, logout_user, AnonymousUserMixin # type: ignore
 import pandas as pd
 
 views = Blueprint('views', __name__)
@@ -61,10 +61,10 @@ def user_setting():
         calving_preparation_time = request.form["calving_preparation_time"]
 
         UserUtils.set_user_setting(
-            user_id=user_id, dry_time=dry_time, calving_preparation=calving_preparation_time
+            user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time) # type: ignore
         )
 
-        CowUntils.reload_all_reproduction(user_id=user_id)
+        CowUntils.reload_all_reproduction(user_id=user_id) # type: ignore
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -90,7 +90,7 @@ def upload_cows():
         added, skipped = 0, 0
         for cow_id in cow_ids:
             try:
-                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id))
+                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id)) # type: ignore
                 added += 1
             except ValueError:
                 skipped += 1

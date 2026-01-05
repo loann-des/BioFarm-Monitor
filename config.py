@@ -8,6 +8,9 @@ class HTTP304Filter(lg.Filter):
 
 class config :
 
+    # Configuration de la session
+    PERMANENT_SESSION_LIFETIME = 60*60  # Durée de vie de la session en secondes (1 minute)
+   
     # Configuration du logging pour toute l'application
     lg.basicConfig(
         filename='app.log',  # Nom du fichier log
@@ -34,4 +37,4 @@ class config :
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER')
 
-config = config()
+config = config() # type: ignore

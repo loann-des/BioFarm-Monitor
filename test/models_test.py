@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import sys
+
+from web_app.fonction import my_strftime
 sys.path.insert(1, "../")
 
 import unittest
 import warnings
 
-from datetime import datetime
+from datetime import date, datetime
 from random import randint, sample
 from web_app import app
 from web_app.models import Cow, CowUntils, init_db
@@ -47,7 +49,7 @@ class WebAppUnitTests(unittest.TestCase):
 
             CowUntils.add_cow(user_id, cow_id, birthdate)
 
-            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
             self.assertIsNotNone(c)
 
             self.assertEqual(c.user_id, user_id)
@@ -69,7 +71,7 @@ class WebAppUnitTests(unittest.TestCase):
 
             CowUntils.add_cow(user_id, cow_id, birthdate)
 
-            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
             self.assertIsNotNone(c)
 
             self.assertEqual(c.user_id, user_id)
@@ -117,7 +119,7 @@ class WebAppUnitTests(unittest.TestCase):
 
         CowUntils.add_cow(user_id, cow_id, None)
 
-        c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+        c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
         self.assertIsNotNone(c)
 
         self.assertEqual(c.user_id, user_id)
@@ -133,54 +135,54 @@ class WebAppUnitTests(unittest.TestCase):
 
         CowUntils.update_cow(user_id, cow_id,
                 cow_cares = [{
-                    "date_traitement": datetime.now().date(),
-                    "medicaments": {"medicament", 1},
+                    "date_traitement": my_strftime(datetime.now().date()),
+                    "medicaments": {"medicament": 1},
                     "annotation": "Annotation"
                 }],
                 info = [{
-                    "date_note": birthdate,
+                    "date_note": my_strftime(birthdate),
                     "information": "Information"
                 }],
                 in_farm = False,
-                born_date = birthdate,
+                born_date = (birthdate),
                 reproduction = [{
-                    "insemination": birthdate,
+                    "insemination": my_strftime(birthdate),
                     "ultrasound": True,
-                    "dry": birthdate,
+                    "dry": my_strftime(birthdate),
                     "dry_status": True,
-                    "calving_preparation": birthdate,
+                    "calving_preparation": my_strftime(birthdate),
                     "calving_preparation_status": True,
-                    "calving_date": birthdate,
+                    "calving_date": my_strftime(birthdate),
                     "calving": False,
                     "abortion": False,
                     "reproduction_details": "Details"
                 }],
                 is_calf = True)
 
-        c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id})
+        c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
         self.assertIsNotNone(c)
 
-        self.assertEqual(c.user_id == user_id)
-        self.assertEqual(c.cow_id == cow_id)
+        self.assertEqual(c.user_id, user_id)
+        self.assertEqual(c.cow_id, cow_id)
         self.assertListEqual(c.cow_cares, [{
-                "date_traitement": datetime.now().date(),
-                "medicaments": {"medicament", 1},
+                "date_traitement": my_strftime(datetime.now().date()),
+                "medicaments": {"medicament": 1},
                 "annotation": "Annotation"
             }])
-        self.assertListEqual(c.info == [{
-                "date_note": birthdate,
+        self.assertListEqual(c.info , [{
+                "date_note": my_strftime(birthdate),
                 "information": "Information"
             }])
         self.assertFalse(c.in_farm)
         self.assertEqual(c.born_date, birthdate)
         self.assertListEqual(c.reproduction, [{
-                "insemination": birthdate,
+                "insemination": my_strftime(birthdate),
                 "ultrasound": True,
-                "dry": birthdate,
+                "dry": my_strftime(birthdate),
                 "dry_status": True,
-                "calving_preparation": birthdate,
+                "calving_preparation": my_strftime(birthdate),
                 "calving_preparation_status": True,
-                "calving_date": birthdate,
+                "calving_date": my_strftime(birthdate),
                 "calving": False,
                 "abortion": False,
                 "reproduction_details": "Details"
@@ -219,7 +221,7 @@ class WebAppUnitTests(unittest.TestCase):
 
             CowUntils.add_calf(user_id, calf_id, birthdate)
 
-            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : calf_id})
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : calf_id}) # type: ignore
             self.assertIsNotNone(c)
 
             self.assertEqual(c.user_id, user_id)
