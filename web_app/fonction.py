@@ -268,7 +268,6 @@ def sum_pharmacie_left(user_id: int, year: int) -> dict[str, int]:
     
     return dict(Counter(sum_pharmacie_used(user_id=user_id,year=year)) + Counter(sum_dlc_left(user_id=user_id, year=year)))
 
-
 def remaining_pharmacie_stock(user_id: int, year: int) -> dict[str, int]:
     """Calculates the remaining stock of each medication in the pharmacy for a given year.
 
@@ -305,7 +304,10 @@ def get_hystory_pharmacie(user_id : int) -> list[tuple[date, dict[str, int], str
     care_raw : list[tuple[Traitement,int]] = CowUntils.get_all_care(user_id=user_id) or []
     prescription_raw : List[tuple[date, dict[str, int], bool]]= PrescriptionUntils.get_all_prescription_cares(user_id=user_id) or []
 
-    care_data = [(parse_date(traitement["date_traitement"]), traitement["medicaments"], f"care {cow_id}") for traitement, cow_id in care_raw]
+    care_data = [
+        (parse_date(traitement["date_traitement"]), traitement["medicaments"], f"care {cow_id}")
+        for traitement, cow_id in care_raw
+        ]
     prescription_data = [
         (parse_date(date), medics, "dlc left" if dlc_left else "prescription")
         for date, medics, dlc_left in prescription_raw

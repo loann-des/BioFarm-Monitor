@@ -29,7 +29,7 @@ def add_cow():
 
         lg.info(f"Adding new cow {cow_id}...")
 
-        CowUntils.add_cow(user_id=user_id, cow_id=cow_id)
+        CowUntils.add_cow(user_id=user_id, cow_id=cow_id, init_as_cow=True)
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}

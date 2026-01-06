@@ -114,9 +114,9 @@ class Cow(db.Model):
     """True si la vache se trouve dans la ferme, False si elle en est sortie.""" #TODO modif doc sur Type
 
     # TODO: Determine exact type annotation for born_date
-    born_date = mapped_column(Date)
+    born_date : Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     """Date de naissance de la vache."""
-
+    
     reproduction: Mapped[list[Reproduction]] = mapped_column(MutableList.as_mutable(JSON),
             default=list, nullable=False) #TODO modif doc sur Type
     """Liste des reproductions de la vache."""
@@ -124,6 +124,11 @@ class Cow(db.Model):
     is_calf: Mapped[bool] = mapped_column(Boolean, default=False,
             nullable=False)
     """True si la vache est une génisse, False sinon."""
+    
+    #TODO refaire fonction avec cette arg
+    init_as_cow : Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    """True si la vache est comme vache adult, False sinon."""
+
 
     # TODO: Determine exact type annotation for __table_args__
     __table_args__ = (
@@ -141,7 +146,8 @@ class Cow(db.Model):
         in_farm: bool = True,
         born_date: date | None = None,
         reproduction: list[Reproduction] | None = None,
-        is_calf: bool = False
+        is_calf: bool = False,
+        init_as_cow: bool = False
     ):
         if cow_cares is None:
             cow_cares = []
@@ -158,6 +164,7 @@ class Cow(db.Model):
         self.born_date = born_date
         self.reproduction = reproduction
         self.is_calf = is_calf
+        self.init_as_cow = init_as_cow
 
 
 class Prescription(db.Model):
@@ -387,7 +394,7 @@ class CowUntils:
         return Cow.query.filter_by(user_id=user_id).all() if user_id else Cow.query.all()
 
     @staticmethod
-    def add_cow(user_id: int, cow_id, born_date: Optional[date] = None) -> None:
+    def add_cow(user_id: int, cow_id, born_date: Optional[date] = None, init_as_cow: bool = False) -> None:
         """Adds a new cow to the database if it does not already exist.
 
         If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
@@ -402,7 +409,8 @@ class CowUntils:
             new_cow = Cow(
                 user_id=user_id,
                 cow_id=cow_id,
-                born_date=born_date
+                born_date=born_date,
+                init_as_cow=init_as_cow
             )
             db.session.add(new_cow)
             db.session.commit()
@@ -621,7 +629,7 @@ class CowUntils:
             (care_dict, cow.cow_id)
             for cow in cows
             for care_dict in cow.cow_cares
-            if bool(care_dict)
+            if bool(cow.cow_cares) and bool(care_dict)
         ]
         # tri par date décroissante
         # TODO verif sort
@@ -664,7 +672,7 @@ class CowUntils:
 
         return [cow_care 
                 for cow in Cow.query.filter_by(user_id=user_id).all()
-                for cow_care  in cow.cow_cares
+                for cow_care  in cow.cow_cares if bool(cow.cow_cares)
                 if parse_date(cow_care["date_traitement"]).year == year
                 ]
 
@@ -681,23 +689,59 @@ class CowUntils:
             list[Tuple[date, dict[str, int], str]]: A list of calf care records from the specified year.
         """
         from web_app.fonction import parse_date
-        res : list[Traitement] = []
-        cow: Cow
-        for cow in Cow.query.filter_by(user_id=user_id).all(): 
+        # res : list[Traitement] = []
+        # cow: Cow
+        # for cow in Cow.query.filter_by(user_id=user_id).all(): 
             # TODO verif integrité is_calf
-            if cow.is_calf :
-                res.append(cow_care 
-                    for cow_care  in cow.cow_cares
-                    if parse_date(cow_care["date_traitement"]).year == year # type: ignore
+            # res.extend(
+            #         cow_care
+            #         for cow_care in cow.cow_cares
+            #         if (
+            #             parse_date(cow_care["date_traitement"]).year == year #verif de l'anné
+            #             and (
+            #                 cow.is_calf # si c'est un veaux
+            #                 or (        # sinon
+            #                     cow.reproduction   #si il y'a eu reproduction
+            #                     and parse_date(cow_care["date_traitement"]) <= parse_date(cow.reproduction[-1]["insemination"]) # traitement avant reproduction
+            #                     )
+            #                 )
+            #             )
+            # )
+        res : list[Traitement] = [
+            cow_care 
+            for cow in Cow.query.filter_by(user_id=user_id).all()   #iteration sur cows
+            for cow_care in cow.cow_cares                           #iteration sur cow_care
+            if (
+                parse_date(cow_care["date_traitement"]).year == year #verif de l'année
+                and (
+                    cow.is_calf            # si c'est un veau
+                    or (
+                        not cow.init_as_cow # sinon : non initialiser comme vache
+                        and cow.reproduction   # et si il y'a eu reproduction
+                        and parse_date(cow_care["date_traitement"]) <= parse_date(cow.reproduction[0]["insemination"]) # et si traitement avant reproduction
+                        )
+                    )
                 )
-            else :
-                last_insemination = parse_date(cow.reproduction[-1]["insemination"]) if cow.reproduction else None
-                res.append(
-                    cow_care
-                    for cow_care in cow.cow_cares
-                    if parse_date(cow_care["date_traitement"]).year == year
-                    and parse_date(cow_care["date_traitement"]) <= last_insemination # type: ignore
-                ) if last_insemination else None
+        ]
+            
+            
+            # if cow.is_calf:
+            #     res.extend(
+            #         cow_care
+            #         for cow_care in cow.cow_cares
+            #         if parse_date(cow_care["date_traitement"]).year == year
+            #     )
+            # else:
+            #     last_insemination = parse_date(cow.reproduction[-1]["insemination"]) if cow.reproduction else None
+            #     if last_insemination:
+            #         res.extend(
+            #             cow_care
+            #             for cow_care in cow.cow_cares
+            #             if (
+            #                 parse_date(cow_care["date_traitement"]).year == year
+            #                 and parse_date(cow_care["date_traitement"])<= last_insemination
+            #             )
+            #         )
         return res
 
     # END cow care functions ------------------------------------------------

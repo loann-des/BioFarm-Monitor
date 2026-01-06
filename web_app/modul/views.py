@@ -90,7 +90,7 @@ def upload_cows():
         added, skipped = 0, 0
         for cow_id in cow_ids:
             try:
-                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id)) # type: ignore
+                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True) # type: ignore
                 added += 1
             except ValueError:
                 skipped += 1
