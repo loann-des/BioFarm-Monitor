@@ -117,7 +117,7 @@ class Cow(db.Model):
     # TODO: Determine exact type annotation for born_date
     born_date : Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     """Date de naissance de la vache."""
-    
+
     reproduction: Mapped[list[Reproduction]] = mapped_column(MutableList.as_mutable(JSON),
             default=list, nullable=False) #TODO modif doc sur Type
     """Liste des reproductions de la vache."""
@@ -125,7 +125,7 @@ class Cow(db.Model):
     is_calf: Mapped[bool] = mapped_column(Boolean, default=False,
             nullable=False)
     """True si la vache est une génisse, False sinon."""
-    
+
     #TODO refaire fonction avec cette arg
     init_as_cow : Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     """True si la vache est comme vache adult, False sinon."""
@@ -628,7 +628,20 @@ class CowUntils:
     def update_cow_care(
         user_id: int, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
-        cow: Optional[Cow]
+        """Met à jour la liste de traitements d'une vache.
+
+        Cette fonction met à jour la liste de traitements d'une vache au sein de
+        la base de données. Lance une ValueError si aucune vache ne correspond
+        à l'identifiant spécifié, et lance une IndexError si le traitement
+        n'existe pas déjà dans la base de données.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache concernée
+            * care_index (int): Position dans la liste du traitement à modifier
+            * new_care (Traitement): Nouvelles données de traitement
+        """
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             # Remplacement du soin dans la liste
             if care_index >= len(cow.cow_cares):
@@ -644,18 +657,18 @@ class CowUntils:
 
     @staticmethod
     def delete_cow_care(user_id: int, cow_id: int, care_index: int) -> None:
-        """Deletes a specific care record from a cow's care list.
+        """Retire un traitement de la liste de traitements d'une vache
 
-        This function removes the care record at the specified index from the cow's care list and commits the change to the database.
+        Cette fonction retire le traitement à l'indice spécifié de la liste de
+        traitements de la vache associée à l'identifiant fourni et enregistre
+        (commit) le changement dans la base de données
 
-        Args:
-            cow_id (int): The unique identifier for the cow.
-            care_index (int): The index of the care record to be deleted.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * care_index (int): Indice du traitement dans la liste
         """
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             del cow.cow_cares[care_index]
             db.session.commit()
@@ -665,7 +678,7 @@ class CowUntils:
             raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def get_all_care(user_id : int) -> list[Tuple[Traitement, int]]:
+    def get_all_care(user_id : int) -> list[tuple[Traitement, int]]:
         """Retrieves all non-empty care records for all cows, sorted by date in descending order.
 
         This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
@@ -673,8 +686,8 @@ class CowUntils:
         Returns:
             list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
         """
-        cows: List[Cow] = Cow.query.filter_by(user_id=user_id).all()
-        all_cares: List[Tuple[Traitement, int]] = [
+        cows: list[Cow] = Cow.query.filter_by(user_id=user_id).all()
+        all_cares: list[tuple[Traitement, int]] = [
             (care_dict, cow.cow_id)
             for cow in cows
             for care_dict in cow.cow_cares
@@ -686,19 +699,23 @@ class CowUntils:
         return all_cares
 
     @staticmethod
-    def get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement]:
-        """Retrieves the care records for a cow with the specified ID.
+    def get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement] | None:
+        """Renvoie la liste des traitements d'une vache
 
-        Returns the list of care records for the cow if found, otherwise logs an error and returns None.
+        Renvoie la liste des traitements de la vache associée à l'identifiant
+        fourni si elle existe. Sinon, marque une erreur dans le journal et
+        renvoie None.
 
-        Args:
-            id (int): The unique identifier for the cow.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
 
-        Returns:
-            Optional[Tuple[date, dict, str]]: The list of care records for the cow, or None if the cow is not found.
+        Renvoie:
+            * list[Traitement] | : La liste des traitements de la vache
+            spécifiéé si elle existe, None sinon
         """
         # Récupérer la vache depuis la BDD
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return cow.cow_cares
         lg.error(f"(user :{user_id}, cow: {cow_id}) : not found.")
@@ -706,20 +723,24 @@ class CowUntils:
 
     @staticmethod
     def get_care_on_year(user_id : int , year: int) -> list[Traitement]:
+        """Récupère la liste des traitements sur l'ensemble des vaches effectués
+        l'année spécifiée.
+
+        Cette fonction itère sur l'ensemble des vaches et collecte les
+        traitements dont l'année correspond à l'année fournie en argument.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année à laquelle ont eu lieu les traitements que l'on
+            souhaite collecter
+
+        Renvoie:
+            * list[Traitement]: La liste des traitements qui ont eu lieu l'année
+            spécifiée
+        """
         from web_app.fonction import parse_date
 
-        """Retrieves all care records for all cows that occurred in a specific year.
-
-        This function iterates through all cows and collects care records whose date matches the specified year.
-
-        Args:
-            year (int): The year to filter care records by.
-
-        Returns:
-            list[Tuple[date, dict, str]]: A list of care records from the specified year.
-        """
-
-        return [cow_care 
+        return [cow_care
                 for cow in Cow.query.filter_by(user_id=user_id).all()
                 for cow_care  in cow.cow_cares if bool(cow.cow_cares)
                 if parse_date(cow_care["date_traitement"]).year == year
@@ -727,20 +748,27 @@ class CowUntils:
 
     @staticmethod
     def get_calf_care_on_year(user_id : int, year: int) -> list[Traitement]:
-        """Retrieves all care records for calves that occurred in a specific year.
+        """Récupère l'ensemble de l'historique de traitement des veaux sur une
+        année spécifique.
 
-        This function collects care records for cows without reproduction records, or for cows whose care date is before or on their last insemination date, and returns those that match the specified year.
+        Cette fonction collecte l'ensemble des traitements effectués sur les
+        vaches sans historique de reproduction et les traitements effectués  sur
+        les vaches avant la date de leur première insémination, et les filtre
+        pour correspondre à l'année fournie en argument.
 
-        Args:
-            year (int): The year to filter calf care records by.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur.
+            * year (int): Année au cours de laquelle ont eu lieu les
+           traitements.
 
-        Returns:
-            list[Tuple[date, dict[str, int], str]]: A list of calf care records from the specified year.
+        Renvoie:
+            * list[Traitement]: Une liste de traitements sur les veaux datant
+            de l'année fournie en argument
         """
         from web_app.fonction import parse_date
         # res : list[Traitement] = []
         # cow: Cow
-        # for cow in Cow.query.filter_by(user_id=user_id).all(): 
+        # for cow in Cow.query.filter_by(user_id=user_id).all():
             # TODO verif integrité is_calf
             # res.extend(
             #         cow_care
@@ -757,7 +785,7 @@ class CowUntils:
             #             )
             # )
         res : list[Traitement] = [
-            cow_care 
+            cow_care
             for cow in Cow.query.filter_by(user_id=user_id).all()   #iteration sur cows
             for cow_care in cow.cow_cares                           #iteration sur cow_care
             if (
@@ -772,8 +800,8 @@ class CowUntils:
                     )
                 )
         ]
-            
-            
+
+
             # if cow.is_calf:
             #     res.extend(
             #         cow_care
@@ -1151,7 +1179,7 @@ class PrescriptionUntils:
         Returns:
             List[tuple[date, dict[str, int], bool]]: A list of tuples containing the prescription date, care dictionary, and DLC flag.
         """
-        
+
         all_cares: List[Tuple[date, dict[str, int], bool]] = [
             (prescription.date, prescription.care, prescription.dlc_left)
             for prescription in (Prescription.query.filter_by(user_id=user_id).all())
