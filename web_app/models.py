@@ -1,4 +1,5 @@
 # Standard
+from ast import Dict
 import logging as lg
 from typing import List, Optional, Tuple, TypedDict, Any
 
@@ -307,27 +308,33 @@ class Pharmacie(db.Model):
 
 
 class Users(UserMixin, db.Model):
-    """Represents a user in the database, including their settings for dry time and calving preparation time.
+    """Représente un utilisateur dans la base de données. Inclut les durées de
+    tarissement et de préparation du vêlage.
 
-    This class stores user-specific configuration for managing cow care and reproduction cycles.
+    Cette classe contient la configuration utilisateur de gestion des
+    traitements et cycles reproductifs.
     """
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)  # numero utilisateur
-    email = Column(String(100), unique=True, nullable=False)
-    password = Column(String(200), nullable=False)
-    setting = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)  # numero utilisateur
+    email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(200), nullable=False)
+    setting: Mapped[Setting] = mapped_column(
         MutableDict.as_mutable(JSON), default=dict, nullable=False
     )  # setting utilisateur
-    medic_list = Column(MutableDict.as_mutable(JSON), default=dict, nullable=False)
+    medic_list: Mapped[dict[Any, Any]] = mapped_column(MutableDict.as_mutable(JSON),
+            default=dict, nullable=False)
 
     def __init__(self, email : str, password : str, setting: Setting):
-        """Initializes a Users object with the provided settings.
+        """Initialise un objet Users avec les arguments fournis.
+        Ce constructeur définit les paramètres utilisateurs pour les durées de
+        tarissement et de préparation au vêlage.
 
-        This constructor sets the user's settings for dry time and calving preparation time.
-
-        Args:
-            setting (Setting): The user's settings containing dry time and calving preparation time.
+        Arguments:
+            * email (str): L'adresse e-mail de l'utilisateur
+            * password (str): Le mot de passe de l'utilisateur
+            * setting (Setting): un objet Setting représentant les réglages de
+            l'utilisateur
         """
         self.email = email
         self.password = password
@@ -337,73 +344,79 @@ class Users(UserMixin, db.Model):
 
 
 def init_db() -> None:
-    """Initializes the database by dropping all tables, recreating them, and adding default entries.
+    """Initialise la base de données. Pour ce faire, supprime toutes les tables,
+    les re-créée et les remplit avec les entrées par défaut.
 
-    This function resets the database, adds a default prescription and user, commits the changes, and logs a warning that the database has been initialized.
-
-    Returns:
-        None
+    Cette fonction réinitialise la base de données, ajoute des utilisateurs,
+    enregistre les changements (commit) et marque dans le journal que la base
+    de données a été réinitialisée.
     """
     db.drop_all()
     db.create_all()
     # db.session.add(Prescription(user_id=1, date=None, care={}, dlc_left=True))
-    UserUtils.add_user(email="adm@mail.com", password=generate_password_hash(password="adm"))
-    UserUtils.add_user(email="adm2@mail.com", password=generate_password_hash(password="adm"))
+    UserUtils.add_user(email="adm@mail.com",
+            password=generate_password_hash(password="adm"))
+    UserUtils.add_user(email="adm2@mail.com",
+            password=generate_password_hash(password="adm"))
     db.session.commit()
     lg.warning("Database initialized!")
 
 
 # COW FONCTION
 class CowUntils:
-    """Provides utility functions for managing cow records, care events, and reproduction data.
+    """Cette classe est un namespace. Tous ses membres sont statiques.
 
-    This class contains static methods to add, update, retrieve, and manage cows and their associated care and reproduction records in the database.
+    Ce namespace regroupe les fonctions de gestion des vaches, de
+    l'historique des traitements, et des données de reproduction.
     """
 
     # general cow functions ------------------------------------------------
 
     @staticmethod
     def get_cow(user_id : int, cow_id: int) -> Cow:
-        """Retrieves a cow by its ID from the database.
+        """Recherche une vache dans la base de données et renvoie un objet Cow
+        si la vache a été trouvée.
 
-        This function queries the database for a cow with the specified ID and returns the Cow object if found.
+        Arguments:
+            * cow_id (int): Identifiant de la vache recherchée.
 
-        Args:
-            cow_id (int): The unique identifier for the cow.
+        Renvoie:
+            * Cow: L'objet Cow correspondant à la vache associée à cow_id.
 
-        Returns:
-            Cow: The Cow object corresponding to the given ID.
-
-        Raises:
-            ValueError: If the cow with the given ID does not exist.
+        Lance:
+            * ValueError si la vache recherchée n'existe pas dans la base de
+            données.
         """
+
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return cow
         raise ValueError(f"Cow with ID {cow_id} not found")
 
     @staticmethod
-    def get_all_cows(user_id: Optional[int] = None) -> list[Cow]:
-        """Retrieves all of a user cows from the database.
+    def get_all_cows(user_id: int | None = None) -> list[Cow]:
+        """Renvoie l'ensemble des vaches d'un utilisateur.
 
-        This function queries the database and returns a list of all Cow objects.
+        Cette fonction interroge la base de données et renvoie une liste de
+        toutes les vaches associées à un utilisateur.
 
-        Returns:
-            list[Cow]: A list for user of all his cows in the database.
-
+        Renvoie:
+            * list[Cow]: Une liste contenant l'ensemble des vaches d'un
+            utilisateur
         """
         return Cow.query.filter_by(user_id=user_id).all() if user_id else Cow.query.all()
 
     @staticmethod
-    def add_cow(user_id: int, cow_id, born_date: Optional[date] = None, init_as_cow: bool = False) -> None:
-        """Adds a new cow to the database if it does not already exist.
+    def add_cow(user_id: int, cow_id: int, born_date: date | None = None,
+            init_as_cow: bool = False) -> None:
+        """Ajoute une nouvelle vache à la base de données si elle n'existe pas
+        déjà.
 
-        If a cow with the given ID is not present, it is created and added to the database. Otherwise, an error is logged.
+        Si aucune vache avec l'identifiant correspondant n'existe, alors elle
+        est ajoutée à la base de données. Sinon une erreur est marquée dans le
+        journal.
 
-        Args:
-            id (int): The unique identifier for the cow to be uploaded.
-
-        Returns:
-            None
+        Arguments:
+            * id (int): Identifiant de la vache à ajouter
         """
         if not Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             new_cow = Cow(
@@ -421,17 +434,16 @@ class CowUntils:
                 f"(user :{user_id}, cow: {cow_id}) : already in database")
 
     @staticmethod
-    def update_cow(user_id: int, cow_id: int, **kwargs) -> None:
-        """Updates the attributes of a cow in the database.
+    def update_cow(user_id: int, cow_id: int, **kwargs: dict[str, Any]) -> None:
+        """Met à jour les attributs d'une vache dans la base de données.
 
-        This function retrieves the cow with the specified ID and updates its attributes based on the provided keyword arguments.
+        Cette fonction recherche la vache associée à l'identifiant fourni, et
+        met à jour ses attributs à partir des arguments nommés (kwargs).
 
-        Args:
-            cow_id (int): The unique identifier for the cow to be updated.
-            **kwargs: The attributes to update (e.g., in_farm, born_date, etc.).
-
-        Returns:
-            None
+        Arguments:
+            * cow_id (int): Identifiant de la vache à modifier
+            * **kwargs (dict[str, Any]): Les attributs à modifier (e.g. in_farm,
+            born_date, etc.)
         """
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             for key, value in kwargs.items():
@@ -445,16 +457,15 @@ class CowUntils:
 
     @staticmethod
     def suppress_cow(user_id: int, cow_id: int) -> None:
-        """Removes a cow from the database by its ID.
+        """Retire une vache associée à un identifiant de la base de données.
 
-        This function deletes the cow with the specified ID from the database and commits the change. If the cow does not exist, an error is logged.
+        Cette fonction retire de la base de données la vache associée à
+        l'identifiant fourni en argument et enregistre (commit) les changements.
+        Si la vache n'existe pas, une erreur est marquée dans le journal.
 
-        Args:
-            cow_id (int): The unique identifier for the cow to be removed.
-            born_date (date): The birth date of the cow.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
         """
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             db.session.delete(cow)
@@ -467,17 +478,18 @@ class CowUntils:
 
     @staticmethod
     def remove_cow(user_id: int, cow_id: int) -> None:
-        """Marks a cow as no longer in the farm by updating its status.
+        """Enregistre la sortie d'une vache de la ferme en mettant à jour le
+        statut de la vache.
 
-        If the cow with the given ID exists, its status is updated and the change is committed. If the cow does not exist, a warning is logged.
+        Si la vache associée à l'identifiant fourni existe, son statut est mis
+        à jour et enregistré (commit) dans la base de données. Si la vache
+        n'existe pas, une erreur est marquée dans le journal.
 
-        Args:
-            id (int): The unique identifier for the cow to remove.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache à retirer de la ferme
         """
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm :
                 raise ValueError(f"user :{user_id}, cow: {cow_id}: deja supprimé.")
@@ -490,7 +502,8 @@ class CowUntils:
                 f"(user :{user_id}, cow: {cow_id}): n'existe pas.")
 
     @staticmethod
-    def add_calf(user_id: int, calf_id: int, born_date: Optional[date] = None) -> None:
+    def add_calf(user_id: int, calf_id: int,
+            born_date: date | None = None) -> None:
         """Adds a new calf to the database if it does not already exist.
 
         If a calf with the given ID is not present, it is created and added to the database. Otherwise, an error is logged and a ValueError is raised.
@@ -501,6 +514,20 @@ class CowUntils:
 
         Returns:
             None
+        """
+        """Ajoute un veau à la base de données s'il n'existe pas déjà.
+
+        S'il n'existe pas de veau associé à l'identifiant fourni, il est créé
+        et ajouté à la base de données. Autrement, une erreur est marquée dans
+        le journal et une ValueError est lancée.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * calf_id (int): Identifiant du veau
+            * born_date (date): Date de naissance du veau
+
+        Lance:
+            * ValueError s'il existe déjà un veau associé à l'identifiant fourni
         """
         if not Cow.query.get({"user_id": user_id, "cow_id": calf_id}):
             new_cow = Cow(
@@ -524,7 +551,7 @@ class CowUntils:
     @staticmethod
     def add_cow_care(
         user_id: int, cow_id: int,  cow_care: Traitement
-    ) -> Optional[tuple[int, date]]:
+    ) -> tuple[int, date] | None:
         """Updates the care record for a cow with the specified ID.
 
         If the cow exists, the care is added and a tuple with the number of remaining cares and the date of new available care. If the cow does not exist, an error is logged and None is returned.
@@ -535,6 +562,24 @@ class CowUntils:
 
         Returns:
             Optional[tuple[int, date]]: The number of remaining cares and the date of new available care, or None if the cow is not found.
+        """
+        """Met à jour l'historique des traitements de la vache associée à
+        l'identifiant fourni en argument.
+
+        Si la vache existe, le traitement est ajouté et un tuple contenant le
+        nombre de traitement restants et la date des prochains traitements est
+        créé. Si la vache n'existe pas, une erreur est marquée dans le journal
+        et la fonction renvoie None.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * cow_care (Traitement): Traitement à ajouter
+
+        Retourne:
+            * tuple ([int, date] | None): le nombre de traitements restants et
+            la date du prochain, ou None si aucune vache associée à cow_id n'a
+            été trouvée
         """
 
         # Récupérer la vache depuis la BDD
@@ -549,18 +594,22 @@ class CowUntils:
         cow: Cow, cow_care: Traitement
     ) -> tuple[int, date]:
         #TODO Gestion des dates ptn
-        """Adds a care record to the specified cow and returns updated care information.
+        """Ajoute un traitement à la vache spécifiée et renvoie les données de
+        traitement mises à jour.
 
-        This function appends a new care entry to the cow's care list, commits the change, and calculates the number of remaining cares and the date when a new care becomes available.
+        Cette fonction ajoute une nouvelle entrée à la liste des traitements
+        de la vache associée à l'identifiant fourni, enregistre (commit) les
+        modifications, et calcule le nombre de traitements restants et la date
+        du suivant.
 
-        Args:
-            cow (Cow): The cow object to update.
-            cow_cares (Tuple[date, dict, str]): The care information to add.
-            id (int): The unique identifier for the cow.
-            nb_cares_years (int): A function to calculate the number of cares in the current year.
+        Arguments:
+            * cow (Cow): L'objet Cow à mettre à jour
+            * cow_cares (Tuplee[date, dict, str]): Les informations de
+            traitement à ajouter
 
-        Returns:
-            Tuple[int, date]: The number of remaining cares and the date of new available care.
+        Renvoie:
+        * tuple[int, date]: Le nombre de traitements restants et la date du
+        prochain
         """
 
         from .fonction import remaining_care_on_year, new_available_care
