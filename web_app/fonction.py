@@ -134,7 +134,7 @@ def remaining_care_on_year(cow: Cow) -> int:
     # traitement restant dans l'année glissante
     return 3 - nb_care_year
 
-def new_available_care(cow: Cow) -> date:
+def new_available_care(cow: Cow) -> Optional[date]:
     """Determines the next date a cow becomes eligible for a new care treatment.
 
     This function calculates when a cow can receive its next care treatment based on its care history and the annual treatment limit.
@@ -157,7 +157,7 @@ def new_available_care(cow: Cow) -> date:
         return parse_date(cow.cow_cares[0]["date_traitement"]) + timedelta(days=365)
     else:
         # Pas de soins, donc pas de date dispo
-        raise ValueError(f"Cow with ID {cow.cow_id} has no care records.")
+        return None
 
 def get_pharma_list(user_id: int) -> list[str]:
     """Returns a list of all medication names available in the pharmacy.
@@ -457,11 +457,15 @@ def remaining_care_to_excel(user_id: int) -> bytes:
 
     cow: Cow
     for cow in CowUntils.get_all_cows(user_id=user_id):
-        cow_id = cow.id
+        cow_id = cow.cow_id
+        print("cow_id ",cow.cow_id)
         nb_remaining = remaining_care_on_year(cow)
+        print(" "*3, "nb_remaining: ", nb_remaining)
         renewal_date = new_available_care(cow)
+        print(" "*3, "renewal_date: ", renewal_date)
         renewal_date_str = renewal_date.strftime(
             "%d %b %Y") if renewal_date else "N/A"
+        print(" "*3, "renewal_date_str: ", renewal_date_str)
 
         ws.append([cow_id, nb_remaining, renewal_date_str])
         cell = ws.cell(row=ws.max_row, column=2)

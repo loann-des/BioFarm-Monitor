@@ -3,7 +3,7 @@ from datetime import datetime
 from io import BytesIO
 from flask import Blueprint, jsonify, redirect, render_template, request, send_file, url_for
 import logging as lg
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user # type: ignore
 
 
 from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, date_to_str
@@ -37,7 +37,7 @@ def update_care():
     try:
         # Récupération des données du formulaire
         cow_id = request.form["id"]
-        care : Traitement = Traitement()
+        care : Traitement = Traitement() # type: ignore
         care["medicaments"] = extract_cares(request.form)
 
         care["date_traitement"] = request.form["care_date"]
@@ -48,9 +48,9 @@ def update_care():
 
         lg.info(f"update care{cow_id}...")
 
-        remain_care = CowUntils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care)
+        remain_care = CowUntils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care) # type: ignore
 
-        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {date_to_str(remain_care[1])} pour {cow_id}."
+        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {date_to_str(remain_care[1])} pour {cow_id}." # type: ignore
         return jsonify({"success": True, "message": success_message})
 
     except Exception as e:
@@ -68,7 +68,7 @@ def add_prescription():
 
         # Récupère les médicaments et quantités
         cares: dict[str, int] = {}
-        for nb_care in range(get_pharma_len(user_id=current_user.id)):
+        for nb_care in range(get_pharma_len(user_id=current_user.id)): # type: ignore
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
 
@@ -94,7 +94,7 @@ def add_prescription():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PrescriptionUntils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares)
+        PrescriptionUntils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares) # type: ignore
 
         return jsonify({"success": True, "message": "Ordonnance ajoutée avec succès."})
 
@@ -250,10 +250,10 @@ def download():
 @pharma.route("/download_remaining_care", methods=["GET", "POST"])
 def download_remaining_care():
     try:
-        excel_io = remaining_care_to_excel()
+        excel_io = remaining_care_to_excel(user_id=current_user.id) # type: ignore
 
         return send_file(
-            excel_io,
+            excel_io, # type: ignore
             download_name="traitement.xlsx",
             as_attachment=True,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
