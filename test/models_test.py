@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import sys
 
-from web_app.fonction import my_strftime
 sys.path.insert(1, "../")
+from web_app.fonction import my_strftime
 
 import unittest
 import warnings
