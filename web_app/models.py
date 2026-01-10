@@ -1202,102 +1202,131 @@ class CowUntils:
 
 # PRESCRIPTION FONCTION
 class PrescriptionUntils:
-    """Provides utility functions for managing prescription records and pharmacy medication lists.
+    """Cette class est un namespace, tous ses membres sont statiques.
 
-    This class contains static methods to add, update, and retrieve prescriptions and medication lists in the database.
+    Ce namespace regroupe les fonctions pour ajouter, retirer, récupérer et
+    modifier les prescriptions et produits médicaux dans la base de données.
     """
 
     @staticmethod
     def add_prescription(user_id: int, date: date, care_items: dict[str, int]) -> None:
-        """Adds a new prescription to the database with the specified date and care items.
+        """Ajoute une nouvelle prescription à la base de données avec les date
+        et éléments spécifiés.
 
-        This function creates a new Prescription object, adds it to the database session, and commits the transaction.
+        Cette fonction créée un nouvel objet Prescription, l'ajoute à la base
+        de données et enregistre (commit) les changements dans la base de
+        données.
 
-        Args:
-            date (date): The date of the prescription.
-            care_items (dict[str, int]): The dictionary of care items to include in the prescription.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * date (date): Date de la prescription
+            * care_items (dict[str, int]): Éléments de la prescription,
+            typiquement nom du traitement et dose
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=False)  # type: ignore
+        prescription = Prescription(user_id=user_id, date=date, care=care_items,
+                dlc_left=False)  # type: ignore
         db.session.add(prescription)
         db.session.commit()
 
     @staticmethod
     def add_dlc_left(user_id: int, date: date, care_items: dict[str, int]) -> None:
-        """Adds a new prescription to the database for medication removed due to expired shelf life (DLC).
+        """Ajoute une prescription remisée pour péremption.
 
-        This function creates a new Prescription object with the DLC flag set to True, adds it to the database session, and commits the transaction.
+        Cette fonction créée un nouvel objet Prescription avec le flag DLC à
+        True, l'ajoute à la base de donnée, et enregistre (commit) la
+        transaction.
 
-        Args:
-            date (date): The date of the medication removal.
-            care_items (dict[str, int]): The dictionary of care items removed due to expired DLC.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * date (date): Date de retrait du traitement
+            * care_items (dict[str, int]): Éléments de la prescription,
+            typiquement nom du traitement et dose
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items, dlc_left=True) # type: ignore
+        prescription = Prescription(user_id=user_id, date=date, care=care_items,
+            dlc_left=True) # type: ignore
         db.session.add(prescription)
         db.session.commit()
 
     @staticmethod
-    def get_all_prescription(user_id: int) -> List[Prescription]:
-        """Retrieves all prescriptions from the database.
+    def get_all_prescription(user_id: int) -> list[Prescription]:
+        """Récupère toutes les prescriptions de la base de données.
 
-        This function queries the database and returns a list of all Prescription objects.
+        Cette fonction récupère toutes les prescriptions présentes dans la base
+        de données.
 
-        Returns:
-            List[Prescription]: A list of all prescriptions in the database.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+
+        Renvoie:
+            * list[Prescription]: Une liste des prescriptions présentes dans la
+            base de données
         """
         return Prescription.query.filter_by(user_id=user_id).all()
 
     @staticmethod
-    def get_all_prescription_cares(user_id: int) -> List[tuple[date, dict[str, int], bool]]:
-        """Retrieves all prescription care records, excluding the header, sorted by date in descending order.
+    def get_all_prescription_cares(user_id: int) -> list[tuple[date, dict[str, int], bool]]:
+        """Récupère toutes les prescriptions dans la base de données triées par
+        ordre décroissant de date.
 
-        This function collects all prescription records, removes the first entry (assumed to be a header), and returns the remaining records as a list sorted by date, most recent first.
+        Cette fonction collecte toutes les prescriptions présentes dans la base
+        de données, retire la première entrée (l'en-tête), et renvoie les
+        entrées ainsi collectées triées par date, en commençant par la plus
+        récente.
 
-        Returns:
-            List[tuple[date, dict[str, int], bool]]: A list of tuples containing the prescription date, care dictionary, and DLC flag.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+
+        Renvoie:
+            * list[tuple[date, dict[str, int], bool]]: Liste des prescriptions
+            présentes dans la base de données, par ordre décroissante de date.
         """
 
-        all_cares: List[Tuple[date, dict[str, int], bool]] = [
+        all_cares: list[tuple[date, dict[str, int], bool]] = [
             (prescription.date, prescription.care, prescription.dlc_left)
             for prescription in (Prescription.query.filter_by(user_id=user_id).all())
         ]
-        all_cares.pop(0)  # suprimer l'entete
+        _ = all_cares.pop(0)  # suprimer l'entete
         # Tri décroissant sur la date
         all_cares.sort(key=lambda x: x[0], reverse=True)
         return all_cares
 
     @staticmethod
-    def get_year_prescription(user_id : int, year: int) -> List[Prescription]:
-        """Retrieves all prescriptions from the database for a specific year.
+    def get_year_prescription(user_id : int, year: int) -> list[Prescription]:
+        """Récupère toutes les prescriptions de la base de données datées d'une
+        année spécifique.
 
-        This function filters prescriptions by the given year and returns a list of matching Prescription objects.
+        Cette fonction renvoie une liste des prescriptions présentes dans la
+        base de données datées d'une certaine année.
 
-        Args:
-            year (int): The year to filter prescriptions by.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année des prescriptions
 
-        Returns:
-            List[Prescription]: A list of prescriptions from the specified year.
+        Renvoie:
+            * list[Prescriptions]: Liste des prescriptions datées de l'année
+            spécifiée
         """
         return Prescription.query.filter_by(user_id=user_id, dlc_left=False).filter(
             (extract("year", Prescription.date) == year) # type: ignore
         ).all()
 
     @staticmethod
-    def get_dlc_left_on_year(user_id: int, year: int) -> List[Prescription]:
-        """Retrieves all prescriptions for which medication was removed to expired shelf life (DLC) in a specific year.
+    def get_dlc_left_on_year(user_id: int, year: int) -> list[Prescription]:
+        """Récupère toutes les prescriptions pour lesquelles un traitement a été
+        retiré car arrivé à expiration lors de l'année fournie en argument.
 
-        This function filters prescriptions by the given year and returns those where the DLC (shelf life) has passed.
+        Cette fonction récupère les prescriptions dans la base de données, les
+        filtre pour correspondre à l'année fournie en argument, et renvoie
+        celles qui ont expiré.
 
-        Args:
-            year (int): The year to filter prescriptions by.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année au cours de laquelle les traitements sont
+            arrivés à expiration
 
-        Returns:
-            List[Prescription]: A list of prescriptions with medication removed due to expired DLC in the specified year.
+        Renvoie:
+            * list[Prescription]: La liste des prescriptions dont le traitement
+            a expiré au cours de l'année spécifiée
         """
         return Prescription.query.filter_by(user_id=user_id, dlc_left=True).filter(
             (extract("year", Prescription.date) == year) # type: ignore
@@ -1309,42 +1338,52 @@ class PrescriptionUntils:
 
 # PHARMACIE FONCTION
 class PharmacieUtils:
-    """Provides utility functions for managing pharmacy records and annual medication statistics.
+    """Cette classe est un namespace, ses membres sont statiques.
 
-    This class contains static methods to retrieve, update, and create pharmacy records for specific years, as well as to manage medication stock and usage data.
+    Ce namespace regroupe les fonctions pour récupérer, modifier et créer des
+    entrées de pharmacie pour les années spécifiées, ainsi que gérer les stocks
+    et usages de médicaments.
     """
 
     @staticmethod
     def get_pharmacie_year(user_id: int, year: int) -> Pharmacie:
-        """Retrieves the pharmacy record for a specific year.
+        """Récupère l'entrée de pharmacie pour une année spécifique.
 
-        This function returns the Pharmacie object for the given year if it exists, otherwise raises a ValueError.
+        Cette fonction renvoie l'objet Pharmacie pour l'année fournie en
+        argument si une telle entrée existe, ValueError sinon.
 
-        Args:
-            year (int): The year for which to retrieve the pharmacy record.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année des entrées de pharmacie à récupérer
 
-        Returns:
-            Pharmacie: The pharmacy record for the specified year.
+        Renvoie:
+            * Pharmacie: l'entrée de Pharmacie pour l'année fournie en argument.
 
-        Raises:
-            ValueError: If the pharmacy record for the given year does not exist.
+        Lance:
+            * ValueError s'il n'existe pas d'entrée de pharmacie pour l'année
+            spécifiée.
         """
         if pharmacie := Pharmacie.query.get({"user_id" : user_id, "year" : year }):
             return pharmacie
         raise ValueError(f"{year} doesn't exist.")
 
     @staticmethod
-    def updateOrDefault_pharmacie_year(user_id: int, year: int, default: Pharmacie) -> Pharmacie:
-        """Updates the pharmacy record for a given year if it exists, or creates it with default values if not.
+    def updateOrDefault_pharmacie_year(user_id: int, year: int,
+            default: Pharmacie) -> Pharmacie:
+        """Met à jour l'année de pharmacie correspondant à une année spécifiée
+        si elle existe, sinon la créée avec les valeurs par défaut.
 
-        This function updates all attributes of the existing pharmacy record for the specified year, or adds a new record with the provided default if none exists.
+        Cette fonction met à jour tous les attributs de l'entrée de pharmacie
+        correspondant à l'année fournie en argument, ou créée une nouvelle
+        entrée remplie avec les valeurs par défaut fournies en argument.
 
-        Args:
-            year (int): The year for which to update or create the pharmacy record.
-            default (Pharmacie): The default Pharmacie object to use if no record exists.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année de l'entrée à modifier
+            * default (Pharmacie): Valeurs par défaut de l'entrée
 
-        Returns:
-            Pharmacie: The updated or newly created pharmacy record for the year.
+        Renvoie:
+            * Pharmacie: L'entrée modifiée ou créée pour l'année spécifiée
         """
         pharmacie_db = Pharmacie.query.get({"user_id" : user_id, "year" : year })
 
@@ -1360,13 +1399,18 @@ class PharmacieUtils:
         return pharmacie_db
 
     @staticmethod
-    def get_all_pharmacie(user_id: int) -> List[Pharmacie]:
-        """Retrieves all pharmacy records from the database.
+    def get_all_pharmacie(user_id: int) -> list[Pharmacie]:
+        """Récupère toutes les entrées de pharmacie de la base de données.
 
-        This function queries the database and returns a list of all Pharmacie objects.
+        Cette fonction interroge la base de données et renvoie une liste de
+        toutes les entrées Pharmacie qu'elle contient.
 
-        Returns:
-            List[Pharmacie]: A list of all pharmacy records in the database.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+
+        Renvoie:
+            * list[Pharmacie]: La liste de toutes les entrées de pharmacie de la
+            base de données
         """
         return Pharmacie.query.filter_by(user_id=user_id).all()
 
@@ -1381,20 +1425,26 @@ class PharmacieUtils:
         total_out: dict[str, int],
         remaining_stock: dict[str, int],
     ) -> None:
-        """Creates and saves a new pharmacy record for a specific year with the provided medication statistics.
+        """Créée et enregistre une nouvelle entrée de pharmacie pour une année
+        spécifique, en utilisant les informations fournies en argument.
 
-        This function constructs a new Pharmacie object with the given data and commits it to the database.
+        Cette fonction construit un nouvel objet Pharmacie contenant les données
+        fournies et enregistre (commit) les changements dans la base de données.
 
-        Args:
-            year (int): The year for the pharmacy record.
-            total_used (dict[str, int]): Total medication used in the year.
-            total_used_calf (dict[str, int]): Total medication used for calves in the year.
-            total_out_dlc (dict[str, int]): Total medication removed due to expired shelf life (DLC).
-            total_out (dict[str, int]): Total medication taken out of the pharmacy.
-            remaining_stock (dict[str, int]): Remaining stock of each medication at year end.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année de l'entrée de pharmacie
+            * total_enter (dict[str, int]): Dictionnaire associant les noms et
+            quantités de traitements ajoutés à la pharmacie au cours de l'année
+            * total_used (dict[str, int]): Dictionnaire associant les noms et
+            quantités de traitements utilisés au cours de l'année
+            * total_out_dlc (dict[str, int]): Dictionnaire associant les noms et
+            quantités de traitements expirés dans la pharmacie au cours de
+            l'année
+            * total_out (dict[str, int]): Dictionnaire associant les noms et
+            quantités de traitements retirés de la pharmacie au cours de l'année
+            * remaining_stock (dict[str, int]): Dictionnaire associant les noms
+            et quantités de traitements restant à la fin de l'année
         """
         pharmacie = Pharmacie(
             user_id=user_id,
@@ -1411,19 +1461,23 @@ class PharmacieUtils:
 
     @staticmethod
     def upload_pharmacie_year(user_id: int, year: int, remaining_stock: dict[str, int]) -> None:
-        """Creates and saves a new pharmacy record for a specific year with the provided remaining stock.
+        """Créée et enregistre une nouvelle entrée de pharmacie, pour l'année
+        spécifiée, avec les stocks restants spécifiés.
 
-        This function adds a new Pharmacie object for the given year with empty statistics except for the provided remaining stock. If a record for the year already exists, it raises a ValueError.
+        Cette fonction ajoute un nouvel objet Pharmacie pour l'année fournie en
+        argument, vierge à l'exception des stocks restants fournis en argument.
+        Si une entrée de pharmacie existe déjà pour l'année spécifiée, lance une
+        ValueError.
 
-        Args:
-            year (int): The year for the pharmacy record.
-            remaining_stock (dict[str, int]): Remaining stock of each medication at year end.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année de la nouvelle entrée de pharmacie
+            * remaining_stock (dict[str, int]): Dictionnaire associant les noms
+            et quantités de traitements restant en stock
 
-        Returns:
-            None
-
-        Raises:
-            ValueError: If a pharmacy record for the given year already exists.
+        Lance:
+            * ValueError s'il existe déjà une entrée de pharmacie pour l'année
+            spécifiée
         """
         if Pharmacie.query.get({"user_id" : user_id, "year" : year}):
             raise ValueError(f"{year} already existe.")
@@ -1447,19 +1501,25 @@ class PharmacieUtils:
 
 # USERS FONCTION
 class UserUtils:
-    """Provides utility functions for managing user records and user-specific settings.
+    """Cette classe est un namespace, ses membres sont statiques.
 
-    This class contains static methods to add users, update user settings, and retrieve user configuration from the database.
+    Ce namespace regroupe les fonctions de gestion (ajout, suppression,
+    modification des paramètres) des utilisateurs et de récupération des
+    réglages utilisateurs dans la base de données.
     """
 
     @staticmethod
     def add_user(email : str, password : str) -> None:
-        """Adds a new user to the database with default settings.
+        """Ajoute un nouvel utilisateur à la base de données avec les données
+        par défaut.
 
-        This function creates a user with default dry time and calving preparation time settings and commits it to the database.
+        Cette fonction créée un nouvel utilisateur en utilisant l'adresse e-mail
+        et le mot de passe fournis en argument, avec les durées de tarissement
+        et de préparation du vêlage par défaut.
 
-        Returns:
-            None
+        Arguments:
+            * email (str): Adresse e-mail du nouvel utilisateur
+            * password (str): Mot de passe du nouvel utilisateur
         """
 
         user = Users(email=email, password=password, setting={"dry_time": 0, "calving_preparation_time": 0})
@@ -1468,16 +1528,17 @@ class UserUtils:
 
     @staticmethod
     def set_user_setting(user_id : int, dry_time: int, calving_preparation: int) -> None:
-        """Updates the user's settings for dry time and calving preparation time.
+        """Met à jour les réglages utilisateur concernant les durées de
+        tarissement et de préparation du vêlage.
 
-        This function sets the dry time and calving preparation time values for the first user in the database and commits the changes.
+        Cette fonction met à jour les durées de tarissement et de préparation
+        du vêlage pour l'utilisateur associé à l'identifiant fourni en argument,
+        et enregistre (commit) les changements dans la base de données.
 
-        Args:
-            dry_time (int): The number of days for the dry period.
-            calving_preparation (int): The number of days for calving preparation.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * dry_time (int): Durée de tarissement
+            * calving_preparation (int): Durée de préparation au vêlage
         """
 
         user: Users = Users.query.get(user_id) # type: ignore
@@ -1487,33 +1548,44 @@ class UserUtils:
 
     @staticmethod
     def get_user_setting(user_id : int) -> Setting:
-        """Retrieves the current user's settings for dry time and calving preparation time.
+        """Récupère les réglages utilisateur de durée de tarissement et de
+        préparation au vêlage
 
-        This function returns the settings dictionary for the first user in the database.
+        Cette fonction retourne le dictionnaire des réglages de l'utilisateur
+        associé à l'identidiant fourni en argument concernant les durées de
+        tarissement et de préparation au vêlage.
 
-        Returns:
-            Setting: The user's settings containing dry time and calving preparation time.
+        Renvoie:
+            * Settings: les réglages utilisateur de durée de tarissement et de
+            préparation au vêlage
         """
         user: Users = Users.query.get(user_id) # type: ignore
         return user.setting # type: ignore
 
     @staticmethod
     def get_user(user_id):
+        """Récupère l'utilisateur associé à l'identifiant fourni en argument.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+        """
         if user := Users.query.get(user_id):
             return user
         else:
             raise #TODO raise get_user mais peut etre pas apparament bug
+
     @staticmethod
     def add_medic_in_pharma_list(user_id: int, medic: str, mesur: int) -> None:
-        """Adds a new medication to the pharmacy list if it does not already exist.
+        """Ajoute un médicament à la pharmacie.
 
-        If the medication is not present in the pharmacy list, it is added and the change is committed. If it already exists, an error is logged.
+        Cette fonction ajoute un médicament à la pharmacie de l'utilisateur s'il
+        n'existe pas déjà. S'il existe déjà, une erreur est marquée dans le
+        journal.
 
-        Args:
-            medic (str): The name of the medication to add.
-
-        Returns:
-            None
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * medic (str): Nom du médicament
+            * mesur (int): Quantité de médicament
         """
         user: Users = Users.query.get(user_id) # type: ignore
         user.medic_list.setdefault(medic,mesur)
@@ -1529,6 +1601,18 @@ class UserUtils:
 
         Returns:
             dict[str, int]: A dictionary mapping medication names to their quantities.
+        """
+        """Récupère la liste des médicaments dans la pharmacie de l'utilisateur.
+
+        Cette fonction renvoie un dictionnaire contenant les médicaments
+        présents dans la pharmacie de l'utilisateur ainsi que leurs quantité.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+
+        Renvoie:
+            * dict[str, int]: Un dictionnaire associant les noms des médicaments
+            à leurs quantités
         """
         user : Users = Users.query.get(user_id) # type: ignore
         return user.medic_list # type: ignore
