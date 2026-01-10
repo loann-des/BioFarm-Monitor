@@ -827,20 +827,26 @@ class CowUntils:
 
     @staticmethod
     def add_insemination(user_id : int, cow_id: int, insemination: str) -> None:
-        """Adds an insemination record to the specified cow.
+        # TODO Gestion doublon add_reproduction
+        """Ajoute une entrée à l'historique d'insémination de la vache spécifiée
 
-        This function appends a new insemination event to the cow's reproduction history if the cow exists, otherwise logs an error and raises a ValueError.
+        Cette fonction ajoute une nouvelle insémination à l'historique de
+        reproduction de la vache associée à l'identifiant fourni comme argument
+        si elle existe. Sinon, marque une erreur dans le journal et lance une
+        ValueError.
 
-        Args:
-            id (int): The unique identifier for the cow.
-            insemination (date): The date of the insemination event.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * insemination (str): Date d'insémination
 
-        Returns:
-            None
-        """  # TODO Gestion doublon add_reproduction
-        cow: Optional[Cow]
+        Lance:
+            * ValueError si la vache spécifiée n'existe pas
+        """
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+            if not cow.in_farm:
+                raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction.append(
                 {
                     "insemination": insemination,
@@ -864,23 +870,31 @@ class CowUntils:
 
     @staticmethod
     def validated_ultrasound(user_id : int, cow_id: int, ultrasound: bool) -> None:
-        """Validates or invalidates the ultrasound result for the latest insemination of a cow.
+        """Valide ou invalide les résultats des ultrasons pour la dernière
+        insémination d'une vache.
 
-        This function updates the ultrasound status in the cow's reproduction record and, if confirmed, updates related reproduction dates. If the cow does not exist, an error is logged and a ValueError is raised.
+        Cette fonction met à jour les résultats des ultrasons dans l'historique
+        de reproduction de la vache associée à l'identifiant fourni, ainsi que
+        les dates de reproduction associées.Si la vache spécifiée n'existe pas,
+        une ValueError est lancée.
 
-        Args:
-            id (int): The unique identifier for the cow.
-            ultrasound (bool): The result of the ultrasound (True for confirmed, False for not confirmed).
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * ultradound (bool): Résultats des ultrasons (True si confirmé,
+            False si non confirmé)
 
-        Returns:
-            None
+        Lance:
+            * ValueError si aucune vache dans la base n'est associée à
+            l'identifiant fourni
         """
         from web_app.fonction import last
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = last(cow.reproduction) # type: ignore
-            if not reproduction : raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
+            if not reproduction:
+                raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
@@ -897,15 +911,20 @@ class CowUntils:
 
     @staticmethod
     def set_reproduction(user_id: int, reproduction: Reproduction) -> Reproduction: #TODO Pur calculatoir sortir ?
-        """Calculates and sets the key reproduction dates for a cow based on insemination and user settings.
+        """Calcule les dates de reproduction pour une vache en fonction de sa
+        date d'insémination et des réglages utilisateur.
 
-        This function updates the reproduction dictionary with calculated dry, calving preparation, and calving dates.
+        Cette fonction met à jour le dictionnaire de reproduction avec les
+        durées de tarissage, de préparation et la date de vêlage calculés.
 
-        Args:
-            reproduction (Reproduction): The reproduction record to update.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * reproduction (Reproduction): Les données de reproduction à mettre
+            à jour
 
-        Returns:
-            Reproduction: The updated reproduction record with calculated dates.
+        Renvoie:
+            * Reproduction: Les données de reproduction mises à jour, avec les
+            dates calculées
         """
         from web_app.fonction import substract_date_to_str, sum_date_to_str
         user: Users = UserUtils.get_user(user_id=user_id)
@@ -919,27 +938,42 @@ class CowUntils:
 
     @staticmethod
     def get_reproduction(user_id : int, cow_id: int) -> Reproduction:
-        """Retrieves the latest reproduction record for a cow by its ID.
+        """Récupère la dernière reproduction de la vache spécifiée.
 
-        This function returns the most recent reproduction dictionary for the specified cow, or raises a ValueError if the cow does not exist.
+        Cette fonction renvoie l'entrée de reproduction la plus récente de la
+        vache spécifiée, ou lance une ValueError si aucune vache n'est associée
+        à l'identifiant fourni en argument.
 
-        Args:
-            id (int): The unique identifier for the cow.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
 
-        Returns:
-            Reproduction: The latest reproduction record for the cow.
+        Renvoie:
+            * Reproduction: l'entrée de reproduction la plus récente pour la
+            vache concernée
 
-        Raises:
-            ValueError: If the cow with the given ID does not exist.
+        Lance:
+            * ValueError si la vache spécifiée n'existe pas
         """
-        cow: Optional[Cow]
+        cow: Cow | None
         if not (cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id})):
             raise ValueError(f"{cow_id} n'existe pas.")
-        if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+        if not cow.in_farm:
+            raise ValueError(f"cow : {cow_id} : est supprimer")
         return cow.reproduction[-1]
 
     @staticmethod
     def reload_all_reproduction(user_id : int) -> None:
+        """Recalcule les dates associées à la dernière reproduction des vaches.
+
+        Cette fonction parcourt la liste des vaches et recalcule pour chacune
+        les dates clefs liées à la reproduction la plus récente dans son
+        historique et enregistre (commit) les changements dans la base de
+        données.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+        """
         from .fonction import last
 
         cows: list[Cow] = Cow.query.filter_by(user_id= user_id, in_farm=True).all()
@@ -957,37 +991,54 @@ class CowUntils:
 
     @staticmethod
     def get_valide_reproduction(user_id : int) -> dict[int, Reproduction]:
-        """Retrieves the latest valid reproduction records for all cows with a confirmed ultrasound.
+        """Récupère la dernière entrée de reproduction valide pour toutes les
+        vaches dont les ultrasons ont été confirmés.
 
-        This function returns a dictionary mapping cow IDs to their most recent reproduction record where the ultrasound is confirmed.
+        Cette fonction renvoie un dictionnaire associant l'identifiant de chaque
+        vache à leur reproduction la plus récente où les ultrasons ont été
+        confirmés.
 
-        Returns:
-            dict[int, Reproduction]: A dictionary of cow IDs to their valid reproduction records.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+
+        Renvoie:
+            * dict[int, Reproduction]: Un dictionnaire d'identifiant de vaches
+            contenant leur plus récente reproduction avec ultrasons confirmés
         """
         from .fonction import last
         cows: list[Cow] = Cow.query.filter_by(user_id=user_id, in_farm=True).all()
         return {
             cow.cow_id: cow.reproduction[-1]
             for cow in cows
-            if last(cow.reproduction) and cow.reproduction[-1].get("ultrasound") and not cow.reproduction[-1].get("calving")
+            if last(cow.reproduction) and
+                    cow.reproduction[-1].get("ultrasound") and
+                    not cow.reproduction[-1].get("calving")
         }
 
     @staticmethod
-    def validated_calving(cow_id: int, user_id : int, abortion: bool, info: Optional[str] = None) -> None:
-        """Validates the calving event for a cow and records whether it was an abortion.
+    def validated_calving(cow_id: int, user_id : int, abortion: bool,
+            info: str | None = None) -> None:
+        """Valide le vêlage pour une vache et enregistre si c'était un
+        avortement.
 
-        This function updates the latest reproduction record for the specified cow to indicate a calving event and whether it was an abortion. If the cow does not exist, an error is logged and a ValueError is raised.
+        Cette fonction met à jour la dernière reproduction de la vache spécifiée
+        pour indiquer un vêlage, et enregistrer si c'était un avortement ou non.
+        Si aucune vache n'est associée à l'identifiant fourni en argument, une
+        erreur est marquée dans le journal et une ValueError est lancée.
 
-        Args:
-            cow_id (int): The unique identifier for the cow.
-            abortion (bool): True if the calving was an abortion, False otherwise.
+        Arguments:
+            * cow_id (int): Identifiant de la vache
+            * user_id (int): Identifiant de l'utilisateur
+            * abortion (bool): True si le vêlage était un avortement, False
+            sinon
+            * info (str | None): Notes et commentaires
 
-        Returns:
-            None
+        Lance:
+            * ValueError si la vache n'existe pas
         """
-            #TODO gestion pas d'insemination reproduction_ultrasound calving
-            #TODO getstion info
-        cow: Optional[Cow]
+        #TODO gestion pas d'insemination reproduction_ultrasound calving
+        #TODO getstion info
+        cow: Cow | None
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
 
@@ -1005,19 +1056,24 @@ class CowUntils:
 
     @staticmethod
     def validated_dry(user_id : int, cow_id: int) -> None:
-        """Validates the dry for a cow.
+        """Valide le tarissage d'une vache.
 
-        This function updates the latest reproduction record for the specified cow to indicate that the dry period has been completed. If the cow does not exist, an error is logged and a ValueError is raised.
+        Cette fonction met à jour l'historique de reproduction pour la vache
+        associée à l'identifiant fourni en argument pour indiquer que la période
+        de tarissage est terminée. Si la vache n'existe pas, une erreur est
+        marquée dans le journal et une ValueError est lancée.
 
-        Args:
-            cow_id (int): The unique identifier for the cow.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
 
-        Returns:
-            None
+        Lance:
+            * ValueError si aucune vache ne correspond à l'identifiant fourni
         """
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+            if not cow.in_farm:
+                raise ValueError(f"cow : {cow_id} : est supprimer")
 
             try:
                 reproduction: Reproduction = cow.reproduction[-1]
@@ -1036,19 +1092,25 @@ class CowUntils:
 
     @staticmethod
     def validated_calving_preparation(user_id : int, cow_id: int) -> None:
-        """Validates the calving preparation for a cow.
+        """Valide la date de préparation du vêlage pour une vache.
 
-        This function updates the latest reproduction record for the specified cow to indicate that the calving preparation has been completed. If the cow does not exist, an error is logged and a ValueError is raised.
+        Cette fonction met à jour la dernière entrée de l'historique de
+        reproduction de la vache associée à l'identifiant fourni en argument
+        pour indiquer que la préparation au vêlage a bien été effectuée. Si la
+        vache spécifiée n'existe pas, une erreur est marquée dans le journal et
+        une ValueError est lancée.
 
-        Args:
-            cow_id (int): The unique identifier for the cow.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
 
-        Returns:
-            None
+        Lance:
+            * ValueError si la vache spécifiée n'existe pas
         """
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+            if not cow.in_farm:
+                raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving_preparation_status"] = True
             cow.reproduction[-1] = reproduction
@@ -1079,9 +1141,23 @@ class CowUntils:
         Returns:
             None
         """
-        cow: Optional[Cow]
+        """Met à jour une entrée de reproduction d'une vache.
+
+        Cette fonction remplace l'entrée de reproduction à l'indice fourni en
+        argument par un nouveau dictionnaire de reproduction, et enregistre
+        (commit) le changement dans la base de données.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * repro_index (int): Indice de l'entrée dans l'historique
+            * new_repro (Reproduction): Entrée de reproduction à insérer dans
+            l'historique
+        """
+        cow: Cow | None
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+            if not cow.in_farm:
+                raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction[repro_index] = new_repro
             db.session.commit()
             lg.info(f"{cow_id} : reproduction updated in database")
@@ -1091,20 +1167,26 @@ class CowUntils:
 
     @staticmethod
     def delete_cow_reproduction(user_id: int, cow_id: int, repro_index: int) -> None:
-        """Deletes a specific reproduction record from a cow's reproduction history.
+        """Supprime une entrée de l'historique de reproduction d'une vache.
 
-        This function removes the reproduction record at the specified index and commits the change to the database. If the cow does not exist, an error is logged and a ValueError is raised.
+        Cette fonction supprime l'entrée présente à l'indice fourni de
+        l'historique de reproduction de la vache et enregistre (commit) les
+        changements dans la base de données. Si la vache spécifiée n'existe pas,
+        une erreur est marquée dans le journal et une ValueError est lancée.
 
-        Args:
-            cow_id (int): The unique identifier for the cow.
-            repro_index (int): The index of the reproduction record to delete.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * repro_index (int): Indice dans l'historique de l'entrée à
+            supprimer
 
-        Returns:
-            None
+        Lance:
+            * ValueError si la vache spécifiée n'existe pas
         """
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
-            if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
+            if not cow.in_farm:
+                raise ValueError(f"cow : {cow_id} : est supprimer")
             del cow.reproduction[repro_index]
             db.session.commit()
             lg.info(f"{cow_id} : reproduction deleted in database")
