@@ -15,9 +15,9 @@ def login_post():
     password = request.form.get('password')
     remember = bool(request.form.get('remember'))
 
-    user : Users = Users.query.filter_by(email=email).first()
+    user : Users = Users.query.filter_by(email=email).first() # type: ignore
 
-    if not user or not check_password_hash(user.password, password):
+    if not user or not check_password_hash(user.password, password): # type: ignore
         return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
 
     login_user(user, remember=remember, force=True)
@@ -37,7 +37,7 @@ def signup_post():
         flash('Email address already exists')
         return redirect(url_for('auth.signup'))
 
-    new_user = Users(email=email, name=name, password=generate_password_hash(password))
+    new_user = Users(email=email, name=name, password=generate_password_hash(password)) # type: ignore
     db.session.add(new_user)
     db.session.commit()
 

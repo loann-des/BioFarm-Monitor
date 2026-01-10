@@ -152,7 +152,7 @@ def add_medic_in_pharma_list():
         mesur = request.form["medic_unit"]
         lg.info(f"Ajout de {medic} a l'armoire a pharmacie...")
 
-        UserUtils.add_medic_in_pharma_list(user_id=current_user.id, medic=medic, mesur=mesur)
+        UserUtils.add_medic_in_pharma_list(user_id=current_user.id, medic=medic, mesur=mesur) # type: ignore
 
                 # Retourne un JSON avec l'URL de redirection
         return jsonify({
@@ -194,7 +194,7 @@ def init_stock():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year=year, remaining_stock=remaining_stock)
+        PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year=year, remaining_stock=remaining_stock) # type: ignore
 
         return jsonify(
             {"success": True, "message": "pharmacie initialiser avec succès."}

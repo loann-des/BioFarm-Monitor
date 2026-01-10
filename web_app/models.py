@@ -622,7 +622,7 @@ class CowUntils:
         lg.info(f"Care add to (user :{cow.user_id}, cow: {cow.cow_id}).")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
-        return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
+        return remaining_care_on_year(cow=cow), new_available_care(cow=cow) # type: ignore
 
     @staticmethod
     def update_cow_care(

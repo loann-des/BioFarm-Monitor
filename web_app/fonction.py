@@ -402,7 +402,7 @@ def pharmacie_to_csv(user_id: int, year: int) -> str:
     # === AJOUT : lignes des prescriptions par date ===
     # Construire dict : date_str -> med -> qty
     prescriptions_per_date = {
-        pres.date.strftime("%d %b %Y"): pres.care
+        pres.date.strftime("%d %b %Y"): pres.care # type: ignore
         for pres in PrescriptionUntils.get_year_prescription(user_id=user_id,year=year)
     }
 
@@ -442,11 +442,11 @@ def remaining_care_to_excel(user_id: int) -> bytes:
     """
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Traitements Restants"
+    ws.title = "Traitements Restants" # type: ignore
 
     headers = ["Numéro Vache",
                "Nb Traitements Restants", "Date Renouvellement"]
-    ws.append(headers)
+    ws.append(headers) # type: ignore
 
     color_map = {
         3: "00FF00",  # vert
@@ -467,8 +467,8 @@ def remaining_care_to_excel(user_id: int) -> bytes:
             "%d %b %Y") if renewal_date else "N/A"
         print(" "*3, "renewal_date_str: ", renewal_date_str)
 
-        ws.append([cow_id, nb_remaining, renewal_date_str])
-        cell = ws.cell(row=ws.max_row, column=2)
+        ws.append([cow_id, nb_remaining, renewal_date_str]) # type: ignore
+        cell = ws.cell(row=ws.max_row, column=2) # type: ignore
         color = color_map.get(nb_remaining, "000000")
 
         # case coloré
@@ -481,7 +481,7 @@ def remaining_care_to_excel(user_id: int) -> bytes:
     excel_io = BytesIO()
     wb.save(excel_io)
     excel_io.seek(0)
-    return excel_io
+    return excel_io # type: ignore
 
 
 def get_all_dry_date(user_id: int) -> dict[int, date]:
