@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
+import os
 import sys
-
-sys.path.insert(1, "../")
-from web_app.fonction import my_strftime
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), "../"))
 
 import unittest
 import warnings
 
-from datetime import date, datetime
+from datetime import datetime
 from random import randint, sample
 from web_app import app
+from web_app.fonction import my_strftime
 from web_app.models import Cow, CowUtils, init_db
 
 
