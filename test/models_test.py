@@ -186,9 +186,34 @@ class CowUtilsUnitTests(unittest.TestCase):
         self.assertTrue(c.is_calf)
         self.assertFalse(c.init_as_cow)
 
-    # TODO test suppress_cow(user_id: int, cow_id: int) -> None:
     def test_suppress_cow(self):
-        pass
+        init_db()
+
+        user_ids = sample(list(range(100)), 100)
+        cow_ids = sample(list(range(100)), 100)
+        birthdate = datetime.now().date()
+
+        for i in range(100):
+            CowUtils.add_cow(user_ids[i], cow_ids[i], birthdate)
+
+        cs = CowUtils.get_all_cows()
+
+        self.assertEqual(len(cs), 100)
+
+        for i in range(0, 100):
+            j = randint(0, len(cs) - 1)
+
+            self.assertEqual(cs[j].user_id, user_ids[j])
+            self.assertEqual(cs[j].cow_id, cow_ids[j])
+
+            CowUtils.suppress_cow(user_ids[j], cow_ids[j])
+            cs = CowUtils.get_all_cows()
+
+            self.assertRaises(ValueError, lambda : CowUtils.get_cow(user_ids[j],
+                cow_ids[j]))
+
+            del user_ids[j]
+            del cow_ids[j]
 
     def test_remove_cow(self):
         init_db()
