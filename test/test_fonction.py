@@ -98,7 +98,6 @@ class DataFunctionsUnitTests(unittest.TestCase):
         self.assertEqual(False, parse_bool("0"))
         self.assertEqual(False, parse_bool("no"))
 
-    # TODO: test day_delta
     def test_day_delta(self):
         today = datetime.now().date()
         one_year_ago = today - timedelta(days = 365)
