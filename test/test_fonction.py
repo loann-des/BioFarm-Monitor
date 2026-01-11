@@ -26,7 +26,7 @@ def random_date():
 class DataFunctionsUnitTests(unittest.TestCase):
     def test_first(self):
         for i in range(100):
-            lst = [randint(-100, 100) for j in range(i)]
+            lst = [randint(-100, 100) for _ in range(i)]
 
             if len(lst) == 0:
                 self.assertIsNone(first(lst))
@@ -35,7 +35,7 @@ class DataFunctionsUnitTests(unittest.TestCase):
 
     def test_last(self):
         for i in range(100):
-            lst = [randint(-100, 100) for j in range(i)]
+            lst = [randint(-100, 100) for _ in range(i)]
 
             if len(lst) == 0:
                 self.assertIsNone(last(lst))
@@ -43,7 +43,7 @@ class DataFunctionsUnitTests(unittest.TestCase):
                 self.assertEqual(lst[i-1], last(lst))
 
     def test_my_strftime(self):
-        for i in range(100):
+        for _i in range(100):
             d = random_date()
             dstr = my_strftime(d)
             expected = "{:04d}-{:02d}-{:02d}".format(d.year, d.month, d.day)
@@ -51,7 +51,7 @@ class DataFunctionsUnitTests(unittest.TestCase):
             self.assertEqual(expected, dstr)
 
     def test_parse_date(self):
-        for i in range(100):
+        for _i in range(100):
             d = random_date()
             dstr = "{:04d}-{:02d}-{:02d}".format(d.year, d.month, d.day)
 

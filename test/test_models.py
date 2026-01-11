@@ -258,7 +258,7 @@ class CowUtilsUnitTests(unittest.TestCase):
     def test_add_care(self):
         init_db()
 
-        for i in range(10):
+        for _i in range(10):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
 
@@ -269,7 +269,7 @@ class CowUtilsUnitTests(unittest.TestCase):
 
             total_cares = 0
 
-            for j in range(10):
+            for _j in range(10):
                 if randint(0, 1) == 1:
                     total_cares += 1
 
@@ -300,7 +300,7 @@ class CowUtilsUnitTests(unittest.TestCase):
     def test_add_cow_care(self):
         init_db()
 
-        for i in range(10):
+        for _i in range(10):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
 
@@ -310,7 +310,7 @@ class CowUtilsUnitTests(unittest.TestCase):
 
             total_cares = 0
 
-            for j in range(10):
+            for _j in range(10):
                 if randint(0, 1) == 1:
                     total_cares += 1
 
