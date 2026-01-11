@@ -255,13 +255,91 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertListEqual(c.reproduction, [])
             self.assertTrue(c.is_calf)
 
-    # TODO: test add_cow_care
-    def test_add_cow_care(self):
-        pass
-
-    # TODO: test add_care
     def test_add_care(self):
-        pass
+        init_db()
+
+        for i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            CowUtils.add_cow(user_id, cow_id)
+
+            cow = CowUtils.get_cow(user_id, cow_id)
+            self.assertEqual(0, len(cow.cow_cares))
+
+            total_cares = 0
+
+            for j in range(10):
+                if randint(0, 1) == 1:
+                    total_cares += 1
+
+                    medicname = "".join(
+                        [chr(randint(33, 126)) for _ in range(10)])
+                    dose = randint(1, 10000)
+                    annotation = "".join(
+                        [chr(randint(33, 126)) for _ in range(10)])
+
+                    # XXX: Return value ignored for now. Use when
+                    # remaining_care_on_year and new_available_care will be
+                    # validated.
+                    _ = CowUtils.add_care(cow, {
+                        "date_traitement": my_strftime(datetime.now().date()),
+                        "medicaments": {medicname: dose},
+                        "annotation": annotation
+                    })
+
+                    self.assertEqual(my_strftime(datetime.now().date()),
+                        cow.cow_cares[-1]["date_traitement"])
+                    self.assertEqual({medicname: dose},
+                        cow.cow_cares[-1]["medicaments"])
+                    self.assertEqual(annotation,
+                        cow.cow_cares[-1]["annotation"])
+
+                self.assertEqual(total_cares, len(cow.cow_cares))
+
+    def test_add_cow_care(self):
+        init_db()
+
+        for i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            CowUtils.add_cow(user_id, cow_id)
+            self.assertEqual(0,
+                len(CowUtils.get_cow(user_id, cow_id).cow_cares))
+
+            total_cares = 0
+
+            for j in range(10):
+                if randint(0, 1) == 1:
+                    total_cares += 1
+
+                    medicname = "".join(
+                        [chr(randint(33, 126)) for _ in range(10)])
+                    dose = randint(1, 10000)
+                    annotation = "".join(
+                        [chr(randint(33, 126)) for _ in range(10)])
+
+                    # XXX: Return value ignored for now. Use when
+                    # remaining_care_on_year and new_available_care will be
+                    # validated.
+                    _ = CowUtils.add_cow_care(user_id, cow_id, {
+                        "date_traitement": my_strftime(datetime.now().date()),
+                        "medicaments": {medicname: dose},
+                        "annotation": annotation
+                    })
+
+                    cow = CowUtils.get_cow(user_id, cow_id)
+
+                    self.assertEqual(my_strftime(datetime.now().date()),
+                        cow.cow_cares[-1]["date_traitement"])
+                    self.assertEqual({medicname: dose},
+                        cow.cow_cares[-1]["medicaments"])
+                    self.assertEqual(annotation,
+                        cow.cow_cares[-1]["annotation"])
+
+                self.assertEqual(total_cares,
+                    len(CowUtils.get_cow(user_id, cow_id).cow_cares))
 
     # TODO: test update_cow_care
     def test_update_cow_care(self):
