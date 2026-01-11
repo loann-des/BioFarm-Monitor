@@ -878,7 +878,7 @@ class CowUtils:
         cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
-            reproduction: Reproduction = last(cow.reproduction) # type: ignore
+            reproduction: Reproduction | None = last(cow.reproduction) # type: ignore
             if not reproduction:
                 raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
             reproduction["ultrasound"] = ultrasound
