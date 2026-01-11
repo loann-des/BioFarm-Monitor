@@ -5,5 +5,3 @@ __pycache__
 app.log
 app.db
 app.db-journal
-.vscode/
-/.vscode
