@@ -19,68 +19,93 @@ from .models import (
     UserUtils,
 )
 import logging as lg
+from typing import TypeVar
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 URI = os.path.join(basedir, "txt")
 
+T = TypeVar("T")
 
-def first(lst: List) -> Optional[object]:
-    """Returns the first element of a list or None if the list is empty."""
+def first(lst: list[T]) -> T | None:
+    """Renvoie le premier élément d'une liste, ou None si la liste est vide."""
     return lst[0] if lst else None
 
 
-def last(lst: List) -> Optional[object]:
-    """Returns the last element of a list or None if the list is empty."""
+def last(lst: list[T]) -> T | None:
+    """Renvoie le dernier élément d'une liste, ou None si la liste est vide."""
     return lst[-1] if lst else None
 
 
-def my_strftime(date_obj: date|str) -> str:
-
+def my_strftime(date_obj: date | str) -> str:
+    """Convertit une date (objet date ou chaîne de caractères) en une chaîne de
+    caractères au format "AAAA-MM-JJ".
+    """
     return (date_obj if isinstance(date_obj, date)
                     else datetime.strptime(date_obj, "%Y-%m-%d").date()
             ).strftime('%Y-%m-%d')
 
-def parse_date(date_obj: date|str) -> date:
-    """Parses a date string in the format 'YYYY-MM-DD' and returns a date object
+def parse_date(date_obj: date | str) -> date:
+    """Convertit une chaîne de caractère représentant une date au format
+    "AAAA-MM-JJ" en un objet date.
     """
     return (date_obj if isinstance(date_obj, date)
             else datetime.strptime(date_obj, "%Y-%m-%d").date()
             )
 
-def date_to_str(date_obj : date|str) -> str:
+def date_to_str(date_obj : date | str) -> str:
+    """Convertit  une date ou une chaîne de caractère représentant une date
+    au format "AAAA-MM-JJ" en une chaîne de caractère au format "JJ Mois AAA"
+    (avec Mois le nom du mois dans la langue du système).
+    """
     return (date_obj
             if isinstance(date_obj, date)
             else datetime.strptime(date_obj, "%Y-%m-%d").date()
             ).strftime('%d %B %Y')
 
-def sum_date_to_str(date_obj : date|str, delta_day :int) -> str :
+def sum_date_to_str(date_obj: date | str, delta_day: int) -> str:
+    """Ajoute le nombre de jours passé en argument à la date passée en
+    arguments et renvoie le résultat sous la forme d'une chaîne de caractères
+    au format "AAAA-MM-JJ".
+    """
     return my_strftime(
-                parse_date(date_obj) +  timedelta(days=delta_day)
+                parse_date(date_obj) + timedelta(days=delta_day)
             )
 
-def substract_date_to_str(date_obj : date|str, delta_day :int) -> str :
+def substract_date_to_str(date_obj: date | str, delta_day: int) -> str:
+    """Soustrait le nombre de jours passé en argument à la date passée en
+    arguments et renvoie le résultat sous la forme d'une chaîne de caractères
+    au format "AAAA-MM-JJ".
+    """
     return my_strftime(
-                parse_date(date_obj) -  timedelta(days=delta_day)
+                parse_date(date_obj) - timedelta(days=delta_day)
             )
 
-def format_bool_fr(value: bool, true_str="Oui", false_str="Non") -> str:
+def format_bool_fr(value: bool, true_str: str="Oui",
+        false_str: str="Non") -> str:
+    """Renvoie la transcription des booléens en termes français "Oui" et "Non".
+    """
     return true_str if value else false_str
 
-def parse_bool(value: str) -> Optional[bool]:
+def parse_bool(value: str | None) -> bool | None:
+    """Convertit une chaîne de caractères en booléen"""
     if value is None or not value:
         return None
     return value.lower() in {"true", "1", "yes"}
 
 def day_delta(date: date) -> int:
-    """Calculates the number of days between the given date and the date one year ago from today.
+    """Calcule le temps séparant la date d'il y a un an jour pour jour et la
+    date fournie en argument.
 
-    This function helps determine how many days have passed since a point exactly one year before the current date.
+    Cette fonction détermine le nombre de jours écoulés entre la date d'il y a
+    un an jour pour jour et la date fournie en argument. Le résultat est négatif
+    si la date fournie précède la date d'il y a un an, positif sinon.
 
-    Args:
-        date (date): The date to compare.
+    Arguments:
+        * date (date): La date depuis laquelle on cherche à calculer le delta
 
-    Returns:
-        int: The number of days between the given date and one year ago from today.
+    Renvoie:
+        * int: le nombre de jours entre la date fournie en argument et la date
+        un an jour pour jour avant aujourd'hui
     """
     today = datetime.now().date()  # date du jour
     # date d'il y a un ans jour pour jour
