@@ -115,7 +115,7 @@ class Cow(db.Model):
     """True si la vache se trouve dans la ferme, False si elle en est sortie.""" #TODO modif doc sur Type
 
     # TODO: Determine exact type annotation for born_date
-    born_date : Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    born_date : Mapped[date | None] = mapped_column(Date, nullable=True)
     """Date de naissance de la vache."""
 
     reproduction: Mapped[list[Reproduction]] = mapped_column(MutableList.as_mutable(JSON),
@@ -131,8 +131,7 @@ class Cow(db.Model):
     """True si la vache est comme vache adult, False sinon."""
 
 
-    # TODO: Determine exact type annotation for __table_args__
-    __table_args__ = (
+    __table_args__: tuple[PrimaryKeyConstraint, dict[str, Any]] = (
         PrimaryKeyConstraint(
             user_id,
             cow_id),
@@ -179,8 +178,7 @@ class Prescription(db.Model):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
             nullable=False)
 
-    # TODO: Determine exact type annotation for date
-    date = mapped_column(Date, nullable=False)
+    date: Mapped[Date] = mapped_column(Date, nullable=False)
     """Date de la prescription."""
 
     # Traitement stocké au format JSON en base
@@ -261,8 +259,7 @@ class Pharmacie(db.Model):
     """Stocks restants à la fin de l'année. Forme un dictionnaire
     {<nom>: <quantité>}."""
 
-    # TODO: Determine exact type annotation for __table_args__
-    __table_args__ = (
+    __table_args__: tuple[PrimaryKeyConstraint, dict[str, Any]] = (
         PrimaryKeyConstraint(
             user_id,
             year),
@@ -314,7 +311,7 @@ class Users(UserMixin, db.Model):
     Cette classe contient la configuration utilisateur de gestion des
     traitements et cycles reproductifs.
     """
-    __tablename__ = "users"
+    __tablename__: str = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)  # numero utilisateur
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -551,7 +548,7 @@ class CowUtils:
     @staticmethod
     def add_cow_care(
         user_id: int, cow_id: int,  cow_care: Traitement
-    ) -> tuple[int, date] | None:
+    ) -> tuple[int, date | None]:
         """Updates the care record for a cow with the specified ID.
 
         If the cow exists, the care is added and a tuple with the number of remaining cares and the date of new available care. If the cow does not exist, an error is logged and None is returned.
@@ -583,7 +580,7 @@ class CowUtils:
         """
 
         # Récupérer la vache depuis la BDD
-        cow: Optional[Cow]
+        cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return CowUtils.add_care(cow, cow_care)
         lg.error(f"(user :{user_id}, cow: {cow_id})  not found.")
@@ -592,7 +589,7 @@ class CowUtils:
     @staticmethod
     def add_care(
         cow: Cow, cow_care: Traitement
-    ) -> tuple[int, date]:
+    ) -> tuple[int, date | None]:
         #TODO Gestion des dates ptn
         """Ajoute un traitement à la vache spécifiée et renvoie les données de
         traitement mises à jour.
@@ -1563,7 +1560,7 @@ class UserUtils:
         return user.setting # type: ignore
 
     @staticmethod
-    def get_user(user_id):
+    def get_user(user_id: int) -> Users:
         """Récupère l'utilisateur associé à l'identifiant fourni en argument.
 
         Arguments:
