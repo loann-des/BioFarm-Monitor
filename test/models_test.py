@@ -25,6 +25,31 @@ class CowUtilsUnitTests(unittest.TestCase):
     def tearDown(self):
         self.app_context.pop()
 
+    def test_add_cow(self):
+        init_db()
+
+        for i  in range(100):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+            birthdate = None if i < 50 else datetime.now().date()
+
+            CowUtils.add_cow(user_id, cow_id, birthdate)
+
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
+            self.assertIsNotNone(c)
+
+            self.assertEqual(c.user_id, user_id)
+            self.assertEqual(c.cow_id, cow_id)
+            self.assertListEqual(c.cow_cares, [])
+            self.assertListEqual(c.info, [])
+            self.assertTrue(c.in_farm)
+            self.assertEqual(c.born_date, birthdate)
+            self.assertListEqual(c.reproduction, [])
+
+            # NOTE: If a new cow has is_calf at False, shouldn't init_as_cow be True?
+            self.assertFalse(c.is_calf)
+            self.assertFalse(c.init_as_cow)
+
     def test_get_cow(self):
         init_db()
 
@@ -72,28 +97,6 @@ class CowUtilsUnitTests(unittest.TestCase):
 
     def test_get_all_cows_by_user(self):
         pass
-
-    def test_add_cow(self):
-        init_db()
-
-        for i  in range(100):
-            user_id = randint(1, 9999)
-            cow_id = randint(1, 9999)
-            birthdate = None if i < 50 else datetime.now().date()
-
-            CowUtils.add_cow(user_id, cow_id, birthdate)
-
-            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
-            self.assertIsNotNone(c)
-
-            self.assertEqual(c.user_id, user_id)
-            self.assertEqual(c.cow_id, cow_id)
-            self.assertListEqual(c.cow_cares, [])
-            self.assertListEqual(c.info, [])
-            self.assertTrue(c.in_farm)
-            self.assertEqual(c.born_date, birthdate)
-            self.assertListEqual(c.reproduction, [])
-            self.assertFalse(c.is_calf)
 
     def test_update_cow(self):
         init_db()
