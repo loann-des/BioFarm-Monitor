@@ -12,7 +12,11 @@ from random import randint, sample
 from web_app import app
 from web_app.models import Cow, CowUtils, init_db
 
-class WebAppUnitTests(unittest.TestCase):
+
+class CowUtilsUnitTests(unittest.TestCase):
+    """Test unitaires des fonctions membres de CowUtils.
+    """
+
     def setUp(self):
         warnings.simplefilter("ignore")
         self.app_context = app.app_context()
@@ -20,46 +24,6 @@ class WebAppUnitTests(unittest.TestCase):
 
     def tearDown(self):
         self.app_context.pop()
-
-    """
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    TESTS FOR THE METHODS : CowUtils general methods :
-        - add_cow(user_id: int, cow_id: int, born_date: date = None) -> None
-        - get_cow(user_id: int, cow_id: int) -> Cow | None
-        - get_all_cows() -> list[Cow]
-        - get_all_cows(user_id : int) -> list[Cow]
-        - update_cow(user_id: int, cow_id: int, **kwargs) -> None
-        - suppress_cow(user_id: int, cow_id: int) -> None
-        - remove_cow(user_id: int, cow_id: int) -> None
-        - add_calf(user_id: int, calf_id: int, born_date: date = None) -> None
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    """
-
-    def test_add_cow(self):
-        init_db()
-
-        for i  in range(100):
-            user_id = randint(1, 9999)
-            cow_id = randint(1, 9999)
-            birthdate = None if i < 50 else datetime.now().date()
-
-            CowUtils.add_cow(user_id, cow_id, birthdate)
-
-            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
-            self.assertIsNotNone(c)
-
-            self.assertEqual(c.user_id, user_id)
-            self.assertEqual(c.cow_id, cow_id)
-            self.assertListEqual(c.cow_cares, [])
-            self.assertListEqual(c.info, [])
-            self.assertTrue(c.in_farm)
-            self.assertEqual(c.born_date, birthdate)
-            self.assertListEqual(c.reproduction, [])
-            self.assertFalse(c.is_calf)
 
     def test_get_cow(self):
         init_db()
@@ -106,12 +70,32 @@ class WebAppUnitTests(unittest.TestCase):
             self.assertListEqual(cs[i].reproduction, [])
             self.assertFalse(cs[i].is_calf)
 
-    # TODO test get_all_cows(user_id : int) -> list[Cow]:
     def test_get_all_cows_by_user(self):
         pass
 
+    def test_add_cow(self):
+        init_db()
+
+        for i  in range(100):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+            birthdate = None if i < 50 else datetime.now().date()
+
+            CowUtils.add_cow(user_id, cow_id, birthdate)
+
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
+            self.assertIsNotNone(c)
+
+            self.assertEqual(c.user_id, user_id)
+            self.assertEqual(c.cow_id, cow_id)
+            self.assertListEqual(c.cow_cares, [])
+            self.assertListEqual(c.info, [])
+            self.assertTrue(c.in_farm)
+            self.assertEqual(c.born_date, birthdate)
+            self.assertListEqual(c.reproduction, [])
+            self.assertFalse(c.is_calf)
+
     def test_update_cow(self):
-        # TODO: pass test_update_cow
         init_db()
 
         user_id = randint(1, 9999)
@@ -233,55 +217,108 @@ class WebAppUnitTests(unittest.TestCase):
             self.assertListEqual(c.reproduction, [])
             self.assertTrue(c.is_calf)
 
-    """
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    TESTS FOR THE METHODS : CowUtils care methods :
-        - add_cow_care(user_id: int, cow_id: int,  cow_care: Traitement) -> Optional[tuple[int, date]]
-        - add_care(cow: Cow, cow_care: Traitement) -> tuple[int, date]
-        - update_cow_care(user_id: int, cow_id: int, care_index: int, new_care: Traitement) -> None
-        - delete_cow_care(user_id: int, cow_id: int, care_index: int) -> None
-        - get_all_care(user_id : int) -> list[Tuple[Traitement, int]]
-        - get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement]
-        - get_care_on_year(user_id : int , year: int) -> list[Traitement]
-        - get_calf_care_on_year(user_id : int, year: int) -> list[Tuple[Traitement]]:
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    """
+    # TODO: test add_cow_care
     def test_add_cow_care(self):
         pass
 
+    # TODO: test add_care
     def test_add_care(self):
         pass
 
+    # TODO: test update_cow_care
     def test_update_cow_care(self):
         pass
 
+    # TODO: test delete_cow_care
     def test_delete_cow_care(self):
         pass
 
+    # TODO: test geta_all_cares
     def test_get_all_cares(self):
         pass
 
+    # TODO: test get_care_by_id
     def test_get_care_by_id(self):
         pass
 
+    # TODO: test get_care_on_year
     def test_get_care_on_year(self):
         pass
 
+    # TODO: test get_calf_care_on_year
     def test_get_calf_care_on_year(self):
         pass
 
-    """
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+class PrescriptionUtilsUnitTests(unittest.TestCase):
+    # TODO: test add_prescription
+    def test_add_prescription(self):
+        pass
 
-    TEST FOR THE METHODS : CowUtils reproduction methods
+    # TODO: test add_dlc_left
+    def test_add_dlc_left(self):
+        pass
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    """
+    # TODO: test get_all_prescriptions
+    def test_get_all_prescriptions(self):
+        pass
+
+    # TODO: test get_all_prescriptions
+    def test_get_all_prescriptions_cares(self):
+        pass
+
+    # TODO: test get_year_prescription
+    def test_get_year_prescription(self):
+        pass
+
+    # TODO: test get_dlc_left_on_year
+    def test_get_dlc_left_on_year(self):
+        pass
+
+class PharmacieUtilsUnitTests(unittest.TestCase):
+    # TODO: test get_pharmacie_year
+    def test_get_pharmacie_year(self):
+        pass
+
+    # TODO: test updateOrDefault_pharmacie_year
+    def test_updateOrDefault_pharmacie_year(self):
+        pass
+
+    # TODO: test get_all_pharmacie
+    def test_get_all_pharmacie(self):
+        pass
+
+    # TODO: test set_pharmacie_year
+    def test_set_pharmacie_year(self):
+        pass
+
+    # TODO: test upload_pharmacie_year
+    def test_upload_pharmacie_year(self):
+        pass
+
+class UserUtilsUnitTest(unittest.TestCase):
+    # TODO: test add_user
+    def add_user(self):
+        pass
+
+    # TODO: test set_user_setting
+    def test_set_user_setting(self):
+        pass
+
+    # TODO: test get_user_setting
+    def test_get_user_setting(self):
+        pass
+
+    # TODO: test get_user
+    def test_get_user(self):
+        pass
+
+    # TODO: test add_medic_in_pharma_list
+    def test_add_medic_in_pharma_list(self):
+        pass
+
+    # TODO: test get_pharma_list
+    def test_get_pharma_list(self):
+        pass
+
 if (__name__ == "__main__"):
     unittest.main()
