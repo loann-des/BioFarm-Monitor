@@ -363,7 +363,7 @@ def init_db() -> None:
 
 
 # COW FONCTION
-class CowUntils:
+class CowUtils:
     """Cette classe est un namespace. Tous ses membres sont statiques.
 
     Ce namespace regroupe les fonctions de gestion des vaches, de
@@ -585,7 +585,7 @@ class CowUntils:
         # Récupérer la vache depuis la BDD
         cow: Optional[Cow]
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
-            return CowUntils.add_care(cow, cow_care)
+            return CowUtils.add_care(cow, cow_care)
         lg.error(f"(user :{user_id}, cow: {cow_id})  not found.")
         raise ValueError(f"(user :{user_id}, cow: {cow_id})  n'existe pas.")
 
@@ -899,7 +899,7 @@ class CowUntils:
 
             if ultrasound:
 
-                cow.reproduction[-1] = CowUntils.set_reproduction(user_id,reproduction)
+                cow.reproduction[-1] = CowUtils.set_reproduction(user_id,reproduction)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
             else:
                 lg.info(f"insemination on {date} of {cow_id} invalidate")
@@ -982,7 +982,7 @@ class CowUntils:
                 and cow.reproduction[-1].get("ultrasound")
                     and not cow.reproduction[-1].get("calving")):
 
-                cow.reproduction[-1] = CowUntils.set_reproduction(
+                cow.reproduction[-1] = CowUtils.set_reproduction(
                     user_id,
                     cow.reproduction[-1])
 
@@ -990,7 +990,7 @@ class CowUntils:
         lg.info("reproduction reload")
 
     @staticmethod
-    def get_valide_reproduction(user_id : int) -> dict[int, Reproduction]:
+    def get_valid_reproduction(user_id : int) -> dict[int, Reproduction]:
         """Récupère la dernière entrée de reproduction valide pour toutes les
         vaches dont les ultrasons ont été confirmés.
 
@@ -1201,7 +1201,7 @@ class CowUntils:
 
 
 # PRESCRIPTION FONCTION
-class PrescriptionUntils:
+class PrescriptionUtils:
     """Cette class est un namespace, tous ses membres sont statiques.
 
     Ce namespace regroupe les fonctions pour ajouter, retirer, récupérer et
@@ -1248,7 +1248,7 @@ class PrescriptionUntils:
         db.session.commit()
 
     @staticmethod
-    def get_all_prescription(user_id: int) -> list[Prescription]:
+    def get_all_prescriptions(user_id: int) -> list[Prescription]:
         """Récupère toutes les prescriptions de la base de données.
 
         Cette fonction récupère toutes les prescriptions présentes dans la base
@@ -1264,7 +1264,7 @@ class PrescriptionUntils:
         return Prescription.query.filter_by(user_id=user_id).all()
 
     @staticmethod
-    def get_all_prescription_cares(user_id: int) -> list[tuple[date, dict[str, int], bool]]:
+    def get_all_prescriptions_cares(user_id: int) -> list[tuple[date, dict[str, int], bool]]:
         """Récupère toutes les prescriptions dans la base de données triées par
         ordre décroissant de date.
 

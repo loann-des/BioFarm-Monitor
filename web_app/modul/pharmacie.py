@@ -7,7 +7,7 @@ from flask_login import login_required, current_user # type: ignore
 
 
 from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, date_to_str
-from web_app.models import CowUntils, PharmacieUtils, PrescriptionUntils, Traitement, UserUtils, Users
+from web_app.models import CowUtils, PharmacieUtils, PrescriptionUtils, Traitement, UserUtils, Users
 
 
 pharma = Blueprint('pharma', __name__)
@@ -48,7 +48,7 @@ def update_care():
 
         lg.info(f"update care{cow_id}...")
 
-        remain_care = CowUntils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care) # type: ignore
+        remain_care = CowUtils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care) # type: ignore
 
         success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {date_to_str(remain_care[1])} pour {cow_id}." # type: ignore
         return jsonify({"success": True, "message": success_message})
@@ -94,7 +94,7 @@ def add_prescription():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PrescriptionUntils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares) # type: ignore
+        PrescriptionUtils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares) # type: ignore
 
         return jsonify({"success": True, "message": "Ordonnance ajoutée avec succès."})
 
@@ -133,7 +133,7 @@ def add_dlc_left():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PrescriptionUntils.add_dlc_left(user_id=current_user.id, date=date_obj, care_items=cares)
+        PrescriptionUtils.add_dlc_left(user_id=current_user.id, date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Medicament sortie avec succès."})
 

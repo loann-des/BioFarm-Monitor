@@ -10,7 +10,7 @@ import warnings
 from datetime import date, datetime
 from random import randint, sample
 from web_app import app
-from web_app.models import Cow, CowUntils, init_db
+from web_app.models import Cow, CowUtils, init_db
 
 class WebAppUnitTests(unittest.TestCase):
     def setUp(self):
@@ -25,7 +25,7 @@ class WebAppUnitTests(unittest.TestCase):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    TESTS FOR THE METHODS : CowUntils general methods :
+    TESTS FOR THE METHODS : CowUtils general methods :
         - add_cow(user_id: int, cow_id: int, born_date: date = None) -> None
         - get_cow(user_id: int, cow_id: int) -> Cow | None
         - get_all_cows() -> list[Cow]
@@ -47,7 +47,7 @@ class WebAppUnitTests(unittest.TestCase):
             cow_id = randint(1, 9999)
             birthdate = None if i < 50 else datetime.now().date()
 
-            CowUntils.add_cow(user_id, cow_id, birthdate)
+            CowUtils.add_cow(user_id, cow_id, birthdate)
 
             c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
             self.assertIsNotNone(c)
@@ -69,7 +69,7 @@ class WebAppUnitTests(unittest.TestCase):
             cow_id = randint(1, 9999)
             birthdate = None if i < 50 else datetime.now().date()
 
-            CowUntils.add_cow(user_id, cow_id, birthdate)
+            CowUtils.add_cow(user_id, cow_id, birthdate)
 
             c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
             self.assertIsNotNone(c)
@@ -91,9 +91,9 @@ class WebAppUnitTests(unittest.TestCase):
         birthdate = datetime.now().date()
 
         for i in range(100):
-            CowUntils.add_cow(user_ids[i], cow_ids[i], birthdate)
+            CowUtils.add_cow(user_ids[i], cow_ids[i], birthdate)
 
-        cs : list[Cow] = CowUntils.get_all_cows()
+        cs : list[Cow] = CowUtils.get_all_cows()
         self.assertEqual(len(cs), 100)
 
         for i in range(len(cs)):
@@ -117,7 +117,7 @@ class WebAppUnitTests(unittest.TestCase):
         user_id = randint(1, 9999)
         cow_id = randint(1, 9999)
 
-        CowUntils.add_cow(user_id, cow_id, None)
+        CowUtils.add_cow(user_id, cow_id, None)
 
         c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
         self.assertIsNotNone(c)
@@ -133,7 +133,7 @@ class WebAppUnitTests(unittest.TestCase):
 
         birthdate = datetime.now().date()
 
-        CowUntils.update_cow(user_id, cow_id,
+        CowUtils.update_cow(user_id, cow_id,
                 cow_cares = [{
                     "date_traitement": my_strftime(datetime.now().date()),
                     "medicaments": {"medicament": 1},
@@ -199,15 +199,15 @@ class WebAppUnitTests(unittest.TestCase):
         user_id = randint(1, 9999)
         cow_id = randint(1, 9999)
 
-        CowUntils.add_cow(user_id, cow_id, datetime.now().date())
+        CowUtils.add_cow(user_id, cow_id, datetime.now().date())
 
-        c = CowUntils.get_cow(user_id, cow_id)
+        c = CowUtils.get_cow(user_id, cow_id)
         self.assertIsNotNone(c)
         self.assertTrue(c.in_farm)
 
-        CowUntils.remove_cow(user_id, cow_id)
+        CowUtils.remove_cow(user_id, cow_id)
 
-        c = CowUntils.get_cow(user_id, cow_id)
+        c = CowUtils.get_cow(user_id, cow_id)
         self.assertIsNotNone(c)
         self.assertFalse(c.in_farm)
 
@@ -219,7 +219,7 @@ class WebAppUnitTests(unittest.TestCase):
             calf_id = randint(1, 9999)
             birthdate = None if i < 50 else datetime.now().date()
 
-            CowUntils.add_calf(user_id, calf_id, birthdate)
+            CowUtils.add_calf(user_id, calf_id, birthdate)
 
             c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : calf_id}) # type: ignore
             self.assertIsNotNone(c)
@@ -237,7 +237,7 @@ class WebAppUnitTests(unittest.TestCase):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    TESTS FOR THE METHODS : CowUntils care methods :
+    TESTS FOR THE METHODS : CowUtils care methods :
         - add_cow_care(user_id: int, cow_id: int,  cow_care: Traitement) -> Optional[tuple[int, date]]
         - add_care(cow: Cow, cow_care: Traitement) -> tuple[int, date]
         - update_cow_care(user_id: int, cow_id: int, care_index: int, new_care: Traitement) -> None
@@ -278,7 +278,7 @@ class WebAppUnitTests(unittest.TestCase):
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    TEST FOR THE METHODS : CowUntils reproduction methods
+    TEST FOR THE METHODS : CowUtils reproduction methods
 
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------

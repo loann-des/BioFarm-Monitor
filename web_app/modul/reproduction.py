@@ -8,7 +8,7 @@ from flask_login import login_required, current_user
 
 
 from web_app.fonction import get_all_calving_date, get_all_calving_preparation_date, get_all_dry_date, get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, my_strftime
-from web_app.models import CowUntils, PharmacieUtils, PrescriptionUntils, UserUtils, Users
+from web_app.models import CowUtils, PharmacieUtils, PrescriptionUtils, UserUtils, Users
 
 
 repro = Blueprint('repro', __name__)
@@ -29,7 +29,7 @@ def add_cow():
 
         lg.info(f"Adding new cow {cow_id}...")
 
-        CowUntils.add_cow(user_id=user_id, cow_id=cow_id, init_as_cow=True)
+        CowUtils.add_cow(user_id=user_id, cow_id=cow_id, init_as_cow=True)
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}
@@ -50,7 +50,7 @@ def remove_cow():
 
         lg.info(f"supresion de {cow_id}...")
 
-        CowUntils.remove_cow(user_id=current_user.id, cow_id=cow_id)
+        CowUtils.remove_cow(user_id=current_user.id, cow_id=cow_id)
 
         return jsonify({"success": True, "message": f"{cow_id} a été supprimée."})
 
@@ -69,7 +69,7 @@ def insemination():
         # Récupération de l'id de la vache
         cow_id = int(request.form["id"])
 
-        CowUntils.add_insemination(user_id=current_user.id, cow_id=cow_id, insemination=date_obj)
+        CowUtils.add_insemination(user_id=current_user.id, cow_id=cow_id, insemination=date_obj)
 
         return jsonify(
             {"success": True, "message": f"insemination {cow_id} ajouter avec succes"}
@@ -88,7 +88,7 @@ def ultrasound():
 
         ultrasound = bool(request.form["ultrasound"])
 
-        CowUntils.validated_ultrasound(user_id=current_user.id, cow_id=cow_id, ultrasound=ultrasound)
+        CowUtils.validated_ultrasound(user_id=current_user.id, cow_id=cow_id, ultrasound=ultrasound)
 
         success_message = f"l'echographie de {cow_id} a été {'valider' if ultrasound else 'invalider'} avec succes"
         return jsonify({"success": True, "message": success_message})
@@ -117,7 +117,7 @@ def validate_dry():
         return jsonify({"success": False, "message": "Aucune vache spécifiée."}), 400
 
     try:
-        CowUntils.validated_dry(user_id=current_user.id, cow_id=cow_id)
+        CowUtils.validated_dry(user_id=current_user.id, cow_id=cow_id)
 
         return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
     except Exception as e:
@@ -132,7 +132,7 @@ def show_calving_preparation():
         return jsonify({"success": True, "calving_preparation": calving_preparation})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
-    
+
 @login_required
 @repro.route("/validate_calving_preparation")
 def validate_calving_preparation():
@@ -144,7 +144,7 @@ def validate_calving_preparation():
         return jsonify({"success": False, "message": "Aucune vache spécifiée."}), 400
 
     try:
-        CowUntils.validated_dry(user_id=current_user.id, cow_id=cow_id)
+        CowUtils.validated_dry(user_id=current_user.id, cow_id=cow_id)
 
         return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
     except Exception as e:
@@ -173,14 +173,14 @@ def upload_calf():
         calf_id = request.form["calf_id"]
         calving_date = request.form["calving_date"]
         if borning == "abortion":
-            CowUntils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True)
+            CowUtils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True)
             success_message = f"avortement de {mother_id} rensegné, courage"
 
         elif calf_id and calving_date:
             lg.info(f"Adding new calf {calf_id}...")
-            CowUntils.validated_calving(user_id=current_user.id, cow_id=mother_id, abortion=False)
+            CowUtils.validated_calving(user_id=current_user.id, cow_id=mother_id, abortion=False)
             calving_date = datetime.strptime(calving_date, "%Y-%m-%d").date()
-            CowUntils.add_calf(user_id=current_user.id, calf_id=calf_id, born_date=calving_date)
+            CowUtils.add_calf(user_id=current_user.id, calf_id=calf_id, born_date=calving_date)
             success_message = f"naissance de {calf_id} confirmé"
         else:
             raise ValueError('Renségner "Numéro Veau" et  "Date de velage"')

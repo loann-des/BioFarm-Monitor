@@ -17,7 +17,7 @@ import pandas as pd
 views = Blueprint('views', __name__)
 
 from ..fonction import *
-from ..models import CowUntils, PrescriptionUntils, PharmacieUtils, UserUtils, Users
+from ..models import CowUtils, PrescriptionUtils, PharmacieUtils, UserUtils, Users
 
 # TODO edit
 # TODO gestion des log
@@ -64,7 +64,7 @@ def user_setting():
             user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time) # type: ignore
         )
 
-        CowUntils.reload_all_reproduction(user_id=user_id) # type: ignore
+        CowUtils.reload_all_reproduction(user_id=user_id) # type: ignore
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -90,7 +90,7 @@ def upload_cows():
         added, skipped = 0, 0
         for cow_id in cow_ids:
             try:
-                CowUntils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True) # type: ignore
+                CowUtils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True) # type: ignore
                 added += 1
             except ValueError:
                 skipped += 1
@@ -105,7 +105,7 @@ def upload_cows():
 
 @views.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
 def view_cow(cow_id):
-    if cow := CowUntils.get_cow(cow_id=cow_id):
+    if cow := CowUtils.get_cow(cow_id=cow_id):
         print("🐄 Vache récupérée :", cow)
         return render_template("cow_details.html", cow=cow)
     else:
@@ -114,7 +114,7 @@ def view_cow(cow_id):
 
 @views.route("/cow_liste/edit_cow/<int:cow_id>", methods=["GET", "POST"])
 def edit_cow(cow_id):
-    return render_template("cow_edit.html", cow=CowUntils.get_cow(cow_id=cow_id))
+    return render_template("cow_edit.html", cow=CowUtils.get_cow(cow_id=cow_id))
 
 
 @views.route("/cow_liste/suppress_cow/<int:cow_id>", methods=["POST"])
@@ -122,7 +122,7 @@ def suppress_cow(cow_id):
     # TODO Ajout ms confirmation avant suppression
     lg.info(f"Suppression de la vache {cow_id}...")
     try:
-        CowUntils.suppress_cow(cow_id=cow_id)
+        CowUtils.suppress_cow(cow_id=cow_id)
         return jsonify({"success": True, "message": f"Vache {cow_id} supprimée."})
     except Exception as e:
         lg.error(f"Erreur pendant la suppression de la vache {cow_id}: {e}")
@@ -160,7 +160,7 @@ def update_cow_details(cow_id):
     update_data["info"] = info_list  # ou adapte le nom de champ selon ton modèle
 
     try:
-        CowUntils.update_cow(cow_id, **update_data)
+        CowUtils.update_cow(cow_id, **update_data)
         flash("Vache mise à jour avec succès.", "success")
     except ValueError as e:
         flash(str(e), "danger")
@@ -183,7 +183,7 @@ def update_cow_care(cow_id, care_index):
             meds[med] = int(qty)
         i += 1
 
-    CowUntils.update_cow_care(
+    CowUtils.update_cow_care(
         cow_id=cow_id, care_index=care_index, new_care=(new_date, meds, new_info)
     )
 
@@ -193,7 +193,7 @@ def update_cow_care(cow_id, care_index):
 @views.route('/delete_cow_care/<int:cow_id>/<int:care_index>', methods=['POST'])
 def delete_cow_care(cow_id, care_index):
     try:
-        CowUntils.delete_cow_care(cow_id=cow_id, care_index=care_index)
+        CowUtils.delete_cow_care(cow_id=cow_id, care_index=care_index)
         flash("Soin supprimé.")
     except IndexError:
         flash("Soin introuvable.")
@@ -226,7 +226,7 @@ def update_cow_reproduction(cow_id, repro_index):
         }
 
         # Mettre à jour la reproduction et l'info complémentaire
-        CowUntils.update_cow_reproduction(
+        CowUtils.update_cow_reproduction(
             cow_id=cow_id, repro_index=repro_index, new_repro=(new_repro, info)
         )
 
@@ -241,12 +241,10 @@ def update_cow_reproduction(cow_id, repro_index):
 @views.route('/delete_cow_reproduction/<int:cow_id>/<int:repro_index>', methods=['POST'])
 def delete_cow_reproduction(cow_id, repro_index):
     try:
-        CowUntils.delete_cow_reproduction(cow_id=cow_id, repro_index=repro_index)
+        CowUtils.delete_cow_reproduction(cow_id=cow_id, repro_index=repro_index)
         flash("Reproduction supprimée.")
     except IndexError:
         flash("Reproduction introuvable.")
     return redirect(url_for('edit_cow', cow_id=cow_id))
 
 # END cow_edit form
-
-
