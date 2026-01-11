@@ -549,17 +549,6 @@ class CowUtils:
     def add_cow_care(
         user_id: int, cow_id: int,  cow_care: Traitement
     ) -> tuple[int, date | None]:
-        """Updates the care record for a cow with the specified ID.
-
-        If the cow exists, the care is added and a tuple with the number of remaining cares and the date of new available care. If the cow does not exist, an error is logged and None is returned.
-
-        Args:
-            id (int): The unique identifier for the cow.
-            cow_cares (Tuple[date, dict, str]): The care information to add.
-
-        Returns:
-            Optional[tuple[int, date]]: The number of remaining cares and the date of new available care, or None if the cow is not found.
-        """
         """Met à jour l'historique des traitements de la vache associée à
         l'identifiant fourni en argument.
 
