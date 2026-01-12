@@ -1,14 +1,16 @@
 # Pharmacie form
-from datetime import datetime
-from io import BytesIO
-from flask import Blueprint, jsonify, redirect, render_template, request, send_file, url_for
-import pandas as pd
 import logging as lg
+
+from datetime import datetime
+from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 
-
-from web_app.fonction import get_all_calving_date, get_all_calving_preparation_date, get_all_dry_date, get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, my_strftime
-from web_app.models import CowUtils, PharmacieUtils, PrescriptionUtils, UserUtils, Users
+from web_app.fonction import (
+    get_all_calving_date,
+    get_all_calving_preparation_date,
+    get_all_dry_date
+)
+from web_app.models import CowUtils, Users
 
 
 repro = Blueprint('repro', __name__)

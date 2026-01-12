@@ -1,13 +1,15 @@
-import os
 import csv
 import io
-from collections import Counter, defaultdict
-from datetime import date, datetime, timedelta
-from typing import List, Optional, Tuple
-from werkzeug.datastructures import FileStorage
+import logging as lg
+import os
 import openpyxl
-from openpyxl.styles import Font, PatternFill
+
+from collections import Counter
+from datetime import date, datetime, timedelta
 from io import BytesIO
+from openpyxl.styles import Font, PatternFill
+from typing import TypeVar
+
 from .models import (
     Cow,
     Prescription,
@@ -18,8 +20,6 @@ from .models import (
     Traitement,
     UserUtils,
 )
-import logging as lg
-from typing import TypeVar
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 URI = os.path.join(basedir, "txt")
@@ -123,7 +123,7 @@ def nb_cares_years(user_id: int, cow_id) -> int:
     Returns:
         int: The number of care events in the past year.
     """
-    cares: List[Traitement] = CowUtils.get_care_by_id(user_id=user_id, cow_id=cow_id)
+    cares: list[Traitement] = CowUtils.get_care_by_id(user_id=user_id, cow_id=cow_id)
     return sum(
         day_delta(parse_date(care["date_traitement"])) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
@@ -139,7 +139,7 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
     Returns:
         int: The number of care events in the past year.
     """
-    cares: List[Traitement] = cow.cow_cares
+    cares: list[Traitement] = cow.cow_cares
     return sum(
         day_delta(parse_date(care["date_traitement"])) <= 365 for care in cares
     )  # sum boolean if True 1 else 0
@@ -159,7 +159,7 @@ def remaining_care_on_year(cow: Cow) -> int:
     # traitement restant dans l'année glissante
     return 3 - nb_care_year
 
-def new_available_care(cow: Cow) -> Optional[date]:
+def new_available_care(cow: Cow) -> date | None:
     """Determines the next date a cow becomes eligible for a new care treatment.
 
     This function calculates when a cow can receive its next care treatment based on its care history and the annual treatment limit.
@@ -327,7 +327,7 @@ def get_history_pharmacie(user_id : int) -> list[tuple[date, dict[str, int], str
 
     # Récupère les données
     care_raw : list[tuple[Traitement,int]] = CowUtils.get_all_care(user_id=user_id) or []
-    prescription_raw : List[tuple[date, dict[str, int], bool]]= PrescriptionUtils.get_all_prescriptions_cares(user_id=user_id) or []
+    prescription_raw : list[tuple[date, dict[str, int], bool]]= PrescriptionUtils.get_all_prescriptions_cares(user_id=user_id) or []
 
     care_data = [
         (parse_date(traitement["date_traitement"]), traitement["medicaments"], f"care {cow_id}")

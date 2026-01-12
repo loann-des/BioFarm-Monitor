@@ -1,7 +1,7 @@
 from datetime import timedelta
 from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager
 
 
 

@@ -1,13 +1,33 @@
 # Pharmacie form
-from datetime import datetime
-from io import BytesIO
-from flask import Blueprint, jsonify, redirect, render_template, request, send_file, url_for
 import logging as lg
+
+from datetime import datetime
+from flask import (
+    Blueprint,
+    jsonify,
+    render_template,
+    request,
+    send_file,
+    url_for
+)
 from flask_login import login_required, current_user # type: ignore
+from io import BytesIO
 
-
-from web_app.fonction import get_pharma_len, pharmacie_to_csv, remaining_care_to_excel, remaining_pharmacie_stock, date_to_str
-from web_app.models import CowUtils, PharmacieUtils, PrescriptionUtils, Traitement, UserUtils, Users
+from web_app.fonction import (
+    get_pharma_len,
+    pharmacie_to_csv,
+    remaining_care_to_excel,
+    remaining_pharmacie_stock,
+    date_to_str
+)
+from web_app.models import (
+    CowUtils,
+    PharmacieUtils,
+    PrescriptionUtils,
+    Traitement,
+    UserUtils,
+    Users
+)
 
 
 pharma = Blueprint('pharma', __name__)

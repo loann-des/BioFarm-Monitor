@@ -1,5 +1,7 @@
+import logging as lg
+import pandas as pd
+
 from datetime import datetime
-from io import BytesIO
 from flask import (
     Blueprint,
     flash,
@@ -7,17 +9,15 @@ from flask import (
     redirect,
     render_template,
     request,
-    send_file,
     url_for,
 )
-import logging as lg
-from flask_login import login_required, current_user, logout_user, AnonymousUserMixin # type: ignore
-import pandas as pd
-
-views = Blueprint('views', __name__)
+from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
+from io import BytesIO
 
 from ..fonction import *
-from ..models import CowUtils, PrescriptionUtils, PharmacieUtils, UserUtils, Users
+from ..models import CowUtils, UserUtils, Users
+
+views = Blueprint('views', __name__)
 
 # TODO edit
 # TODO gestion des log

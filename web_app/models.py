@@ -1,31 +1,23 @@
 # Standard
-from ast import Dict
 import logging as lg
-from typing import List, Optional, Tuple, TypedDict, Any
 
-# Third-party
-from datetime import date, datetime, timedelta
+from datetime import date
 from flask_login import UserMixin
-
 from sqlalchemy import (
     Boolean,
-    Column,
     Date,
     ForeignKey,
     Integer,
-    PickleType,
     PrimaryKeyConstraint,
     String,
     DATE,
     JSON,
     extract)
-
 from sqlalchemy.ext.mutable import MutableList, MutableDict
 from sqlalchemy.orm import Mapped, mapped_column
+from typing import TypedDict, Any
 from werkzeug.security import generate_password_hash
 
-
-# Local
 from . import db
 
 # TODO gestion exeption
