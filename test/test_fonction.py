@@ -10,7 +10,7 @@ import warnings
 from datetime import date, datetime, timedelta
 from random import randint
 from web_app import app
-from web_app.fonction import day_delta, first, format_bool_fr, last, my_strftime, nb_cares_years, nb_cares_years_of_cow, parse_bool, parse_date, substract_date_to_str, sum_date_to_str
+from web_app.fonction import day_delta, first, format_bool_fr, last, my_strftime, nb_cares_years, nb_cares_years_of_cow, parse_bool, parse_date, remaining_care_on_year, substract_date_to_str, sum_date_to_str
 from web_app.models import CowUtils, init_db
 
 def random_date():
@@ -206,7 +206,44 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
 
     # TODO: test remaining_cares_on_year
     def test_remaining_care_on_year(self):
-        pass
+        init_db()
+
+        for _i in range(33):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            CowUtils.add_cow(user_id, cow_id)
+
+            cow = CowUtils.get_cow(user_id, cow_id)
+
+            self.assertEqual(0, len(cow.cow_cares))
+            self.assertEqual(3, remaining_care_on_year(cow))
+
+            remaining_cares = 3
+
+            for j in range(3):
+                last_medic_days = randint(0, 730)
+
+                if last_medic_days <= 365:
+                    remaining_cares -= 1
+
+                medic_date = datetime.now().date() - timedelta(days=last_medic_days)
+                medic_name = "".join([chr(randint(33, 126)) for _ in range(10)])
+                medic_amount = randint(1, 9999)
+                annotation = "".join([chr(randint(33, 126)) for _ in range(10)])
+
+                # XXX: Return value ignored for now. Use when
+                # remaining_care_on_year and new_available_care will be
+                # validated.
+                _ = CowUtils.add_cow_care(user_id, cow_id, {
+                    "date_traitement": my_strftime(medic_date),
+                    "medicaments": {medic_name: medic_amount},
+                    "annotation": annotation
+                })
+
+                cow = CowUtils.get_cow(user_id, cow_id)
+                self.assertEqual(j + 1, len(cow.cow_cares))
+                self.assertEqual(remaining_cares, remaining_care_on_year(cow))
 
     # TODO: test new_available_care
     def test_new_available_care(self):

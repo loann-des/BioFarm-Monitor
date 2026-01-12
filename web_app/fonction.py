@@ -152,15 +152,19 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
     )  # sum boolean if True 1 else 0
 
 def remaining_care_on_year(cow: Cow) -> int:
-    """Calculates the number of remaining care treatments available for a cow in the current rolling year.
+    """Calcule le nombre de traitements qu'il est possible d'administrer à la
+    vache dans le courant de l'année roulante actuelle.
 
-    This function determines how many care treatments a cow can still receive within a 365-day period, based on a maximum of three allowed treatments per year.
+    Cette fonction calcule le nombre de traitements que la vache représentée par
+    l'objet Cow fourni en argument peut encore recevoir dans une période de 365
+    jours, sur une base de trois traitements par an.
 
-    Args:
-        cow (Cow): The cow object whose remaining care treatments are to be calculated.
+    Arguments:
+        * cow (Cow): objet représentant la vache concernée
 
-    Returns:
-        int: The number of remaining care treatments for the cow in the current rolling year.
+    Renvoie:
+        * int: Le nombre de traitements que la vache peut encore recevoir dans
+        le courant des 365 prochains jours.
     """
     nb_care_year = nb_cares_years_of_cow(cow=cow)
     # traitement restant dans l'année glissante
