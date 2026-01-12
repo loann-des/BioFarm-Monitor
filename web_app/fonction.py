@@ -133,19 +133,22 @@ def nb_cares_years(user_id: int, cow_id: int) -> int:
     )  # sum boolean if True 1 else 0
 
 def nb_cares_years_of_cow(cow: Cow) -> int:
-    """Counts the number of care events for a cow in the past year by cow object.
+    """Compte le nombre de traitements administrés à une vache au cours de
+    l'année passée.
 
-    This function examines the cow's care records and returns the count of those that occurred within the last 365 days.
+    Cette fonction récupère toutes les entrées de l'historique des traitements
+    de la vache représentée par l'objet Cow fourni en argument et renvoie le
+    nombre de ces entrées datant des 365 derniers jours.
 
-    Args:
-        cow (Cow): The cow object whose care records are to be counted.
+    Arguments:
+        * cow (Cow): L'objet Cow représentant la vache
 
-    Returns:
-        int: The number of care events in the past year.
+    Renvoie:
+        * int: Le nombre de traitements administrés dans les 365 derniers jours
     """
     cares: list[Traitement] = cow.cow_cares
     return sum(
-        day_delta(parse_date(care["date_traitement"])) <= 365 for care in cares
+        day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
     )  # sum boolean if True 1 else 0
 
 def remaining_care_on_year(cow: Cow) -> int:
