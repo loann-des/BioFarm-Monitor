@@ -45,10 +45,8 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertTrue(c.in_farm)
             self.assertEqual(c.born_date, birthdate)
             self.assertListEqual(c.reproduction, [])
-
-            # NOTE: If a new cow has is_calf at False, shouldn't init_as_cow be True?
             self.assertFalse(c.is_calf)
-            self.assertFalse(c.init_as_cow)
+            self.assertTrue(c.init_as_cow)
 
     def test_get_cow(self):
         init_db()
@@ -70,10 +68,8 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertTrue(c.in_farm)
             self.assertEqual(c.born_date, birthdate)
             self.assertListEqual(c.reproduction, [])
-
-            # NOTE: same as line 49
             self.assertFalse(c.is_calf)
-            self.assertFalse(c.init_as_cow)
+            self.assertTrue(c.init_as_cow)
 
     def test_get_all_cows(self):
         init_db()
@@ -96,10 +92,8 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertTrue(cs[i].in_farm)
             self.assertEqual(cs[i].born_date, birthdate)
             self.assertListEqual(cs[i].reproduction, [])
-
-            # NOTE: Same as line 49
             self.assertFalse(cs[i].is_calf)
-            self.assertFalse(cs[i].init_as_cow)
+            self.assertTrue(cs[i].init_as_cow)
 
     def test_get_all_cows_by_user(self):
         pass
@@ -122,10 +116,8 @@ class CowUtilsUnitTests(unittest.TestCase):
         self.assertTrue(c.in_farm)
         self.assertIsNone(c.born_date)
         self.assertListEqual(c.reproduction, [])
-
-        # NOTE: Same as line 49
         self.assertFalse(c.is_calf)
-        self.assertFalse(c.init_as_cow)
+        self.assertTrue(c.init_as_cow)
 
         birthdate = datetime.now().date()
 
@@ -153,7 +145,8 @@ class CowUtilsUnitTests(unittest.TestCase):
                     "abortion": False,
                     "reproduction_details": "Details"
                 }],
-                is_calf = True)
+                is_calf = True,
+                init_as_cow = False)
 
         c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
         self.assertIsNotNone(c)

@@ -395,7 +395,7 @@ class CowUtils:
 
     @staticmethod
     def add_cow(user_id: int, cow_id: int, born_date: date | None = None,
-            init_as_cow: bool = False) -> None:
+            init_as_cow: bool = True) -> None:
         """Ajoute une nouvelle vache à la base de données si elle n'existe pas
         déjà.
 
