@@ -493,17 +493,6 @@ class CowUtils:
     @staticmethod
     def add_calf(user_id: int, calf_id: int,
             born_date: date | None = None) -> None:
-        """Adds a new calf to the database if it does not already exist.
-
-        If a calf with the given ID is not present, it is created and added to the database. Otherwise, an error is logged and a ValueError is raised.
-
-        Args:
-            calf_id (int): The unique identifier for the calf to be added.
-            born_date (date): The birth date of the calf.
-
-        Returns:
-            None
-        """
         """Ajoute un veau à la base de données s'il n'existe pas déjà.
 
         S'il n'existe pas de veau associé à l'identifiant fourni, il est créé
@@ -1107,18 +1096,6 @@ class CowUtils:
         repro_index: int,
         new_repro: Reproduction,
     ) -> None:
-        """Updates a specific reproduction record for a cow.
-
-        This function replaces the reproduction record at the specified index with a new reproduction dictionary and commits the change to the database.
-
-        Args:
-            cow_id (int): The unique identifier for the cow.
-            repro_index (int): The index of the reproduction record to update.
-            new_repro (Reproduction): The new reproduction record to set.
-
-        Returns:
-            None
-        """
         """Met à jour une entrée de reproduction d'une vache.
 
         Cette fonction remplace l'entrée de reproduction à l'indice fourni en
@@ -1572,14 +1549,7 @@ class UserUtils:
 
 
     @staticmethod
-    def get_pharma_list(user_id: int) -> list[str] :
-        """Retrieves the pharmacy medication list as a dictionary.
-
-        This function returns the care dictionary from the pharmacy Prescription entry in the database.
-
-        Returns:
-            dict[str, int]: A dictionary mapping medication names to their quantities.
-        """
+    def get_pharma_list(user_id: int) -> list[str]:
         """Récupère la liste des médicaments dans la pharmacie de l'utilisateur.
 
         Cette fonction renvoie un dictionnaire contenant les médicaments
