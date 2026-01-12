@@ -106,7 +106,6 @@ class Cow(db.Model):
     in_farm: Mapped[bool] = mapped_column(Boolean)
     """True si la vache se trouve dans la ferme, False si elle en est sortie.""" #TODO modif doc sur Type
 
-    # TODO: Determine exact type annotation for born_date
     born_date : Mapped[date | None] = mapped_column(Date, nullable=True)
     """Date de naissance de la vache."""
 
