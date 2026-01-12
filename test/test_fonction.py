@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import sys
-
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), "../"))
 
 import unittest
@@ -10,7 +9,20 @@ import warnings
 from datetime import date, datetime, timedelta
 from random import randint
 from web_app import app
-from web_app.fonction import day_delta, first, format_bool_fr, last, my_strftime, nb_cares_years, nb_cares_years_of_cow, parse_bool, parse_date, remaining_care_on_year, substract_date_to_str, sum_date_to_str
+from web_app.fonction import (
+    day_delta,
+    first,
+    format_bool_fr,
+    last,
+    my_strftime,
+    nb_cares_years,
+    nb_cares_years_of_cow,
+    parse_bool,
+    parse_date,
+    remaining_care_on_year,
+    substract_date_to_str,
+    sum_date_to_str
+)
 from web_app.models import CowUtils, init_db
 
 def random_date():
@@ -61,7 +73,6 @@ class DataFunctionsUnitTests(unittest.TestCase):
 
             self.assertEqual(d, parse_date(dstr))
 
-    # TODO: test date_to_str
     def test_date_to_str(self):
         pass
 
@@ -204,7 +215,6 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
                 self.assertEqual(medics_in_last_year,
                     nb_cares_years_of_cow(cow))
 
-    # TODO: test remaining_cares_on_year
     def test_remaining_care_on_year(self):
         init_db()
 
