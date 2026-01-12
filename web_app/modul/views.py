@@ -46,10 +46,12 @@ def reproduction():
 def pharmacie():
     return render_template("pharmacie.html", user=current_user)
 
+
 @login_required
 @views.route("/cow_liste", methods=["GET"])
 def cow_liste():
     return render_template("cow_liste.html")
+
 
 @login_required
 @views.route("/user_setting", methods=["POST"])
@@ -71,6 +73,7 @@ def user_setting():
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
+
 
 @login_required
 @views.route("/upload_cow/", methods=["POST"])
@@ -98,6 +101,102 @@ def upload_cows():
         return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
+
+
+@login_required
+@views.route("/upload_calf/", methods=["POST"])
+def upload_calfs():
+    file = request.files.get("file")
+    if not file:
+        return "Aucun fichier reçu", 400
+
+    try:
+        user_id = current_user.id
+        # Lire le fichier Excel directement en mémoire
+        df = pd.read_excel(BytesIO(file.read()))
+
+        # Lire uniquement la première colonne (ex: ID de la vache)
+        calf_ids = df.iloc[:, 0].dropna().unique()
+
+        added, skipped = 0, 0
+        for calf_id in calf_ids:
+            try:
+                CowUtils.add_calf(user_id=user_id, calf_id=int(calf_id)) # type: ignore
+                added += 1
+            except ValueError:
+                skipped += 1
+
+        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
+
+    
+@login_required
+@views.route("/init_stock", methods=["POST"])
+def init_stock():
+    #TODO Init par import odt/xls
+    file = request.files.get("file")
+    if not file:
+        return "Aucun fichier reçu", 400
+
+    try:
+        user_id = current_user.id
+        # Lire le fichier Excel directement en mémoire
+        df = pd.read_excel(BytesIO(file.read()))
+
+        # Lire uniquement la première colonne (ex: ID de la vache)
+        medics = df.iloc[:, 0].dropna().unique()
+        qt_medics = df.iloc[:, 0].dropna().unique()
+        
+
+        added, skipped = 0, 0
+        for medic,qt_medic in medics,qt_medics:
+            try:
+                CowUtils.add_calf(user_id=user_id, calf_id=int(calf_id)) # type: ignore
+                added += 1
+            except ValueError:
+                skipped += 1
+
+        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
+    # try:  
+    #     # Récupère et parse la date
+    #     year = request.form["prescription_date"]
+
+    #     # Récupère les médicaments et quantités
+    #     remaining_stock: dict[str, int] = {}
+    #     for nb_care in range(get_pharma_len(current_user.id)):
+    #         medic = request.form.get(f"medic_{nb_care+1}")
+    #         quantite = request.form.get(f"medic_{nb_care+1}_nb")
+
+    #         if medic and quantite:
+    #             qte_int = int(quantite)
+    #             if qte_int > 0:  # ignor les chaps vide
+    #                 if medic in remaining_stock:
+    #                     lg.error(
+    #                         f"Quantité invalide pour medic_{nb_care+1}: {quantite}"
+    #                     )
+    #                     raise ValueError(f"Le médicament '{medic}' est en double.")
+    #                 remaining_stock[medic] = qte_int
+
+    #     if not remaining_stock:
+    #         raise ValueError(
+    #             "Veuillez renseigner au moins un médicament avec une quantité valide."
+    #         )
+
+    #     PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year=year, remaining_stock=remaining_stock) # type: ignore
+
+    #     return jsonify(
+    #         {"success": True, "message": "pharmacie initialiser avec succès."}
+    #     )
+
+    # except Exception as e:
+    #     lg.error(f"Erreur pendant l’upload : {e}")
+    #     return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
+
+# TODO Bouger tout ce qui suit ds un nouveau modul cow_liste
+
 
 
 # cow_liste form

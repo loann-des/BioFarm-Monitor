@@ -22,8 +22,6 @@ from . import db
 
 # TODO gestion exeption
 # TODO gestion des log
-# TODO correction de dict[a : b] en dict[a, b]
-# TODO remplacer id par cow_id
 # TODO Gestion du None dans la repro
 
 
@@ -95,9 +93,9 @@ class Cow(db.Model):
     cow_cares: Mapped[list[Traitement]] = mapped_column(
             MutableList.as_mutable(JSON),
             default=list,
-            nullable=False) #TODO modif doc sur Type
-    """Liste de traitements. Forme un tuple (date de traitement,
-    traitement, notes)."""
+            nullable=False)
+    """Liste de Traitement. Forme un dict {date_traitement: str,
+    medicaments: dict[str, int], annotation: str)."""
 
     info: Mapped[list[Note]] = mapped_column(MutableList.as_mutable(JSON),
             default=list, nullable=False)#TODO modif doc sur Type
@@ -117,7 +115,6 @@ class Cow(db.Model):
             nullable=False)
     """True si la vache est une génisse, False sinon."""
 
-    #TODO refaire fonction avec cette arg
     init_as_cow : Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     """True si la vache est comme vache adult, False sinon."""
 
@@ -404,7 +401,9 @@ class CowUtils:
         journal.
 
         Arguments:
-            * id (int): Identifiant de la vache à ajouter
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache à ajouter
+            * born_date (date|None): Date de naissance
         """
         if not Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             new_cow = Cow(
@@ -559,7 +558,6 @@ class CowUtils:
     def add_care(
         cow: Cow, cow_care: Traitement
     ) -> tuple[int, date | None]:
-        #TODO Gestion des dates ptn
         """Ajoute un traitement à la vache spécifiée et renvoie les données de
         traitement mises à jour.
 
@@ -732,24 +730,6 @@ class CowUtils:
             de l'année fournie en argument
         """
         from web_app.fonction import parse_date
-        # res : list[Traitement] = []
-        # cow: Cow
-        # for cow in Cow.query.filter_by(user_id=user_id).all():
-            # TODO verif integrité is_calf
-            # res.extend(
-            #         cow_care
-            #         for cow_care in cow.cow_cares
-            #         if (
-            #             parse_date(cow_care["date_traitement"]).year == year #verif de l'anné
-            #             and (
-            #                 cow.is_calf # si c'est un veaux
-            #                 or (        # sinon
-            #                     cow.reproduction   #si il y'a eu reproduction
-            #                     and parse_date(cow_care["date_traitement"]) <= parse_date(cow.reproduction[-1]["insemination"]) # traitement avant reproduction
-            #                     )
-            #                 )
-            #             )
-            # )
         res : list[Traitement] = [
             cow_care
             for cow in Cow.query.filter_by(user_id=user_id).all()   #iteration sur cows
@@ -766,25 +746,6 @@ class CowUtils:
                     )
                 )
         ]
-
-
-            # if cow.is_calf:
-            #     res.extend(
-            #         cow_care
-            #         for cow_care in cow.cow_cares
-            #         if parse_date(cow_care["date_traitement"]).year == year
-            #     )
-            # else:
-            #     last_insemination = parse_date(cow.reproduction[-1]["insemination"]) if cow.reproduction else None
-            #     if last_insemination:
-            #         res.extend(
-            #             cow_care
-            #             for cow_care in cow.cow_cares
-            #             if (
-            #                 parse_date(cow_care["date_traitement"]).year == year
-            #                 and parse_date(cow_care["date_traitement"])<= last_insemination
-            #             )
-            #         )
         return res
 
     # END cow care functions ------------------------------------------------
@@ -1003,7 +964,7 @@ class CowUtils:
             * ValueError si la vache n'existe pas
         """
         #TODO gestion pas d'insemination reproduction_ultrasound calving
-        #TODO getstion info
+        #TODO getstion de l'anotation
         cow: Cow | None
         if cow := Cow.query.get({'cow_id' : cow_id, 'user_id' : user_id}):
             if not cow.in_farm : raise ValueError(f"cow : {cow_id} : est supprimer")
@@ -1177,8 +1138,8 @@ class PrescriptionUtils:
             * care_items (dict[str, int]): Éléments de la prescription,
             typiquement nom du traitement et dose
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items,
-                dlc_left=False)  # type: ignore
+        prescription = Prescription(user_id=user_id, date=date, care=care_items, # type: ignore
+                dlc_left=False)  
         db.session.add(prescription)
         db.session.commit()
 
@@ -1196,8 +1157,8 @@ class PrescriptionUtils:
             * care_items (dict[str, int]): Éléments de la prescription,
             typiquement nom du traitement et dose
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items,
-            dlc_left=True) # type: ignore
+        prescription = Prescription(user_id=user_id, date=date, care=care_items, # type: ignore
+            dlc_left=True) 
         db.session.add(prescription)
         db.session.commit()
 
@@ -1523,10 +1484,7 @@ class UserUtils:
         Arguments:
             * user_id (int): Identifiant de l'utilisateur
         """
-        if user := Users.query.get(user_id):
-            return user
-        else:
-            raise #TODO raise get_user mais peut etre pas apparament bug
+        return Users.query.get(user_id) # type: ignore
 
     @staticmethod
     def add_medic_in_pharma_list(user_id: int, medic: str, mesur: int) -> None:

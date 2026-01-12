@@ -79,6 +79,30 @@ def update_care():
 
 
 @login_required
+@pharma.route("/add_medic_in_pharma_list", methods=["POST"])
+def add_medic_in_pharma_list():
+
+    try:
+        # Récupération des données du formulaire
+        medic = request.form["medic"]
+        mesur = request.form["medic_unit"]
+        lg.info(f"Ajout de {medic} a l'armoire a pharmacie...")
+
+        UserUtils.add_medic_in_pharma_list(user_id=current_user.id, medic=medic, mesur=mesur) # type: ignore
+
+                # Retourne un JSON avec l'URL de redirection
+        return jsonify({
+            "success": True,
+            "message": f"{medic} a été ajouté à l'armoire à pharmacie.",
+            "redirect": url_for("views.pharmacie")
+        })
+
+    except Exception as e:
+        lg.error(f"Erreur pendant l’upload : {e}")
+        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
+
+
+@login_required
 @pharma.route("/add_prescription", methods=["POST"])
 def add_prescription():
     try:
@@ -156,69 +180,6 @@ def add_dlc_left():
         PrescriptionUtils.add_dlc_left(user_id=current_user.id, date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Medicament sortie avec succès."})
-
-    except Exception as e:
-        lg.error(f"Erreur pendant l’upload : {e}")
-        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
-
-
-@login_required #TODO bougé sur le home pour l'init
-@pharma.route("/add_medic_in_pharma_list", methods=["POST"])
-def add_medic_in_pharma_list():
-
-    try:
-        # Récupération des données du formulaire
-        medic = request.form["medic"]
-        mesur = request.form["medic_unit"]
-        lg.info(f"Ajout de {medic} a l'armoire a pharmacie...")
-
-        UserUtils.add_medic_in_pharma_list(user_id=current_user.id, medic=medic, mesur=mesur) # type: ignore
-
-                # Retourne un JSON avec l'URL de redirection
-        return jsonify({
-            "success": True,
-            "message": f"{medic} a été ajouté à l'armoire à pharmacie.",
-            "redirect": url_for("views.pharmacie")
-        })
-
-    except Exception as e:
-        lg.error(f"Erreur pendant l’upload : {e}")
-        return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
-
-
-@login_required #TODO bougé sur le home pour l'init
-@pharma.route("/init_stock", methods=["POST"])
-def init_stock():
-    try:
-        # Récupère et parse la date
-        year = request.form["prescription_date"]
-
-        # Récupère les médicaments et quantités
-        remaining_stock: dict[str, int] = {}
-        for nb_care in range(get_pharma_len(current_user.id)):
-            medic = request.form.get(f"medic_{nb_care+1}")
-            quantite = request.form.get(f"medic_{nb_care+1}_nb")
-
-            if medic and quantite:
-                qte_int = int(quantite)
-                if qte_int > 0:  # ignor les chaps vide
-                    if medic in remaining_stock:
-                        lg.error(
-                            f"Quantité invalide pour medic_{nb_care+1}: {quantite}"
-                        )
-                        raise ValueError(f"Le médicament '{medic}' est en double.")
-                    remaining_stock[medic] = qte_int
-
-        if not remaining_stock:
-            raise ValueError(
-                "Veuillez renseigner au moins un médicament avec une quantité valide."
-            )
-
-        PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year=year, remaining_stock=remaining_stock) # type: ignore
-
-        return jsonify(
-            {"success": True, "message": "pharmacie initialiser avec succès."}
-        )
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
