@@ -71,7 +71,7 @@
   </section>
   <!-- END init vache-->
 
-  <!-- init vache-->
+  <!-- init veaux-->
   <section id="init_calf" class="contact section">
     <div class="container section-title">
       <h2>Initialiser vos veaux</h2>
@@ -97,7 +97,35 @@
       <div id="message-form-init_calf" class="alert" style="display: none;"></div>
     </div>
   </section>
-  <!-- END init vache-->
+  <!-- END init veaux-->
+
+  <!-- init Médicament-->
+  <section id="init_medicament" class="contact section">
+    <div class="container section-title">
+      <h2>Initialiser vos médicaments</h2>
+      <p>Importer un fichier Excel (colonne médicaments , colonne qte)</p>
+    </div>
+    <div class="row justify-content-center">
+      <form id="form-init_medicament" action="{{ url_for('views.init_stock') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+
+          {# selection fichier #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <label for="file" class="form-label">Fichier</label>
+            <input type="file" name="file" accept=".xls,.xlsx,.ods" class="form-control" required>
+          </div>
+
+          {# button submit #}
+          <div class="col d-flex flex-column align-items-center text-center">
+            <button type="submit" class="btn btn-primary">Importer</button>
+          </div>
+
+        </div>
+      </form>
+      <div id="message-form-init_medicament" class="alert" style="display: none;"></div>
+    </div>
+  </section>
+  <!-- END init Médicament-->
 
  {# TODO afficher setting #}
 

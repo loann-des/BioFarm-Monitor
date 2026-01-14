@@ -391,7 +391,6 @@ def update_pharmacie_year(user_id : int, year: int) -> Pharmacie:
     return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=user_id, year=year, default=pharmacie)
 
 
-
 def pharmacie_to_csv(user_id: int, year: int) -> str:
     """Generates a CSV report of pharmacy medication statistics for a given year.
 

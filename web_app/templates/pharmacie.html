@@ -293,50 +293,7 @@
   </section>
   <!-- END export_stock Section -->
 
-  <!-- init stock Section -->
-  <section id="init_stock" class="contact section">
-    <div class="container section-title">
-      <h2>Initialisation stock</h2>
-      <p>Sortez ici les médicaments pour DLC passée</p>
-    </div>
 
-    <div class="row justify-content-center">
-      <form id="form-init_stock" action="{{ url_for('pharma.init_stock') }}" method="POST" class="ajax-form php-email-form">
-        <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
-
-          {# date de l'année précédente #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <label for="prescription_date" class="form-label">Date des stock (année précédente) :</label>
-            <input type="number" name="prescription_date" id="prescription_date" min="2000" max="2099" class="form-control" required />
-          </div>
-
-          {# Médicament stock #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len(user.id)) %}
-              <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
-              <div class="input-group mb-2">
-                <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list(user.id) %}
-                    <option value="{{ care }}">{{ care }}</option>
-                  {% endfor %}
-                </select>
-                <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="Nombre de doses" class="form-control" min="1" />
-              </div>
-            {% endfor %}
-          </div>
-
-          {# button submit #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <button type="submit" class="btn btn-primary">Initialisation stock</button>
-          </div>
-
-        </div>
-      </form>
-      <div id="message-form-init_stock" class="alert" style="display: none;"></div>
-    </div>
-
-  </section>
-  <!-- End init stock Section -->
 {% endblock %}
 
 {% block JS %}

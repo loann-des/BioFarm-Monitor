@@ -45,6 +45,9 @@ def create_app():
 
     from .modul.reproduction import repro as repro_blueprint
     app.register_blueprint(repro_blueprint)
+    
+    from .modul.cow_liste import cow_liste as cow_liste_blueprint
+    app.register_blueprint(cow_liste_blueprint)
 
     # Jinja2 global functions
     from .fonction import get_pharma_list, get_pharma_len, get_history_pharmacie, format_bool_fr, date_to_str
