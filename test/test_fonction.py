@@ -218,7 +218,7 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
     def test_remaining_care_on_year(self):
         init_db()
 
-        for _i in range(33):
+        for _i in range(10):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
 
@@ -231,8 +231,11 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
 
             remaining_cares = 3
 
-            for j in range(3):
+            for j in range(10):
                 last_medic_days = randint(0, 730)
+
+                if remaining_cares <= 0:
+                    last_medic_days = randint(366, 730)
 
                 if last_medic_days <= 365:
                     remaining_cares -= 1
