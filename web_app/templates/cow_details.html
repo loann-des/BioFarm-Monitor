@@ -7,14 +7,14 @@
 {% endblock %}
 
 {% block page_title %}
-  {{cow.id}}
+  {{cow.cow_id}} - Détails
 {% endblock %}
 {% block content %}
 
 {# Détails de la vache #}
   <section id='cow_details' class='contact section'>
     <div class="container section-title">
-      <h2>Détails de {{ cow.id }}</h2>
+      <h2>Détails de {{ cow.cow_id }}</h2>
     </div>
     <div class='php-email-form'>
         <p>Dans la ferme : {{ cow.in_farm }}</p>

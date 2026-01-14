@@ -12,32 +12,38 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from ..models import CowUtils, Users, db
 import logging as lg
+from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
 from datetime import datetime
 
 # TODO tout retaper/reparé ici 
 
+
+
 cow_liste = Blueprint('cow_liste', __name__)
 
+
+@login_required
 @cow_liste.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
 def view_cow(cow_id):
-    if cow := CowUtils.get_cow(cow_id=cow_id):
+    if cow := CowUtils.get_cow(user_id=current_user.id, cow_id=cow_id):
         print("🐄 Vache récupérée :", cow)
         return render_template("cow_details.html", cow=cow)
     else:
         return "Vache introuvable", 404
 
-
+@login_required
 @cow_liste.route("/cow_liste/edit_cow/<int:cow_id>", methods=["GET", "POST"])
 def edit_cow(cow_id):
-    return render_template("cow_edit.html", cow=CowUtils.get_cow(cow_id=cow_id))
+    return render_template("cow_edit.html", cow=CowUtils.get_cow(user_id=current_user.id, cow_id=cow_id))
 
 
+@login_required
 @cow_liste.route("/cow_liste/suppress_cow/<int:cow_id>", methods=["POST"])
 def suppress_cow(cow_id):
     # TODO Ajout ms confirmation avant suppression
     lg.info(f"Suppression de la vache {cow_id}...")
     try:
-        CowUtils.suppress_cow(cow_id=cow_id)
+        CowUtils.suppress_cow(user_id=current_user.id, cow_id=cow_id)
         return jsonify({"success": True, "message": f"Vache {cow_id} supprimée."})
     except Exception as e:
         lg.error(f"Erreur pendant la suppression de la vache {cow_id}: {e}")
@@ -50,12 +56,13 @@ def suppress_cow(cow_id):
 # cow_edit form
 
 
+@login_required
 @cow_liste.route("/update_cow_details/<int:cow_id>", methods=["POST"])
 def update_cow_details(cow_id):
     # Récupération des données du formulaire
     in_farm = bool(request.form.get("in_farm"))
     born_date_str = request.form.get("born_date")
-    born_date = datetime.strptime(born_date_str, "%Y-%m-%d").date()
+    born_date = datetime.strptime(born_date_str, "%Y-%m-%d").date() # type: ignore
 
     # Préparation des kwargs à passer à la fonction update_cow
     update_data = {
@@ -82,12 +89,13 @@ def update_cow_details(cow_id):
 
     return redirect(url_for("edit_cow", cow_id=cow_id))
 
+@login_required
 @cow_liste.route("/update_cow_care/<int:cow_id>/<int:care_index>", methods=["POST"])
 def update_cow_care(cow_id, care_index):
 
     # Récupération des données du formulaire
     date_str = request.form.get("care_date")
-    new_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    new_date = datetime.strptime(date_str, "%Y-%m-%d").date() # type: ignore
     new_info = request.form.get("care_info", "")
 
     # Récupération des médicaments
@@ -99,12 +107,13 @@ def update_cow_care(cow_id, care_index):
         i += 1
 
     CowUtils.update_cow_care(
-        cow_id=cow_id, care_index=care_index, new_care=(new_date, meds, new_info)
+        user_id=current_user.id, cow_id=cow_id, care_index=care_index, new_care=(new_date, meds, new_info)
     )
 
     flash("Soin modifié avec succès", "success")
     return redirect(url_for("edit_cow", cow_id=cow_id))  # ou autre vue
 
+@login_required
 @cow_liste.route('/delete_cow_care/<int:cow_id>/<int:care_index>', methods=['POST'])
 def delete_cow_care(cow_id, care_index):
     try:
@@ -114,6 +123,7 @@ def delete_cow_care(cow_id, care_index):
         flash("Soin introuvable.")
     return redirect(url_for('edit_cow', cow_id=cow_id))
 
+@login_required
 @cow_liste.route("/update_cow_reproduction/<int:cow_id>/<int:repro_index>", methods=["POST"])
 def update_cow_reproduction(cow_id, repro_index):
     # TODO recalculer sur modif
@@ -153,6 +163,7 @@ def update_cow_reproduction(cow_id, repro_index):
 
     return redirect(url_for("cow_details", cow_id=cow_id))
 
+@login_required
 @cow_liste.route('/delete_cow_reproduction/<int:cow_id>/<int:repro_index>', methods=['POST'])
 def delete_cow_reproduction(cow_id, repro_index):
     try:
