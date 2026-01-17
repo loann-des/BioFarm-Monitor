@@ -50,7 +50,7 @@ def pharmacie():
 @login_required
 @views.route("/cow_liste", methods=["GET"])
 def cow_liste():
-    return render_template("cow_liste.html")
+    return render_template("cow_liste.html", user = current_user)
 
 
 @login_required
@@ -115,7 +115,7 @@ def upload_calfs():
         # Lire le fichier Excel directement en mémoire
         df = pd.read_excel(BytesIO(file.read()), header=None)
 
-        # Lire uniquement la première colonne (ex: ID de la vache)
+        # Lire uniquement la première colonne (ex: ID du veaux)
         calf_ids = df.iloc[:, 0].dropna().unique()
 
         added, skipped = 0, 0
@@ -125,8 +125,9 @@ def upload_calfs():
                 added += 1
             except ValueError:
                 skipped += 1
-
-        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+                
+        #TODO message a madofier
+        return jsonify({"success": True,"message": f"{added} veaux(s) ajoutée(s), {skipped} déjà existante(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
@@ -165,8 +166,8 @@ def init_stock():
             except ValueError:
                 skipped += 1
         PharmacieUtils.upload_pharmacie_year(user_id=user_id, year=year, remaining_stock=remaining_stock) # type: ignore
-
-        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+        
+        return jsonify({"success": True,"message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
     # try:  

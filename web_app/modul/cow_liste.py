@@ -25,8 +25,10 @@ cow_liste = Blueprint('cow_liste', __name__)
 @login_required
 @cow_liste.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
 def view_cow(cow_id):
+    print(">>> view_cow called 1")
     if cow := CowUtils.get_cow(user_id=current_user.id, cow_id=cow_id):
-        print("🐄 Vache récupérée :", cow)
+        print(">>> view_cow called")
+        # web_app/templates/cow_details.html
         return render_template("cow_details.html", cow=cow)
     else:
         return "Vache introuvable", 404

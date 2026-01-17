@@ -13,7 +13,7 @@
   <section id="cow_liste" class="contact section">
     <div class="col-12">
 
-      {% for cow in get_all_cows() %}
+      {% for cow in get_all_cows(user.id) %}
       <div class="row row-cols-1 row-cols-lg-5 g-5 justify-content-center" id="cow-block-{{ cow.cow_id }}">
         <div class="php-email-form mt-5">
           <div class="col d-flex flex-column align-items-center text-center">
@@ -29,15 +29,15 @@
           </div>
 
           <div class="col d-flex flex-column align-items-center text-center">
-            <form id="form-view_cow-{{ cow.cow_id }}" action="{{ url_for('cow_liste.view_cow', cow_id=cow.cow_id) }}" method="POST" enctype="multipart/form-data">
-              <button type="submit" class="btn btn-primary">view</button>
-            </form>
+            <a href="{{ url_for('cow_liste.view_cow', cow_id=cow.cow_id) }}" class="btn btn-primary">
+              View
+            </a>
           </div>
 
           <div class="col d-flex flex-column align-items-center text-center">
-            <form id="form-edit_cow-{{ cow.cow_id }}" action="{{ url_for('cow_liste.edit_cow', cow_id=cow.cow_id) }}" method="POST" enctype="multipart/form-data">
-              <button type="submit" class="btn btn-primary">edit</button>
-            </form>
+            <a href="{{ url_for('cow_liste.edit_cow', cow_id=cow.cow_id) }}" class="btn btn-primary">
+              Edit
+            </a>
           </div>
 
           <div class="col d-flex flex-column align-items-center text-center">

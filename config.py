@@ -9,7 +9,7 @@ class HTTP304Filter(lg.Filter):
 class config :
 
     # Configuration de la session
-    PERMANENT_SESSION_LIFETIME = 60*60  # Durée de vie de la session en secondes (1 minute)
+    PERMANENT_SESSION_LIFETIME = 60*60  # Durée de vie de la session en secondes (1 heure)
    
     # Configuration du logging pour toute l'application
     lg.basicConfig(
