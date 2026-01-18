@@ -28,32 +28,20 @@ class CowUtilsUnitTests(unittest.TestCase):
     def test_add_cow(self):
         init_db()
 
-        for i  in range(100):
-            user_id = randint(1, 9999)
-            cow_id = randint(1, 9999)
-            birthdate = None if i < 50 else datetime.now().date()
-
-            CowUtils.add_cow(user_id, cow_id, birthdate)
-
-            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
-            self.assertIsNotNone(c)
-
-            self.assertEqual(c.user_id, user_id)
-            self.assertEqual(c.cow_id, cow_id)
-            self.assertListEqual(c.cow_cares, [])
-            self.assertListEqual(c.info, [])
-            self.assertTrue(c.in_farm)
-            self.assertEqual(c.born_date, birthdate)
-            self.assertListEqual(c.reproduction, [])
-            self.assertFalse(c.is_calf)
-            self.assertTrue(c.init_as_cow)
-
-    def test_get_cow(self):
-        init_db()
+        user_ids = list()
+        cow_ids = list()
 
         for i in range(100):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            user_ids.append(user_id)
+            cow_ids.append(cow_id)
+
             birthdate = None if i < 50 else datetime.now().date()
 
             CowUtils.add_cow(user_id, cow_id, birthdate)
@@ -70,6 +58,58 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertListEqual(c.reproduction, [])
             self.assertFalse(c.is_calf)
             self.assertTrue(c.init_as_cow)
+
+        for i in range(100):
+            user_id = user_ids[i]
+            cow_id = cow_ids[i]
+
+            with self.assertRaises(ValueError):
+                CowUtils.add_cow(user_id, cow_id)
+
+    def test_get_cow(self):
+        init_db()
+
+        user_ids = list()
+        cow_ids = list()
+
+        for i in range(100):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            user_ids.append(user_id)
+            cow_ids.append(cow_id)
+
+            birthdate = None if i < 50 else datetime.now().date()
+
+            CowUtils.add_cow(user_id, cow_id, birthdate)
+
+            c : Cow = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
+            self.assertIsNotNone(c)
+
+            self.assertEqual(c.user_id, user_id)
+            self.assertEqual(c.cow_id, cow_id)
+            self.assertListEqual(c.cow_cares, [])
+            self.assertListEqual(c.info, [])
+            self.assertTrue(c.in_farm)
+            self.assertEqual(c.born_date, birthdate)
+            self.assertListEqual(c.reproduction, [])
+            self.assertFalse(c.is_calf)
+            self.assertTrue(c.init_as_cow)
+
+        for i in range(100):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            with self.assertRaises(ValueError):
+                _ = CowUtils.get_cow(user_id, cow_id)
 
     def test_get_all_cows(self):
         init_db()
@@ -178,6 +218,10 @@ class CowUtilsUnitTests(unittest.TestCase):
             }])
         self.assertTrue(c.is_calf)
         self.assertFalse(c.init_as_cow)
+
+        with self.assertRaises(ValueError):
+            CowUtils.update_cow(user_id+randint(1, 9999),
+                cow_id + randint(1, 9999), is_calf = False)
 
     def test_suppress_cow(self):
         init_db()
