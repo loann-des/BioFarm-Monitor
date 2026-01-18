@@ -338,9 +338,52 @@ class CowUtilsUnitTests(unittest.TestCase):
     def test_update_cow_care(self):
         pass
 
-    # TODO: test delete_cow_care
     def test_delete_cow_care(self):
-        pass
+        init_db()
+
+        for _i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            CowUtils.add_cow(user_id, cow_id)
+
+            cares_count = randint(0, 100)
+
+            for _j in range(cares_count):
+                medicname = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+                dose = randint(1, 10000)
+                annotation = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+
+                # XXX: Return value ignored for now. Use when
+                # remaining_care_on_year and new_available_care will be
+                # validated.
+                _ = CowUtils.add_cow_care(user_id, cow_id, {
+                    "date_traitement": my_strftime(datetime.now().date()),
+                    "medicaments": {medicname: dose},
+                    "annotation": annotation
+                })
+
+            self.assertEqual(cares_count,
+                len(CowUtils.get_cow(user_id, cow_id).cow_cares))
+
+            while cares_count > 0:
+                care_index = randint(0, cares_count - 1)
+                cow = CowUtils.get_cow(user_id, cow_id)
+
+                deleted_care = cow.cow_cares[care_index]
+
+                CowUtils.delete_cow_care(user_id, cow_id, care_index)
+                cares_count -= 1
+
+                self.assertEqual(cares_count, len(cow.cow_cares))
+
+                for i in range(cares_count):
+                    self.assertNotEqual(cow.cow_cares[i], deleted_care)
+
+            self.assertEqual(0,
+                len(CowUtils.get_cow(user_id, cow_id).cow_cares))
 
     # TODO: test geta_all_cares
     def test_get_all_cares(self):
