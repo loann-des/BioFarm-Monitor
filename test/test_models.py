@@ -270,12 +270,33 @@ class CowUtilsUnitTests(unittest.TestCase):
         self.assertIsNotNone(c)
         self.assertFalse(c.in_farm)
 
+        with self.assertRaises(ValueError):
+            user_id2 = randint(1, 9999)
+            cow_id2 = randint(1, 9999)
+
+            while user_id2 == user_id and cow_id2 == cow_id:
+                user_id2 = randint(1, 9999)
+                cow_id2 = randint(1, 9999)
+
+            CowUtils.remove_cow(user_id2, cow_id2)
+
     def test_add_calf(self):
         init_db()
+
+        user_ids = list()
+        calf_ids = list()
 
         for i in range(100):
             user_id = randint(1, 9999)
             calf_id = randint(1, 9999)
+
+            while user_id in user_ids and calf_id in calf_ids:
+                user_id = randint(1, 9999)
+                calf_id = randint(1, 9999)
+
+            user_ids.append(user_id)
+            calf_ids.append(calf_id)
+
             birthdate = None if i < 50 else datetime.now().date()
 
             CowUtils.add_calf(user_id, calf_id, birthdate)
@@ -291,6 +312,13 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertEqual(c.born_date, birthdate)
             self.assertListEqual(c.reproduction, [])
             self.assertTrue(c.is_calf)
+
+        for i in range(100):
+            user_id = user_ids[i]
+            calf_id = calf_ids[i]
+
+            with self.assertRaises(ValueError):
+                CowUtils.add_calf(user_id, calf_id)
 
     def test_add_care(self):
         init_db()
@@ -337,9 +365,19 @@ class CowUtilsUnitTests(unittest.TestCase):
     def test_add_cow_care(self):
         init_db()
 
+        user_ids = list()
+        cow_ids = list()
+
         for _i in range(10):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            user_ids.append(user_id)
+            cow_ids.append(cow_id)
 
             CowUtils.add_cow(user_id, cow_id)
             self.assertEqual(0,
@@ -378,6 +416,30 @@ class CowUtilsUnitTests(unittest.TestCase):
                 self.assertEqual(total_cares,
                     len(CowUtils.get_cow(user_id, cow_id).cow_cares))
 
+        for i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            with self.assertRaises(ValueError):
+                medicname = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+                dose = randint(1, 10000)
+                annotation = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+
+                # XXX: Return value ignored for now. Use when
+                # remaining_care_on_year and new_available_care will be
+                # validated.
+                _ = CowUtils.add_cow_care(user_id, cow_id, {
+                    "date_traitement": my_strftime(datetime.now().date()),
+                    "medicaments": {medicname: dose},
+                    "annotation": annotation
+                })
+
     # TODO: test update_cow_care
     def test_update_cow_care(self):
         pass
@@ -385,9 +447,19 @@ class CowUtilsUnitTests(unittest.TestCase):
     def test_delete_cow_care(self):
         init_db()
 
+        user_ids = list()
+        cow_ids = list()
+
         for _i in range(10):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            user_ids.append(user_id)
+            cow_ids.append(cow_id)
 
             CowUtils.add_cow(user_id, cow_id)
 
@@ -428,6 +500,17 @@ class CowUtilsUnitTests(unittest.TestCase):
 
             self.assertEqual(0,
                 len(CowUtils.get_cow(user_id, cow_id).cow_cares))
+
+        for i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            with self.assertRaises(ValueError):
+                CowUtils.delete_cow_care(user_id, cow_id, randint(0, 10))
 
     # TODO: test geta_all_cares
     def test_get_all_cares(self):
