@@ -547,9 +547,37 @@ class CowUtilsUnitTests(unittest.TestCase):
             self.assertEqual(care_amounts[user_id],
                 len(CowUtils.get_all_care(user_id)))
 
-    # TODO: test get_care_by_id
     def test_get_care_by_id(self):
-        pass
+        for _i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            CowUtils.add_cow(user_id, cow_id)
+            cares_count = randint(0, 100)
+
+            for _j in range(cares_count):
+                medicname = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+                dose = randint(1, 10000)
+                annotation = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+
+                # XXX: Return value ignored for now. Use when
+                # remaining_care_on_year and new_available_care will be
+                # validated.
+                _ = CowUtils.add_cow_care(user_id, cow_id, {
+                    "date_traitement": my_strftime(datetime.now().date()),
+                    "medicaments": {medicname: dose},
+                    "annotation": annotation
+                })
+
+            if cares_count == 0:
+                self.assertIsNone(cares_count,
+                    CowUtils.get_care_by_id(user_id, cow_id))
+            else:
+                self.assertIsNotNone(CowUtils.get_care_by_id(user_id, cow_id))
+                self.assertEqual(cares_count,
+                    len(CowUtils.get_care_by_id(user_id, cow_id)))
 
     # TODO: test get_care_on_year
     def test_get_care_on_year(self):
