@@ -512,9 +512,40 @@ class CowUtilsUnitTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 CowUtils.delete_cow_care(user_id, cow_id, randint(0, 10))
 
-    # TODO: test geta_all_cares
     def test_get_all_cares(self):
-        pass
+        care_amounts = dict()
+
+        for _i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            CowUtils.add_cow(user_id, cow_id)
+            cares_count = randint(0, 100)
+
+            for _j in range(cares_count):
+                medicname = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+                dose = randint(1, 10000)
+                annotation = "".join(
+                    [chr(randint(33, 126)) for _ in range(10)])
+
+                # XXX: Return value ignored for now. Use when
+                # remaining_care_on_year and new_available_care will be
+                # validated.
+                _ = CowUtils.add_cow_care(user_id, cow_id, {
+                    "date_traitement": my_strftime(datetime.now().date()),
+                    "medicaments": {medicname: dose},
+                    "annotation": annotation
+                })
+
+            if user_id in care_amounts:
+                care_amounts[user_id] += cares_count
+            else:
+                care_amounts[user_id] = cares_count
+
+        for user_id in care_amounts:
+            self.assertEqual(care_amounts[user_id],
+                len(CowUtils.get_all_care(user_id)))
 
     # TODO: test get_care_by_id
     def test_get_care_by_id(self):
