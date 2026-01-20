@@ -548,9 +548,19 @@ class CowUtilsUnitTests(unittest.TestCase):
                 len(CowUtils.get_all_care(user_id)))
 
     def test_get_care_by_id(self):
+        user_ids = list()
+        cow_ids = list()
+
         for _i in range(10):
             user_id = randint(1, 9999)
             cow_id = randint(1, 9999)
+
+            if user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            user_ids.append(user_id)
+            cow_ids.append(cow_id)
 
             CowUtils.add_cow(user_id, cow_id)
             cares_count = randint(0, 100)
@@ -578,6 +588,17 @@ class CowUtilsUnitTests(unittest.TestCase):
                 self.assertIsNotNone(CowUtils.get_care_by_id(user_id, cow_id))
                 self.assertEqual(cares_count,
                     len(CowUtils.get_care_by_id(user_id, cow_id)))
+
+        for i in range(10):
+            user_id = randint(1, 9999)
+            cow_id = randint(1, 9999)
+
+            while user_id in user_ids and cow_id in cow_ids:
+                user_id = randint(1, 9999)
+                cow_id = randint(1, 9999)
+
+            with self.assertRaises(ValueError):
+                CowUtils.get_care_by_id(user_id, cow_id)
 
     # TODO: test get_care_on_year
     def test_get_care_on_year(self):
