@@ -2,8 +2,8 @@
 import logging as lg
 
 from datetime import datetime
-from flask import Blueprint, jsonify, request
-from flask_login import login_required, current_user
+from flask import Blueprint, jsonify, redirect, request, url_for
+from flask_login import login_required, current_user  # type: ignore
 
 from web_app.fonction import (
     get_all_calving_date,
@@ -18,7 +18,10 @@ repro = Blueprint('repro', __name__)
 current_user : Users
 
 # Reproduction form
-
+@repro.before_request
+def check_authentication():
+    if current_user.is_anonymous:
+        return redirect(url_for('auth.logout'))
 
 @login_required
 @repro.route("/add_cow", methods=["POST"])
@@ -171,11 +174,11 @@ def upload_calf():
     try:
         # Récupération des données du formulaire
         borning = request.form["borning"]
-        mother_id = request.form["mother_id"]
-        calf_id = request.form["calf_id"]
+        mother_id = int(request.form["mother_id"])
+        calf_id = int(request.form["calf_id"])
         calving_date = request.form["calving_date"]
         if borning == "abortion":
-            CowUtils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True)
+            CowUtils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True) 
             success_message = f"avortement de {mother_id} rensegné, courage"
 
         elif calf_id and calving_date:

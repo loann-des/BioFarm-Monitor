@@ -127,7 +127,7 @@ def nb_cares_years(user_id: int, cow_id: int) -> int:
     Renvoie:
         * int: le nombre de traitements administrés dans les 365 derniers jours
     """
-    cares: list[Traitement] = CowUtils.get_care_by_id(user_id=user_id, cow_id=cow_id)
+    cares: list[Traitement] = CowUtils.get_care_by_id(user_id=user_id, cow_id=cow_id)  # type: ignore
     return sum(
         day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
     )  # sum boolean if True 1 else 0

@@ -1,8 +1,7 @@
 from datetime import timedelta
-from flask import Flask, g, session
+from flask import Flask, g, redirect, render_template, session, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-
+from flask_login import LoginManager, logout_user
 
 
 # Initialize SQLAlchemy instance (outside create_app for import access)
@@ -18,20 +17,23 @@ def create_app():
     # Configure Flask-Login
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login' # type: ignore
+    login_manager.session_protection = "strong"
     login_manager.init_app(app)
-
+    
     # User loader function for Flask-Login
     from .models import Users
+
     @login_manager.user_loader
     def load_user(user_id):
         return Users.query.get(int(user_id))
+
 
     @app.before_request
     def before_request():
         session.permanent = True
         app.permanent_session_lifetime = timedelta(minutes=1)
         session.modified = True
-        # g.user = current_user
+
 
     # Register blueprints
     from .modul.auth import auth as auth_blueprint
@@ -48,6 +50,7 @@ def create_app():
     
     from .modul.cow_liste import cow_liste as cow_liste_blueprint
     app.register_blueprint(cow_liste_blueprint)
+
 
     # Jinja2 global functions
     from .fonction import get_pharma_list, get_pharma_len, get_history_pharmacie, format_bool_fr, date_to_str

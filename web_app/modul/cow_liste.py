@@ -21,6 +21,12 @@ from datetime import datetime
 
 cow_liste = Blueprint('cow_liste', __name__)
 
+current_user : Users
+
+@cow_liste.before_request
+def check_authentication():
+    if current_user.is_anonymous:
+        return redirect(url_for('auth.logout'))
 
 @login_required
 @cow_liste.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])

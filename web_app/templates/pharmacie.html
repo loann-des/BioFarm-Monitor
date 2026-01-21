@@ -35,11 +35,11 @@
 
           {# traitement #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len(user.id)) %}
+            {% for nb_care in range(pharma_list|length) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list(user.id) %}
+                  {% for care in pharma_list %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>
@@ -123,11 +123,11 @@
 
           {# medicament sur l'ordonnance #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len(user.id)) %}
+            {% for nb_care in range(pharma_list|length) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list(user.id) %}
+                  {% for care in pharma_list %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>
@@ -167,11 +167,11 @@
 
           {# medicament sortie #}
           <div class="col d-flex flex-column align-items-center text-center">
-            {% for nb_care in range(get_pharma_len(user.id)) %}
+            {% for nb_care in range(pharma_list|length) %}
               <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
               <div class="input-group mb-2">
                 <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
-                  {% for care in get_pharma_list(user.id) %}
+                  {% for care in pharma_list %}
                     <option value="{{ care }}">{{ care }}</option>
                   {% endfor %}
                 </select>

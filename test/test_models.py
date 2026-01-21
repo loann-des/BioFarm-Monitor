@@ -168,13 +168,13 @@ class CowUtilsUnitTests(unittest.TestCase):
                     "date_traitement": my_strftime(datetime.now().date()),
                     "medicaments": {"medicament": 1},
                     "annotation": "Annotation"
-                }],
+                }], # type: ignore
                 info = [{
                     "date_note": my_strftime(birthdate),
                     "information": "Information"
-                }],
-                in_farm = False,
-                born_date = (birthdate),
+                }], # type: ignore
+                in_farm = False, # type: ignore
+                born_date = (birthdate), #  type: ignore
                 reproduction = [{
                     "insemination": my_strftime(birthdate),
                     "ultrasound": True,
@@ -186,9 +186,9 @@ class CowUtilsUnitTests(unittest.TestCase):
                     "calving": False,
                     "abortion": False,
                     "reproduction_details": "Details"
-                }],
-                is_calf = True,
-                init_as_cow = False)
+                }], # type: ignore
+                is_calf = True, # type: ignore
+                init_as_cow = False) # type: ignore
 
         c = Cow.query.get({"user_id": user_id, "cow_id" : cow_id}) # type: ignore
         self.assertIsNotNone(c)
@@ -223,7 +223,7 @@ class CowUtilsUnitTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             CowUtils.update_cow(user_id+randint(1, 9999),
-                cow_id + randint(1, 9999), is_calf = False)
+                cow_id + randint(1, 9999), is_calf = False) # type: ignore
 
     def test_suppress_cow(self):
         init_db()
@@ -589,7 +589,7 @@ class CowUtilsUnitTests(unittest.TestCase):
             else:
                 self.assertIsNotNone(CowUtils.get_care_by_id(user_id, cow_id))
                 self.assertEqual(cares_count,
-                    len(CowUtils.get_care_by_id(user_id, cow_id)))
+                    len(CowUtils.get_care_by_id(user_id, cow_id))) # type: ignore
 
         for i in range(10):
             user_id = randint(1, 9999)

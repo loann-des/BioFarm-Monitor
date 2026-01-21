@@ -27,11 +27,16 @@ views = Blueprint('views', __name__)
 
 current_user : Users
 
+@views.before_request
+def check_authentication():
+    if current_user.is_anonymous:
+        return redirect(url_for('auth.logout'))
+
 @login_required
 @views.route("/", methods=["GET","POST"])
 def index():
-    if current_user.__class__ is AnonymousUserMixin :
-        return redirect(url_for('auth.logout'))
+    # if current_user.__class__ is AnonymousUserMixin :
+    #     return redirect(url_for('auth.logout'))
     return render_template("index.html",user=current_user)
 
 
@@ -44,7 +49,7 @@ def reproduction():
 @login_required
 @views.route("/pharmacie", methods=["GET"])
 def pharmacie():
-    return render_template("pharmacie.html", user=current_user)
+    return render_template("pharmacie.html", pharma_list = get_pharma_list(user_id=current_user.id) )
 
 
 @login_required

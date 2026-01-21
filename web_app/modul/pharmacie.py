@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import (
     Blueprint,
     jsonify,
+    redirect,
     render_template,
     request,
     send_file,
@@ -33,6 +34,11 @@ from web_app.models import (
 pharma = Blueprint('pharma', __name__)
 
 current_user : Users
+
+@pharma.before_request
+def check_authentication():
+    if current_user.is_anonymous:
+        return redirect(url_for('auth.logout'))
 
 @login_required
 @pharma.route("/update_care", methods=["POST"])
