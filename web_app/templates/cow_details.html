@@ -38,23 +38,23 @@
       <h2>Traitements</h2>
     </div>
     <div class='php-email-form'>
-      {% for date,care,info in cow.cow_cares %}
+      {% for care in cow.cow_cares %}
         <div class="row gy-4" id="cow-care-block-{{ date }}">
           <div class="col-12">
             <p>
-              <strong>Date de soin :</strong> {{ date }}
+              <strong>Date de soin :</strong>{{ care['date_traitement'] }}
             </p>
           </div>
 
           <div class="col-md-6">
             <p>
-              <strong>Type de soin :</strong> {{ care }}
+              <strong>Type de soin :</strong> {% for medic,qt in care['medicaments'].items() %}</br>{{ medic }}: {{ qt }}{% endfor %}
             </p>
           </div>
 
           <div class="col-md-6">
             <p>
-              <strong>Informations :</strong> {{ info }}
+              <strong>Informations :</strong> {{ care['annotation'] }}
             </p>
           </div>
         </div>

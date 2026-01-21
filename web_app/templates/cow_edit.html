@@ -7,17 +7,17 @@
 {% endblock %}
 
 {% block page_title %}
-  {{cow.id}}
+  {{cow.cow_id}}
 {% endblock %}
 {% block content %}
 
 {# Détails de la vache #}
 <section id="cow_details" class="contact section">
   <div class="container section-title">
-    <h2>Détails de {{ cow.id }}</h2> <!-- ID non éditable -->
+    <h2>Détails de {{ cow.cow_id }}</h2> <!-- ID non éditable -->
   </div>
 
-  <form method="POST" action="{{ url_for('update_cow_details', cow_id=cow.id) }}" class="php-email-form">
+  <form method="POST" action="{{ url_for('cow_liste.update_cow_details', cow_id=cow.cow_id) }}" class="php-email-form">
     <div class="mb-3">
       <label>Dans la ferme :</label>
       <input type="text" name="in_farm" class="form-control" value="{{ cow.in_farm }}">
@@ -51,21 +51,21 @@
     </div>
 
     {% for care_index, care in enumerate(cow.cow_cares) %}
-      <form method="POST" action="{{ url_for('update_cow_care', cow_id=cow.id, care_index=care_index) }}" class="php-email-form">
+      <form method="POST" action="{{ url_for('cow_liste.update_cow_care', cow_id=cow.cow_id, care_index=care_index) }}" class="php-email-form">
         <div class="row gy-4">
 
           {# Date #}
           <div class="col-md-6">
             <label for="care_date">Date :</label>
-            <input type="date" name="care_date" class="form-control" required value="{{ care[0] }}" />
+            <input type="date" name="care_date" class="form-control" required value="{{ care['date_traitement'] }}" />
           </div>
 
           {# Médicaments #}
           <div class="col-md-6">
-            {% for med_name, qty in care[1].items() %}
+            {% for med_name, qty in care['medicaments'].items() %}
               <label>Médicament :</label>
               <select name="medic_{{ loop.index }}" class="form-select">
-                {% for med in get_pharma_list() %}
+                {% for med in pharma_list %}
                   <option value="{{ med }}" {% if med == med_name %}selected{% endif %}>{{ med }}</option>
                 {% endfor %}
               </select>
@@ -76,7 +76,7 @@
           {# Info complémentaire #}
           <div class="col-md-12">
             <label for="care_info">Info complémentaire :</label>
-            <input type="text" name="care_info" class="form-control" value="{{ care[2] or '' }}" />
+            <input type="text" name="care_info" class="form-control" value="{{ care['annotation'] or '' }}" />
           </div>
 
           <div class="col-md-12 text-center">
@@ -85,7 +85,7 @@
 
         </div>
       </form>
-      <form method="POST" action="{{ url_for('delete_cow_care', cow_id=cow.id, care_index=care_index) }}" onsubmit="return confirm('Confirmer la suppression ?');">
+      <form method="POST" action="{{ url_for('cow_liste.delete_cow_care', cow_id=cow.cow_id, care_index=care_index) }}" onsubmit="return confirm('Confirmer la suppression ?');">
         <button type="submit" class="btn btn-danger">Supprimer ce soin</button>
       </form>
 
@@ -109,7 +109,7 @@
   {% set repro = repro_tuple[0] %}
   {% set info = repro_tuple[1] %}
 
-  <form method="POST" action="{{ url_for('update_cow_reproduction', cow_id=cow.id, repro_index=repro_index) }}" class="php-email-form mb-4">
+  <form method="POST" action="{{ url_for('cow_liste.update_cow_reproduction', cow_id=cow.cow_id, repro_index=repro_index) }}" class="php-email-form mb-4">
     <div class="row gy-4">
 
       <div class="col-md-6">
@@ -173,7 +173,7 @@
     </div>
   </form>
 
-  <form method="POST" action="{{ url_for('delete_cow_reproduction', cow_id=cow.id, repro_index=repro_index) }}" onsubmit="return confirm('Confirmer la suppression ?');">
+  <form method="POST" action="{{ url_for('cow_liste.delete_cow_reproduction', cow_id=cow.cow_id, repro_index=repro_index) }}" onsubmit="return confirm('Confirmer la suppression ?');">
     <button type="submit" class="btn btn-danger mb-5">Supprimer cette reproduction</button>
   </form>
   <hr>

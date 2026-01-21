@@ -537,7 +537,7 @@ def get_all_dry_date(user_id: int) -> dict[int, date]:
         lg.error(f"Erreur lors de récupération des dates de tarisement : {e}")
         dry_dates = {}
 
-    return dict(sorted(dry_dates.items(), key=lambda item: item[1]))
+    return dict(sorted(dry_dates.items(), key=lambda item: item[1])) # type: ignore
 
 
 def get_all_calving_preparation_date(user_id: int) -> dict[int, date]:
@@ -555,7 +555,7 @@ def get_all_calving_preparation_date(user_id: int) -> dict[int, date]:
         if not reproduction["calving_preparation_status"]
     }
 
-    return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1]))
+    return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1])) # type: ignore
 
 
 def get_all_calving_date(user_id: int) -> dict[int, date]:
@@ -572,7 +572,7 @@ def get_all_calving_date(user_id: int) -> dict[int, date]:
         for cow_id, reproduction in CowUtils.get_valid_reproduction(user_id=user_id).items()
     }
 
-    return dict(sorted(calving_dates.items(), key=lambda item: item[1]))
+    return dict(sorted(calving_dates.items(), key=lambda item: item[1])) # type: ignore
 
 
 # def rename(pdf: FileStorage, img: FileStorage, article_id: int) -> tuple[str, str]:
