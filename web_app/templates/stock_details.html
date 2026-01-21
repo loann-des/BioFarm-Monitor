@@ -9,7 +9,7 @@
 {% block page_title %}Détaile des Stock{% endblock page_title %}
 {% block content %}
 
-  {% for date, care_dict, source in get_hystory_pharmacie() %}
+  {% for date, care_dict, source in history_pharmacie %}
   <section id="stock_history" class="contact section">
     <div class="container section-title">
       <h2><strong>{{source}}</strong></h2>

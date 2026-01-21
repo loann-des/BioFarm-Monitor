@@ -19,7 +19,8 @@ from web_app.fonction import (
     pharmacie_to_csv,
     remaining_care_to_excel,
     remaining_pharmacie_stock,
-    date_to_str
+    date_to_str,
+    get_history_pharmacie
 )
 from web_app.models import (
     CowUtils,
@@ -206,7 +207,7 @@ def get_stock():
 @login_required
 @pharma.route("/stock_details", methods=["GET"])
 def stock_details():
-    return render_template("stock_details.html")
+    return render_template("stock_details.html", history_pharmacie=get_history_pharmacie(user_id=current_user.id)) # type: ignore
 
 
 @login_required

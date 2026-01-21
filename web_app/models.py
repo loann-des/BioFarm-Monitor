@@ -1200,7 +1200,6 @@ class PrescriptionUtils:
             (prescription.date, prescription.care, prescription.dlc_left)
             for prescription in (Prescription.query.filter_by(user_id=user_id).all())
         ]
-        _ = all_cares.pop(0)  # suprimer l'entete
         # Tri décroissant sur la date
         all_cares.sort(key=lambda x: x[0], reverse=True)
         return all_cares
