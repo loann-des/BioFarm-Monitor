@@ -52,6 +52,7 @@ def pharmacie():
 @login_required
 @views.route("/cow_liste", methods=["GET"])
 def cow_liste():
+    #TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
     return render_template("cow_liste.html", user = current_user)
 
 
@@ -76,7 +77,8 @@ def user_setting():
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify({"success": False, "message": f"Erreur : {str(e)}"})
 
-
+# TODO securiser import de fichier.
+# sur import de fichier verifier que c'est bien des entier et pas du BASH !!!
 @login_required
 @views.route("/upload_cow/", methods=["POST"])
 def upload_cows():
@@ -149,11 +151,13 @@ def init_stock():
         # Lire le fichier Excel directement en mémoire
         df = pd.read_excel(BytesIO(file.read()), header=None)
 
-        # Lire uniquement la première colonne (ex: ID de la vache)
+        # Lire uniquement la première colonne medics : nom du medicament
         medics = df.iloc[0:, 0].dropna().unique()
         print(medics)
+        # Lire uniquement la deuxième colonne qt_medics : quantite du medicament
         qt_medics = df.iloc[0:, 1].dropna().unique()
         print(qt_medics)
+        # Lire uniquement la troisième colonne units : unitée du medicament
         units = df.iloc[0:, 2].to_list()
         print(units)
         
@@ -171,37 +175,3 @@ def init_stock():
         return jsonify({"success": True,"message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
-    # try:  
-    #     # Récupère et parse la date
-    #     year = request.form["prescription_date"]
-
-    #     # Récupère les médicaments et quantités
-    #     remaining_stock: dict[str, int] = {}
-    #     for nb_care in range(get_pharma_len(current_user.id)):
-    #         medic = request.form.get(f"medic_{nb_care+1}")
-    #         quantite = request.form.get(f"medic_{nb_care+1}_nb")
-
-    #         if medic and quantite:
-    #             qte_int = int(quantite)
-    #             if qte_int > 0:  # ignor les chaps vide
-    #                 if medic in remaining_stock:
-    #                     lg.error(
-    #                         f"Quantité invalide pour medic_{nb_care+1}: {quantite}"
-    #                     )
-    #                     raise ValueError(f"Le médicament '{medic}' est en double.")
-    #                 remaining_stock[medic] = qte_int
-
-    #     if not remaining_stock:
-    #         raise ValueError(
-    #             "Veuillez renseigner au moins un médicament avec une quantité valide."
-    #         )
-
-    #     PharmacieUtils.upload_pharmacie_year(user_id=current_user.id, year=year, remaining_stock=remaining_stock) # type: ignore
-
-    #     return jsonify(
-    #         {"success": True, "message": "pharmacie initialiser avec succès."}
-    #     )
-
-    # except Exception as e:
-    #     lg.error(f"Erreur pendant l’upload : {e}")
-    #     return jsonify({"success": False, "message": f"Erreur : {str(e)}"})

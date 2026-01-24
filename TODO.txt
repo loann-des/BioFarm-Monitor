@@ -1,3 +1,8 @@
+TODO modifier les pages Cow_details.html, cow_edit.html pour les faire coller aux nouveau type de retourne
+TODO retire le user id des page html
+TODO metre en place le system de hash des email + la fonction mdp oublié
+
+
 TODO affichage export calendrier des date de tarisement
 TODO affichage export calendrier des date de prepa vellage
 TODO affichage export calendrier des date de vellage
