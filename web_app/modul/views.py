@@ -19,10 +19,9 @@ from ..models import CowUtils, UserUtils, Users
 
 views = Blueprint('views', __name__)
 
-# TODO edit
-# TODO gestion des log
-# TODO historique commande
-# TODO reintroduction d'une vache
+# TODO Metre en place les log
+# TODO Metre en place historique commande pour retour 
+# TODO gestion de la reintroduction d'une vache
 
 
 current_user : Users
@@ -138,7 +137,6 @@ def upload_calfs():
 @login_required
 @views.route("/init_stock", methods=["POST"])
 def init_stock():
-    #TODO Init par import odt/xls
     file = request.files.get("file")
     if not file:
         return "Aucun fichier reçu", 400

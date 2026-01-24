@@ -20,10 +20,8 @@ from werkzeug.security import generate_password_hash
 
 from . import db
 
-# TODO gestion exeption
-# TODO gestion des log
-# TODO Gestion du None dans la repro
-
+# TODO Metre en place les exeptions et leurs gestion 
+# TODO  Metre en place les log
 
 class Traitement(TypedDict):
     date_traitement: str  # date au format 'YYYY-MM-DD'
@@ -178,7 +176,7 @@ class Prescription(db.Model):
     dlc_left: Mapped[bool] = mapped_column(Boolean)
     """True si remiser pour date limite de consommation est dépassée, False sinon."""
 
-    # TODO pdf prescription scanné ?
+    # TODO ajouter le pdf de la prescription scanné ?
 
     def __init__(self,
         user_id: int,
@@ -837,7 +835,7 @@ class CowUtils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def set_reproduction(user_id: int, reproduction: Reproduction) -> Reproduction: #TODO Pur calculatoir sortir ?
+    def set_reproduction(user_id: int, reproduction: Reproduction) -> Reproduction: #TODO fonction Pure calculatoir peut etre sortir pour fonction.py ?
         """Calcule les dates de reproduction pour une vache en fonction de sa
         date d'insémination et des réglages utilisateur.
 

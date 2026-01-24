@@ -105,7 +105,6 @@ def ultrasound():
 @login_required
 @repro.route("/show_dry")
 def show_dry():
-    #TODO valider dry
     try:
         dry_data = get_all_dry_date(user_id=current_user.id)
         return jsonify({"success": True, "dry": dry_data})
@@ -131,7 +130,6 @@ def validate_dry():
 @login_required
 @repro.route("/show_calving_preparation")
 def show_calving_preparation():
-    #TODO valider calving preparation
     try:
         calving_preparation = get_all_calving_preparation_date(user_id=current_user.id)
         return jsonify({"success": True, "calving_preparation": calving_preparation})
@@ -140,22 +138,20 @@ def show_calving_preparation():
     
 
 @login_required
-@repro.route("/validate_calving_preparation")
+@repro.route("/validate_calving_preparation", methods=["POST"])
 def validate_calving_preparation():
-    # TODO validate_dry
     data = request.get_json()
     cow_id = data.get("cow_id")
-
+    lg.info(f"Validation de la préparation au vêlage pour la vache {cow_id}...")
     if not cow_id:
         return jsonify({"success": False, "message": "Aucune vache spécifiée."}), 400
 
     try:
-        CowUtils.validated_dry(user_id=current_user.id, cow_id=cow_id)
+        CowUtils.validated_calving_preparation(user_id=current_user.id, cow_id=cow_id)
 
         return jsonify({"success": True, "message": f"Tarissement validé pour {cow_id}"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-
 
 
 @login_required
@@ -171,7 +167,6 @@ def show_calving_date():
 @login_required
 @repro.route("/upload_calf", methods=["POST"])
 def upload_calf():
-    # TODO gestion veaux upload_cow
     try:
         # Récupération des données du formulaire
         borning = request.form["borning"]

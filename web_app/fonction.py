@@ -317,17 +317,11 @@ def remaining_pharmacie_stock(user_id: int, year: int) -> dict[str, int]:
     Returns:
         dict[str, int]: A dictionary mapping medication names to their remaining quantities for the year.
     """
-    #TODO renvoyer le sum de la pharmatie actuel et precedente
-
     return dict(
         Counter(sum_pharmacie_in(user_id=user_id, year=year))
         + Counter(PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year - 1).remaining_stock)
         - Counter(sum_pharmacie_left(user_id=user_id, year=year))
     )
-
-
-#TODO def remaining_pharmacie_stock_calcul a fair que sur : traitement + prescription
-
 
 def get_history_pharmacie(user_id : int) -> list[tuple[date, dict[str, int], str]]:
     """Builds a chronological history of all pharmacy-related events.
@@ -356,7 +350,6 @@ def get_history_pharmacie(user_id : int) -> list[tuple[date, dict[str, int], str
     full_history.sort(key=lambda x: x[0], reverse=True)
 
     return full_history
-
 
 def update_pharmacie_year(user_id : int, year: int) -> Pharmacie:
     """Updates or creates the pharmacy record for a given year with all relevant medication statistics.
@@ -391,7 +384,6 @@ def update_pharmacie_year(user_id : int, year: int) -> Pharmacie:
         remaining_stock=remaining_stock,
     )
     return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=user_id, year=year, default=pharmacie)
-
 
 def pharmacie_to_csv(user_id: int, year: int) -> str:
     """Generates a CSV report of pharmacy medication statistics for a given year.
@@ -468,7 +460,6 @@ def pharmacie_to_csv(user_id: int, year: int) -> str:
     print("CSV généré (pivoté + année précédente + prescriptions par date):\n", result)
     return result
 
-
 def remaining_care_to_excel(user_id: int) -> bytes:
     """Generates an Excel file summarizing the remaining care treatments for each cow.
 
@@ -520,7 +511,6 @@ def remaining_care_to_excel(user_id: int) -> bytes:
     excel_io.seek(0)
     return excel_io # type: ignore
 
-
 def get_all_dry_date(user_id: int) -> dict[int, date]:
     """Retrieves and sorts the dry dates for all cows with valid reproduction records.
 
@@ -541,7 +531,6 @@ def get_all_dry_date(user_id: int) -> dict[int, date]:
 
     return dict(sorted(dry_dates.items(), key=lambda item: item[1])) # type: ignore
 
-
 def get_all_calving_preparation_date(user_id: int) -> dict[int, date]:
     """Retrieves and sorts the calving preparation dates for all cows with valid reproduction records.
 
@@ -558,7 +547,6 @@ def get_all_calving_preparation_date(user_id: int) -> dict[int, date]:
     }
 
     return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1])) # type: ignore
-
 
 def get_all_calving_date(user_id: int) -> dict[int, date]:
     """Retrieves and sorts the calving dates for all cows with valid reproduction records.

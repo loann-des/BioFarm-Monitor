@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (Object.keys(calving_preparation).length === 0) {
                     resultDiv.innerHTML = "Aucun prepa velage à prévoir.";
                 } else {
-                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Tarrissement</th></tr></thead><tbody>";
+                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Prépa Véllage</th></tr></thead><tbody>";
 
                     const sortedEntries = Object.entries(calving_preparation).sort((a, b) => {
                         return new Date(a[1]) - new Date(b[1]);
@@ -208,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         btn.addEventListener("click", async (e) => {
                             const cowId = e.target.dataset.cow;
                             try {
-                                const res = await fetch("/validate_dry", {
+                                const res = await fetch("/validate_calving_preparation", {
                                     method: "POST",
                                     headers: {
                                         "Content-Type": "application/json"
