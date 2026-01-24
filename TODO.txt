@@ -1,6 +1,6 @@
-TODO affichage export calendrier des date de prepa tarisement
-TODO affichage export calendrier des date de prepa prepa vellage
+TODO affichage export calendrier des date de tarisement
 TODO affichage export calendrier des date de prepa vellage
+TODO affichage export calendrier des date de vellage
 
 TODO gestion des insemination multiple indeterminer
 
