@@ -186,7 +186,9 @@ def new_available_care(cow: Cow) -> date | None:
 
     if nb_care_year > 0 and len(cow.cow_cares) >= nb_care_year:
         # On prend la date du soin qui correspond à nb_care_year avant la fin de la liste
-        care_date = parse_date(cow.cow_cares[-nb_care_year]["date_traitement"])
+        cares_dates = sorted(cow.cow_cares, key=lambda x: parse_date(x["date_traitement"]))
+        care_date = parse_date(cares_dates[-nb_care_year]["date_traitement"])
+        
         return care_date + timedelta(days=365)
     elif len(cow.cow_cares) > 0:
         # Si il y a moins ou autant de soins que nb_care_year, on prend la date du premier soin
