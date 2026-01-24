@@ -137,6 +137,7 @@ def show_calving_preparation():
         return jsonify({"success": True, "calving_preparation": calving_preparation})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+    
 
 @login_required
 @repro.route("/validate_calving_preparation")

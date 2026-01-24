@@ -35,8 +35,6 @@ def check_authentication():
 @login_required
 @views.route("/", methods=["GET","POST"])
 def index():
-    # if current_user.__class__ is AnonymousUserMixin :
-    #     return redirect(url_for('auth.logout'))
     return render_template("index.html",user=current_user)
 
 

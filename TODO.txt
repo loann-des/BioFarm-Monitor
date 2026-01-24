@@ -1,0 +1,12 @@
+TODO affichage export calendrier des date de prepa tarisement
+TODO affichage export calendrier des date de prepa prepa vellage
+TODO affichage export calendrier des date de prepa vellage
+
+TODO gestion des insemination multiple indeterminer
+
+TODO Protection sur consitence des donnée : ex medic utiliser > au sock, date dans le futur...
+
+TODO Version API
+
+TODO Interface client mobile/Desktop
+
