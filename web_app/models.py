@@ -1503,7 +1503,7 @@ class UserUtils:
 
 
     @staticmethod
-    def get_pharma_list(user_id: int) -> list[str]:
+    def get_pharma_list(user_id: int) -> dict[str, int]:
         """Récupère la liste des médicaments dans la pharmacie de l'utilisateur.
 
         Cette fonction renvoie un dictionnaire contenant les médicaments
