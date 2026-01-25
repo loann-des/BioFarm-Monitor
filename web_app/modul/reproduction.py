@@ -135,7 +135,7 @@ def show_calving_preparation():
         return jsonify({"success": True, "calving_preparation": calving_preparation})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
-    
+
 
 @login_required
 @repro.route("/validate_calving_preparation", methods=["POST"])
@@ -174,7 +174,7 @@ def upload_calf():
         calf_id = int(request.form["calf_id"])
         calving_date = request.form["calving_date"]
         if borning == "abortion":
-            CowUtils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True) 
+            CowUtils.validated_calving(user_id=current_user.id,cow_id=mother_id, abortion=True)
             success_message = f"avortement de {mother_id} rensegné, courage"
 
         elif calf_id and calving_date:

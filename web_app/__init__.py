@@ -19,7 +19,7 @@ def create_app():
     login_manager.login_view = 'auth.login' # type: ignore
     login_manager.session_protection = "strong"
     login_manager.init_app(app)
-    
+
     # User loader function for Flask-Login
     from .models import Users
 
@@ -47,7 +47,7 @@ def create_app():
 
     from .modul.reproduction import repro as repro_blueprint
     app.register_blueprint(repro_blueprint)
-    
+
     from .modul.cow_liste import cow_liste as cow_liste_blueprint
     app.register_blueprint(cow_liste_blueprint)
 

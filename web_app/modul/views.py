@@ -20,7 +20,7 @@ from ..models import CowUtils, UserUtils, Users
 views = Blueprint('views', __name__)
 
 # TODO Metre en place les log
-# TODO Metre en place historique commande pour retour 
+# TODO Metre en place historique commande pour retour
 # TODO gestion de la reintroduction d'une vache
 
 
@@ -129,13 +129,13 @@ def upload_calfs():
                 added += 1
             except ValueError:
                 skipped += 1
-                
+
         #TODO message a madofier
         return jsonify({"success": True,"message": f"{added} veaux(s) ajoutée(s), {skipped} déjà existante(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
-    
+
 @login_required
 @views.route("/init_stock", methods=["POST"])
 def init_stock():
@@ -147,7 +147,7 @@ def init_stock():
         user_id = current_user.id
         year = datetime.now().year -1
         remaining_stock: dict[str, int] = {}
-        
+
         # Lire le fichier Excel directement en mémoire
         df = pd.read_excel(BytesIO(file.read()), header=None)
 
@@ -160,7 +160,7 @@ def init_stock():
         # Lire uniquement la troisième colonne units : unitée du medicament
         units = df.iloc[0:, 2].to_list()
         print(units)
-        
+
 
         added, skipped = 0, 0
         for medic,qt_medic,unit in zip(medics,qt_medics,units):
@@ -171,7 +171,7 @@ def init_stock():
             except ValueError:
                 skipped += 1
         PharmacieUtils.upload_pharmacie_year(user_id=user_id, year=year, remaining_stock=remaining_stock) # type: ignore
-        
+
         return jsonify({"success": True,"message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500

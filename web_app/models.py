@@ -20,7 +20,7 @@ from werkzeug.security import generate_password_hash
 
 from . import db
 
-# TODO Metre en place les exeptions et leurs gestion 
+# TODO Metre en place les exeptions et leurs gestion
 # TODO  Metre en place les log
 
 class Traitement(TypedDict):
@@ -1137,7 +1137,7 @@ class PrescriptionUtils:
             typiquement nom du traitement et dose
         """
         prescription = Prescription(user_id=user_id, date=date, care=care_items, # type: ignore
-                dlc_left=False)  
+                dlc_left=False)
         db.session.add(prescription)
         db.session.commit()
 
@@ -1156,7 +1156,7 @@ class PrescriptionUtils:
             typiquement nom du traitement et dose
         """
         prescription = Prescription(user_id=user_id, date=date, care=care_items, # type: ignore
-            dlc_left=True) 
+            dlc_left=True)
         db.session.add(prescription)
         db.session.commit()
 

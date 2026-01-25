@@ -17,7 +17,7 @@ import logging as lg
 from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
 from datetime import datetime
 
-# TODO tout retaper/reparé ici 
+# TODO tout retaper/reparé ici
 
 
 
