@@ -21,11 +21,12 @@ def create_app():
     login_manager.init_app(app)
 
     # User loader function for Flask-Login
-    from .models import Users
+    from .connected_user import ConnectedUser
+    from .models import UserUtils
 
     @login_manager.user_loader
-    def load_user(user_id):
-        return Users.query.get(int(user_id))
+    def load_user(user_id:int):
+        return ConnectedUser(user_id=user_id)
 
 
     @app.before_request
