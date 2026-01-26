@@ -19,11 +19,12 @@ nb_user : int
 nb_connected_user : int
 
 
-class pharma_list_event(TypedDict):
-    """Représente un événement lié à la pharmacie.
+class Pharma_list_event(TypedDict):
+    """
+    Représente un événement lié à la pharmacie.
     
     :var date: str, Date de l'événement au format 'YYYY-MM-DD'
-    :var medicaments: dict[str, int], Dictionnaire des médicaments : quantités.
+    :var medicaments: dict[str, int], Dictionnaire des médicaments , quantités.
     :var event_type: str, Type d'événement (par exemple, 'Traitement', 'prescription', 'sortie pour dlc').
     """
     date: str
@@ -186,7 +187,9 @@ class ConnectedUser(Users) :
             - Counter(self.sum_pharmacie_left(year=year))
         )
 
-    def get_history_pharmacie(self) -> list[tuple[date, dict[str, int], str]]:
+    def get_history_pharmacie(self) -> list[Pharma_list_event]:
+        #TODO Type de retour modifier : list[tuple[date, dict[str:int], str]] -> list[Pharma_list_event]
+        # fair le modification en consequence dans les autres fonctions qui l'utilise
         """Builds a chronological history of all pharmacy-related events.
 
         This function combines care and prescription records, labels them, and returns a list sorted by date in descending order.
@@ -199,24 +202,23 @@ class ConnectedUser(Users) :
         cares_raw : list[Traitement_signe] = CowUtils.get_all_care(user_id=self.id) or []
         prescriptions_raw : list[Prescription_export_format]= PrescriptionUtils.get_all_prescriptions_cares(user_id=self.id) or []
 
-        care_data : list[pharma_list_event] = [
-            pharma_list_event(care_raw["traitement"]["date_traitement"],
-                                        care_raw["traitement"]["medicaments"],
-                                       f"care {care_raw['cow_id']}")
+        care_data : list[Pharma_list_event] = [
+            Pharma_list_event(date=care_raw["traitement"]["date_traitement"],
+                              medicaments=care_raw["traitement"]["medicaments"],
+                              event_type=f"care {care_raw['cow_id']}")
             for care_raw in cares_raw
             ]
-        prescription_data : list[pharma_list_event] = [
-            
-            pharma_list_event(prescription["date_prescription"],
-                              prescription["prescription"],
-                              "dlc left" if prescription["dlc_left"] else "prescription")
-            
+        prescription_data : list[Pharma_list_event] = [
+            Pharma_list_event(date=prescription["date_prescription"],
+                              medicaments=prescription["prescription"],
+                              event_type="dlc left" if prescription["dlc_left"] else "prescription")
+
             for prescription in prescriptions_raw
         ]
 
         # Fusionne et trie par date décroissante
         full_history = care_data + prescription_data
-        full_history.sort(key=lambda x: x[0], reverse=True)
+        full_history.sort(key=lambda x: x["date"], reverse=True)
 
         return full_history
 
