@@ -54,12 +54,12 @@ def create_app():
 
 
     # Jinja2 global functions
-    from .fonction import get_pharma_list, get_pharma_len, get_history_pharmacie, format_bool_fr, date_to_str
+    from .fonction import format_bool_fr, date_to_str
     from .models import CowUtils
     app.jinja_env.globals.update(enumerate=enumerate)
-    app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
-    app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
-    app.jinja_env.globals.update(get_history_pharmacie=get_history_pharmacie)
+    # app.jinja_env.globals.update(get_pharma_list=get_pharma_list)
+    # app.jinja_env.globals.update(get_pharma_len=get_pharma_len)
+    # app.jinja_env.globals.update(get_history_pharmacie=get_history_pharmacie)
     app.jinja_env.globals.update(get_all_cows=CowUtils.get_all_cows)
     app.jinja_env.globals.update(strftime=date_to_str)
     app.jinja_env.globals.update(format_bool_fr=format_bool_fr)

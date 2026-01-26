@@ -36,7 +36,7 @@ def check_authentication():
 @login_required
 @views.route("/", methods=["GET","POST"])
 def index():
-    return render_template("index.html",user=current_user)
+    return render_template("index.html",dry_time=current_user.setting["dry_time"], calving_preparation_time=current_user.setting["calving_preparation_time"])
 
 
 @login_required
@@ -48,14 +48,14 @@ def reproduction():
 @login_required
 @views.route("/pharmacie", methods=["GET"])
 def pharmacie():
-    return render_template("pharmacie.html", pharma_list = get_pharma_list(user_id=current_user.id) )
+    return render_template("pharmacie.html", pharma_list = current_user.medic_list)
 
 
 @login_required
 @views.route("/cow_liste", methods=["GET"])
 def cow_liste():
     #TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
-    return render_template("cow_liste.html", user = current_user)
+    return render_template("cow_liste.html", cows=CowUtils.get_all_cows(current_user.id))
 
 
 @login_required

@@ -14,13 +14,9 @@ from flask import (
 from flask_login import login_required, current_user # type: ignore
 from io import BytesIO
 
+from ..connected_user import ConnectedUser
 from web_app.fonction import (
-    get_pharma_len,
-    pharmacie_to_csv,
-    remaining_care_to_excel,
-    remaining_pharmacie_stock,
     date_to_str,
-    get_history_pharmacie
 )
 from web_app.models import (
     CowUtils,
@@ -34,7 +30,7 @@ from web_app.models import (
 
 pharma = Blueprint('pharma', __name__)
 
-current_user : Users
+current_user : ConnectedUser
 
 @pharma.before_request
 def check_authentication():
@@ -47,7 +43,7 @@ def update_care():
     # TODO valider traitemment seulement si pas de bug (dernier opération)
     def extract_cares(form : dict):
         cares = {}
-        for nb_care in range(get_pharma_len(current_user.id)):
+        for nb_care in range(current_user.get_pharma_len()):
             medic = form.get(f"medic_{nb_care+1}")
             quantite = form.get(f"medic_{nb_care+1}_nb")
             if medic and quantite:
@@ -64,12 +60,17 @@ def update_care():
     try:
         # Récupération des données du formulaire
         cow_id = request.form["id"]
-        care : Traitement = Traitement() # type: ignore
-        care["medicaments"] = extract_cares(request.form)
+        care : Traitement = Traitement(
+            date_traitement=request.form["care_date"],
+            medicaments=extract_cares(request.form),
+            annotation=request.form["care_info"]
+            )
+        
+        # care["medicaments"] = extract_cares(request.form)
 
-        care["date_traitement"] = request.form["care_date"]
+        # care["date_traitement"] = request.form["care_date"]
 
-        care["annotation"] = request.form["care_info"]
+        # care["annotation"] = request.form["care_info"]
 
 
 
@@ -119,7 +120,7 @@ def add_prescription():
 
         # Récupère les médicaments et quantités
         cares: dict[str, int] = {}
-        for nb_care in range(get_pharma_len(user_id=current_user.id)): # type: ignore
+        for nb_care in range(current_user.get_pharma_len()):
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
 
@@ -165,7 +166,7 @@ def add_dlc_left():
 
         # Récupère les médicaments et quantités
         cares: dict[str, int] = {}
-        for nb_care in range(get_pharma_len(user_id=current_user.id)):
+        for nb_care in range(current_user.get_pharma_len()):
             medic = request.form.get(f"medic_{nb_care+1}")
             quantite = request.form.get(f"medic_{nb_care+1}_nb")
 
@@ -198,7 +199,7 @@ def add_dlc_left():
 def get_stock():
     try:
         year = datetime.now().year  #on récupère l'année
-        stock_data = remaining_pharmacie_stock(user_id=current_user.id, year=year)
+        stock_data = current_user.remaining_pharmacie_stock(year=year)
         return jsonify({"success": True, "stock": stock_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -216,7 +217,7 @@ def download():
     lg.info("export-stock")
     try:
         year = int(request.form["export_year"])  # CHAMP CORRIGÉ ICI
-        csv_str = pharmacie_to_csv(user_id=current_user.id, year=year)
+        csv_str = current_user.pharmacie_to_csv(year=year)
 
         # Encodage du CSV en bytes pour envoi en tant que fichier
         csv_bytes = BytesIO(csv_str.encode("utf-8"))

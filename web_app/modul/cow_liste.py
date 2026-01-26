@@ -10,12 +10,15 @@ from flask import (
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from web_app.fonction import get_pharma_list
 
 from ..models import CowUtils, Users, db
 import logging as lg
 from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
 from datetime import datetime
+
+from ..connected_user import ConnectedUser
+
+
 
 # TODO tout retaper/reparé ici
 
@@ -23,7 +26,7 @@ from datetime import datetime
 
 cow_liste = Blueprint('cow_liste', __name__)
 
-current_user : Users
+current_user : ConnectedUser
 
 @cow_liste.before_request
 def check_authentication():
@@ -44,7 +47,9 @@ def view_cow(cow_id):
 @login_required
 @cow_liste.route("/cow_liste/edit_cow/<int:cow_id>", methods=["GET", "POST"])
 def edit_cow(cow_id):
-    return render_template("cow_edit.html", cow=CowUtils.get_cow(user_id=current_user.id, cow_id=cow_id),pharma_list=get_pharma_list(user_id=current_user.id) )
+    return render_template("cow_edit.html",
+                           cow=CowUtils.get_cow(user_id=current_user.id, cow_id=cow_id),
+                           pharma_list=current_user.medic_list)
 
 
 @login_required

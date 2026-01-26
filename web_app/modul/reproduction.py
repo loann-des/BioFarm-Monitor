@@ -5,17 +5,13 @@ from datetime import datetime
 from flask import Blueprint, jsonify, redirect, request, url_for
 from flask_login import login_required, current_user  # type: ignore
 
-from web_app.fonction import (
-    get_all_calving_date,
-    get_all_calving_preparation_date,
-    get_all_dry_date
-)
-from web_app.models import CowUtils, Users
+from web_app.models import CowUtils
+from ..connected_user import ConnectedUser
 
 
 repro = Blueprint('repro', __name__)
 
-current_user : Users
+current_user : ConnectedUser
 
 # Reproduction form
 @repro.before_request
@@ -106,7 +102,7 @@ def ultrasound():
 @repro.route("/show_dry")
 def show_dry():
     try:
-        dry_data = get_all_dry_date(user_id=current_user.id)
+        dry_data = current_user.get_all_dry_date()
         return jsonify({"success": True, "dry": dry_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -131,7 +127,7 @@ def validate_dry():
 @repro.route("/show_calving_preparation")
 def show_calving_preparation():
     try:
-        calving_preparation = get_all_calving_preparation_date(user_id=current_user.id)
+        calving_preparation = current_user.get_all_calving_preparation_date()
         return jsonify({"success": True, "calving_preparation": calving_preparation})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -158,7 +154,7 @@ def validate_calving_preparation():
 @repro.route("/show_calving_date")
 def show_calving_date():
     try:
-        calving_data = get_all_calving_date(user_id=current_user.id)
+        calving_data = current_user.get_all_calving_date()
         return jsonify({"success": True, "calving": calving_data})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
