@@ -15,7 +15,7 @@ from sqlalchemy import (
     extract)
 from sqlalchemy.ext.mutable import MutableList, MutableDict
 from sqlalchemy.orm import Mapped, mapped_column
-from typing import TypedDict, Any
+from typing import NotRequired, TypedDict, Any
 from werkzeug.security import generate_password_hash
 
 from . import db
@@ -23,19 +23,54 @@ from . import db
 # TODO Metre en place les exeptions et leurs gestion
 # TODO  Metre en place les log
 
+
 class Traitement(TypedDict):
+    """
+    Represente un traitement administré à une vache.
+    
+    :var date_traitement: str, Date du traitement au format 'YYYY-MM-DD'
+    :var medicaments: dict[str, int], Dictionnaire des médicaments et dosages administrés
+    :var annotation: str, Annotation ou remarque sur le traitement
+    """
     date_traitement: str  # date au format 'YYYY-MM-DD'
     medicaments: dict[str, int]  # [medicament,dosage]
     annotation: str
 
+class Traitement_signe(TypedDict):
+    """
+    Represente un traitement administré à une vache signé par son identifiant.
+
+    :var cow_id: int, Identifiant de la vache
+    :var traitement: Traitement, Traitement administré à la vache
+    """
+    cow_id: int  # date au format 'YYYY-MM-DD'
+    traitement: Traitement  
 
 class Note(TypedDict):
-    date_note: str  # date au format 'YYYY-MM-DD'
+    """
+    Represente une note generale sur une vache.
+    
+    :var date_note: str, Date au format 'YYYY-MM-DD'
+    :var information: str, information de la note
+    
+    """
+    Redate_note: str  # date au format 'YYYY-MM-DD'
     information: str
 
 
 class Reproduction(TypedDict):
     """Représente le statut reproductif d'une  vache.
+    
+    :var insemination: str, Date d'insémination au format 'YYYY-MM-DD'
+    :var ultrasound: bool | None, Résultats de l'échographie. True si la vache porte un veau, False sinon
+    :var dry: str | None, Date de tarissement au format 'YYYY-MM-DD'
+    :var dry_status: bool, Tarissement d'une vache. True si la vache est tarie, False sinon
+    :var calving_preparation: str | None, Date de préparation au vêlage au format 'YYYY-MM-DD'
+    :var calving_preparation_status: bool, Statut de préparation au vêlage. True si la vache est en préparation au vêlage, False sinon
+    :var calving_date: str | None, Date de vêlage au format 'YYYY-MM-DD'
+    :var calving: bool, Statut du vêlage. True si la vache a vêlé, False sinon
+    :var abortion: bool, Avortement. True si un avortement a eu lieu, False sinon
+    :var reproduction_details: str | None, Détails sur la reproduction
     """
 
     insemination: str
@@ -69,10 +104,24 @@ class Reproduction(TypedDict):
     reproduction_details: str | None # détails sur la reproduction
     """Détails sur la reproduction"""
 
+class Prescription_export_format(TypedDict):
+    """Représente une prescription avec une date associée.
+
+    :var date_prescription: str, Date de la prescription au format 'YYYY-MM-DD'
+    :var prescription: dict[str, int], Dictionnaire des médicaments et dosages prescrits
+    :var dlc_left: bool, True si la date de consommation est atteinte, False sinon.
+    """
+    date_prescription: str  # date au format 'YYYY-MM-DD'
+    prescription: dict[str, int]  # [medicament,dosage]
+    dlc_left: bool  # True si la date de consommation est atteinte, False sinon.
+
 
 class Setting(TypedDict):
     """Stocke des réglages utilisateur, en l'occurrence les durées de
     tarissement et de préparation au vêlage.
+    
+    :var dry_time: int, Temps de tarissement (en jour)
+    :var calving_preparation_time: int, Temps de préparation au vêlage (en jour)
     """
 
     dry_time: int  # Temps de tarrisement (en jour)
@@ -356,7 +405,7 @@ class CowUtils:
     # general cow functions ------------------------------------------------
 
     @staticmethod
-    def get_cow(user_id : int, cow_id: int) -> Cow:
+    def get_cow(user_id: int, cow_id: int) -> Cow:
         """Recherche une vache dans la base de données et renvoie un objet Cow
         si la vache a été trouvée.
 
@@ -376,7 +425,8 @@ class CowUtils:
         raise ValueError(f"Cow with ID {cow_id} not found")
 
     @staticmethod
-    def get_all_cows(user_id: int | None = None) -> list[Cow]:
+    def get_all_cows(user_id: int) -> list[Cow]:
+        # TODO A été modifier 
         """Renvoie l'ensemble des vaches d'un utilisateur.
 
         Cette fonction interroge la base de données et renvoie une liste de
@@ -386,7 +436,7 @@ class CowUtils:
             * list[Cow]: Une liste contenant l'ensemble des vaches d'un
             utilisateur
         """
-        return Cow.query.filter_by(user_id=user_id).all() if user_id else Cow.query.all()
+        return Cow.query.filter_by(user_id=user_id).all()
 
     @staticmethod
     def add_cow(user_id: int, cow_id: int, born_date: date | None = None,
@@ -640,7 +690,7 @@ class CowUtils:
             raise ValueError(f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     @staticmethod
-    def get_all_care(user_id : int) -> list[tuple[Traitement, int]]:
+    def get_all_care(user_id : int) -> list[Traitement_signe]:
         """Retrieves all non-empty care records for all cows, sorted by date in descending order.
 
         This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
@@ -649,15 +699,15 @@ class CowUtils:
             list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
         """
         cows: list[Cow] = Cow.query.filter_by(user_id=user_id).all()
-        all_cares: list[tuple[Traitement, int]] = [
-            (care_dict, cow.cow_id)
+        all_cares: list[Traitement_signe] = [
+            Traitement_signe(cow_id=cow.cow_id, traitement=care_dict)
             for cow in cows
             for care_dict in cow.cow_cares
             if bool(cow.cow_cares) and bool(care_dict)
         ]
         # tri par date décroissante
         # TODO verif sort
-        all_cares.sort(key=lambda x: x[0]["date_traitement"], reverse=True)
+        all_cares.sort(key=lambda x: x["traitement"]["date_traitement"], reverse=True)
         return all_cares
 
     @staticmethod
@@ -1177,7 +1227,7 @@ class PrescriptionUtils:
         return Prescription.query.filter_by(user_id=user_id).all()
 
     @staticmethod
-    def get_all_prescriptions_cares(user_id: int) -> list[tuple[date, dict[str, int], bool]]:
+    def get_all_prescriptions_cares(user_id: int) -> list[Prescription_export_format]:
         """Récupère toutes les prescriptions dans la base de données triées par
         ordre décroissant de date.
 
@@ -1193,13 +1243,14 @@ class PrescriptionUtils:
             * list[tuple[date, dict[str, int], bool]]: Liste des prescriptions
             présentes dans la base de données, par ordre décroissante de date.
         """
-
-        all_cares: list[tuple[date, dict[str, int], bool]] = [
-            (prescription.date, prescription.care, prescription.dlc_left)
+        all_cares: list[Prescription_export_format] = [
+            Prescription_export_format(date_prescription=prescription.date,
+                              prescription=prescription.care,
+                              dlc_left=prescription.dlc_left)
             for prescription in (Prescription.query.filter_by(user_id=user_id).all())
         ]
         # Tri décroissant sur la date
-        all_cares.sort(key=lambda x: x[0], reverse=True)
+        all_cares.sort(key=lambda x: x["date_prescription"], reverse=True)
         return all_cares
 
     @staticmethod
@@ -1500,7 +1551,6 @@ class UserUtils:
         user.medic_list.setdefault(medic,mesur)
         db.session.commit()
         lg.info(f"{medic} add in pharma list")
-
 
     @staticmethod
     def get_pharma_list(user_id: int) -> dict[str, int]:

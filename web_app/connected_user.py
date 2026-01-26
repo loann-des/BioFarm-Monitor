@@ -1,5 +1,8 @@
+from typing import TypedDict
 from .fonction import *
 from .models import (
+    Prescription_export_format,
+    Traitement_signe,
     Users,
     Cow,
     Prescription,
@@ -15,8 +18,24 @@ from .models import (
 nb_user : int
 nb_connected_user : int
 
+
+class pharma_list_event(TypedDict):
+    """Représente un événement lié à la pharmacie.
+    
+    :var date: str, Date de l'événement au format 'YYYY-MM-DD'
+    :var medicaments: dict[str, int], Dictionnaire des médicaments : quantités.
+    :var event_type: str, Type d'événement (par exemple, 'Traitement', 'prescription', 'sortie pour dlc').
+    """
+    date: str
+    medicaments : dict[str, int]
+    event_type : str
+
+
 class ConnectedUser(Users) :
     cmd_history = []
+    # cows : Cows  #TODO interface a iplementer plus tard pour L'api 
+    
+    
     
     
     def __init__(self, user_id:int) :
@@ -177,16 +196,22 @@ class ConnectedUser(Users) :
         """
 
         # Récupère les données
-        care_raw : list[tuple[Traitement,int]] = CowUtils.get_all_care(user_id=self.id) or []
-        prescription_raw : list[tuple[date, dict[str, int], bool]]= PrescriptionUtils.get_all_prescriptions_cares(user_id=self.id) or []
+        cares_raw : list[Traitement_signe] = CowUtils.get_all_care(user_id=self.id) or []
+        prescriptions_raw : list[Prescription_export_format]= PrescriptionUtils.get_all_prescriptions_cares(user_id=self.id) or []
 
-        care_data = [
-            (parse_date(traitement["date_traitement"]), traitement["medicaments"], f"care {cow_id}")
-            for traitement, cow_id in care_raw
+        care_data : list[pharma_list_event] = [
+            pharma_list_event(care_raw["traitement"]["date_traitement"],
+                                        care_raw["traitement"]["medicaments"],
+                                       f"care {care_raw['cow_id']}")
+            for care_raw in cares_raw
             ]
-        prescription_data = [
-            (parse_date(date), medics, "dlc left" if dlc_left else "prescription")
-            for date, medics, dlc_left in prescription_raw
+        prescription_data : list[pharma_list_event] = [
+            
+            pharma_list_event(prescription["date_prescription"],
+                              prescription["prescription"],
+                              "dlc left" if prescription["dlc_left"] else "prescription")
+            
+            for prescription in prescriptions_raw
         ]
 
         # Fusionne et trie par date décroissante
