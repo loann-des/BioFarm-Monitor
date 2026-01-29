@@ -218,7 +218,7 @@ class ConnectedUser(Users) :
 
         # Fusionne et trie par date décroissante
         full_history = care_data + prescription_data
-        full_history.sort(key=lambda x: x["date"], reverse=True)
+        full_history.sort(key=lambda x: parse_date(x["date"]), reverse=True)
 
         return full_history
 

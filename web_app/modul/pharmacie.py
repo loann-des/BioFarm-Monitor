@@ -54,6 +54,7 @@ def update_care():
                     cares[medic] = qte_int
                 except ValueError:
                     lg.warning(f"Quantité invalide pour medic_{nb_care+1}: {quantite}")
+                    
         return cares
 
 
@@ -65,14 +66,6 @@ def update_care():
             medicaments=extract_cares(request.form),
             annotation=request.form["care_info"]
             )
-        
-        # care["medicaments"] = extract_cares(request.form)
-
-        # care["date_traitement"] = request.form["care_date"]
-
-        # care["annotation"] = request.form["care_info"]
-
-
 
         lg.info(f"update care{cow_id}...")
 
@@ -208,7 +201,7 @@ def get_stock():
 @login_required
 @pharma.route("/stock_details", methods=["GET"])
 def stock_details():
-    return render_template("stock_details.html", history_pharmacie=get_history_pharmacie(user_id=current_user.id)) # type: ignore
+    return render_template("stock_details.html", history_pharmacie=current_user.get_history_pharmacie())
 
 
 @login_required

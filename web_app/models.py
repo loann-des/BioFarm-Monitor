@@ -594,7 +594,7 @@ class CowUtils:
             la date du prochain, ou None si aucune vache associée à cow_id n'a
             été trouvée
         """
-
+        #TODO Pas plus de traitements que de qt en stock
         # Récupérer la vache depuis la BDD
         cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
@@ -1205,6 +1205,7 @@ class PrescriptionUtils:
             * care_items (dict[str, int]): Éléments de la prescription,
             typiquement nom du traitement et dose
         """
+        #TODO Pas plus de sortie= que de qt en stock
         prescription = Prescription(user_id=user_id, date=date, care=care_items, # type: ignore
             dlc_left=True)
         db.session.add(prescription)
