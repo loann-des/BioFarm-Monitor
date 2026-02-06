@@ -37,6 +37,10 @@ window.addEventListener("load", () => {
       }
     } catch (error) {
       console.error("Failed to complete AJAX transaction: " + error);
+
+      errorText.textContent = "Connexion impossible.";
+      errorText.innerHTML = "Connexion impossible.";
+      errorDiv.style.display = "block";
     }
   });
 });
