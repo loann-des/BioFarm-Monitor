@@ -29,8 +29,7 @@ def login_post():
     user : Users = Users.query.filter_by(email=email).first() # type: ignore
 
     if not user or not check_password_hash(user.password, password): # type: ignore
-        # return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
-        return redirect(url_for('auth.login'))
+        return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
 
     Connected_user = ConnectedUser(user_id=user.id)
     login_user(Connected_user, remember=remember, force=True)
