@@ -120,6 +120,13 @@ section#content form div select{
   margin-left: 5px;
 }
 
+input[type="file"]::file-selector-button {
+  box-sizing: border-box;
+  border: 1px solid var(--theme-accent-color);
+  background-color: var(--theme-background-color);
+  border-radius: 2px;
+}
+
 section#content form div select {
   box-sizing: border-box;
   padding: 2px;
