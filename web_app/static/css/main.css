@@ -140,3 +140,47 @@ section#content form button[type="submit"] {
 
   cursor: pointer;
 }
+
+section#content form.standalone-button {
+  border: none;
+  background: none;
+}
+
+section#content form.standalone-button button {
+  padding: 5px;
+  border-radius: 2px;
+}
+
+section#content a.standalone-button {
+  display: block;
+  box-sizing: border-box;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 5px;
+  border: none;
+
+  border-radius: 2px;
+  background-color: var(--theme-accent-color);
+  color: white;
+  font-size: 0.75em;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+}
+
+section#content button.standalone-button {
+  display: block;
+  box-sizing: border-box;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 5px;
+  border: none;
+
+  border-radius: 2px;
+  background-color: var(--theme-accent-color);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
