@@ -11,47 +11,47 @@
 {% block content %}
 
   <!-- New Care Section -->
-  <section id="Care" class="contact section">
+  <section id="Care">
     <h2>Cow Care</h2>
     <p>Ajouter ici les nouveaux traitements</p>
 
-    <form id="form-care" action="{{ url_for('pharma.update_care') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+    <form id="form-care" action="{{ url_for('pharma.update_care') }}" method="POST" enctype="multipart/form-data">
       {# Numéro Vache #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="id" class="form-label">Numéro :</label>
-        <input type="number" name="id" id="id" class="form-control" required />
+      <div>
+        <label for="id">Numéro :</label>
+        <input type="number" name="id" id="id"required />
       </div>
 
       {# Date de traitement #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="care_date" class="form-label">Date de traitement :</label>
-        <input type="date" name="care_date" id="care_date" class="form-control" required />
+      <div>
+        <label for="care_date" >Date de traitement :</label>
+        <input type="date" name="care_date" id="care_date" required />
       </div>
 
       {# traitement #}
-      <div class="col d-flex flex-column align-items-center text-center">
+      <div>
         {% for nb_care in range(pharma_list|length) %}
-          <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
-          <div class="input-group mb-2">
-            <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
+          <label for="medic_{{ nb_care + 1 }}">Médicament {{ nb_care + 1 }} :</label>
+          <div>
+            <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}">
               {% for care in pharma_list %}
                 <option value="{{ care }}">{{ care }}</option>
               {% endfor %}
             </select>
-            <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="nb doses|ml" min="1" class="form-control" />
+            <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="nb doses|ml" min="1" />
           </div>
         {% endfor %}
       </div>
 
       {# info complémentaire traitement #}
-      <div class="col d-flex flex-column align-items-center text-center">
+      <div>
         <label for="care_info">information de traitement :</label>
-        <input type="text" name="care_info" id="care_info" class="form-control"/>
+        <input type="text" name="care_info" id="care_info" />
       </div>
 
       {# button submit #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <button type="submit" class="btn btn-primary">Envoyer</button>
+      <div>
+        <button type="submit">Envoyer</button>
       </div>
     </form>
     <div id="message-form-care" class="alert" style="display: none;"></div>
@@ -59,29 +59,29 @@
   <!-- End New Care Section -->
 
   <!-- Pharma Liste Section -->
-  <section id="Pharma" class="contact section">
+  <section id="Pharma">
     <h2>Add In Pharma Liste</h2>
     <p>Ajoutez ici les médicaments que vous utiliserez</p>
 
-    <form id="form-pharma" action="{{ url_for('pharma.add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
+    <form id="form-pharma" action="{{ url_for('pharma.add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data">
       {# medic a ajouter a la list #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="medic" class="form-label">medicament :</label>
-        <input type="text" name="medic" id="medic" class="form-control" required />
+      <div>
+        <label for="medic">medicament :</label>
+        <input type="text" name="medic" id="medic" required />
       </div>
 
       {# selection de l'unité #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="medic_unit" class="form-label">Médicament unité :</label>
-        <select name="medic_unit" id="medic_unit" class="form-select">
+      <div>
+        <label for="medic_unit">Médicament unité :</label>
+        <select name="medic_unit" id="medic_unit">
           <option value="dose">dose</option>
           <option value="ml">millilitres</option>
         </select>
       </div>
 
       {# button submit #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <button type="submit" class="btn btn-primary">Ajouter médicament</button>
+      <div>
+        <button type="submit">Ajouter médicament</button>
       </div>
     </form>
     <div id="message-form-pharma" class="alert" style="display: none;"></div>
@@ -89,35 +89,35 @@
   <!-- End Pharma Liste Section -->
 
   <!-- prescription Section -->
-  <section id="prescription" class="contact section">
+  <section id="prescription">
     <h2>New prescription</h2>
     <p>Ajoutez ici les nouvelles ordonnances vétérinaires</p>
 
-    <form id="form-prescription" action="{{ url_for('pharma.add_prescription') }}" method="POST" class="ajax-form php-email-form">
+    <form id="form-prescription" action="{{ url_for('pharma.add_prescription') }}" method="POST">
       {# date de l'ordonnance #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
-        <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+      <div>
+        <label for="prescription_date">Date de l'ordonnance :</label>
+        <input type="date" name="prescription_date" id="prescription_date" required />
       </div>
 
       {# medicament sur l'ordonnance #}
-      <div class="col d-flex flex-column align-items-center text-center">
+      <div>
         {% for nb_care in range(pharma_list|length) %}
-          <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
-          <div class="input-group mb-2">
-            <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
+          <label for="medic_{{ nb_care + 1 }}">Médicament {{ nb_care + 1 }} :</label>
+          <div>
+            <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}"">
               {% for care in pharma_list %}
                 <option value="{{ care }}">{{ care }}</option>
               {% endfor %}
             </select>
-            <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="Nombre de doses" class="form-control" min="1" />
+            <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="Nombre de doses" min="1" />
           </div>
         {% endfor %}
       </div>
 
       {# button submit #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <button type="submit" class="btn btn-primary">Ajouter ordonnance</button>
+      <div>
+        <button type="submit">Ajouter ordonnance</button>
       </div>
     </form>
     <div id="message-form-prescription" class="alert" style="display: none;"></div>
@@ -125,48 +125,48 @@
   <!-- End prescription Section -->
 
   <!-- DLC Section -->
-  <section id="dlc_left" class="contact section">
+  <section id="dlc_left">
     <h2>Médicament DLC</h2>
     <p>Sortez ici les médicaments pour DLC passée</p>
 
-    <form id="form-dlc_left" action="{{ url_for('pharma.add_dlc_left') }}" method="POST" class="ajax-form php-email-form">
+    <form id="form-dlc_left" action="{{ url_for('pharma.add_dlc_left') }}" method="POST">
       {# date de la sortie #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="prescription_date" class="form-label">Date de l'ordonnance :</label>
-        <input type="date" name="prescription_date" id="prescription_date" class="form-control" required />
+      <div>
+        <label for="prescription_date">Date de l'ordonnance :</label>
+        <input type="date" name="prescription_date" id="prescription_date" required />
       </div>
 
       {# medicament sortie #}
-      <div class="col d-flex flex-column align-items-center text-center">
+      <div>
         {% for nb_care in range(pharma_list|length) %}
-          <label for="medic_{{ nb_care + 1 }}" class="form-label">Médicament {{ nb_care + 1 }} :</label>
-          <div class="input-group mb-2">
-            <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}" class="form-select">
+          <label for="medic_{{ nb_care + 1 }}">Médicament {{ nb_care + 1 }} :</label>
+          <div>
+            <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}">
               {% for care in pharma_list %}
                 <option value="{{ care }}">{{ care }}</option>
               {% endfor %}
             </select>
-            <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="Nombre de doses" class="form-control" min="1" />
+            <input type="number" name="medic_{{ nb_care + 1 }}_nb" id="medic_{{ nb_care + 1 }}_nb" placeholder="Nombre de doses" min="1" />
           </div>
         {% endfor %}
       </div>
 
       {# button submit #}
-      <button type="submit" class="btn btn-primary">Sortir pour DLC</button>
+      <button type="submit">Sortir pour DLC</button>
     </form>
     <div id="message-form-dlc_left" class="alert" style="display: none;"></div>
   </section>
   <!-- End DLC Section -->
 
   <!-- Stock bref Section -->
-  <section id="stock_bref" class="contact section">
+  <section id="stock_bref">
     <h2>Stock Bref</h2>
     <p>Ici vos stocks de médicaments en temps réel</p>
 
-    <div class="php-email-form">
+    <div>
       {# stock de l'année à afficher #}
-      <div class="col-12">
-        <div id="stock-result" class="mt-3"></div>
+      <div>
+        <div id="stock-result"></div>
       </div>
     </div>
 
@@ -176,11 +176,9 @@
   <!-- END Stock bref Section -->
 
   <!-- Stock history Section -->
-  <section id="stock_history" class="contact section">
-    <div class="container section-title">
-      <h2>Stock History</h2>
-      <p>Ici l'historique de votre stock de médicaments</p>
-    </div>
+  <section id="stock_history">
+    <h2>Stock History</h2>
+    <p>Ici l'his  torique de votre stock de médicaments</p>
 
     {# button redirection #}
     <a href="{{ url_for('pharma.stock_details') }}" class="standalone-button">Afficher l'historique des stocks</button></a>
@@ -188,20 +186,20 @@
   <!-- END Stock bref Section -->
 
   <!-- END export_stock Section -->
-  <section id="export_stock" class="contact section">
+  <section id="export_stock">
     <h2>export_stock</h2>
     <p>Téléchargez ici le récapitulatif annuel</p>
 
-    <form id="form-export_stock" action="{{ url_for('pharma.download') }}" class="php-email-form" method="POST" enctype="multipart/form-data">
+    <form id="form-export_stock" action="{{ url_for('pharma.download') }}" method="POST" enctype="multipart/form-data">
       {# date de l'année à exporter #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <label for="export_year" class="form-label">Date des stocks à exporter :</label>
-        <input type="number" name="export_year" id="export_year" min="2000" max="2099" class="form-control" required />
+      <div>
+        <label for="export_year">Date des stocks à exporter :</label>
+        <input type="number" name="export_year" id="export_year" min="2000" max="2099" required />
       </div>
 
       {# button download #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <button type="submit" class="btn btn-primary">Téléchargez stock</button>
+      <div>
+        <button type="submit">Téléchargez stock</button>
       </div>
     </form>
     <div id="message-form-export_stock" class="alert" style="display: none;"></div>
@@ -209,13 +207,13 @@
   <!-- END export_stock Section -->
 
   <!-- END download_remaining_care Section -->
-  <section id="download_remaining_care" class="contact section">
+  <section id="download_remaining_care">
     <h2>export_traitement</h2>
     <p>Téléchargez ici le récapitulatif annuel</p>
 
     <form id="form-download_remaining_care" action="{{ url_for('pharma.download_remaining_care') }}" class="standalone-button" method="POST" enctype="multipart/form-data">
       {# button download #}
-      <button type="submit" class="btn btn-primary">Téléchargez traitement</button>
+      <button type="submit">Téléchargez traitement</button>
     </form>
     <div id="message-form-download_remaining_care" class="alert" style="display: none;"></div>
   </section>
