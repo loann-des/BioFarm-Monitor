@@ -15,7 +15,7 @@
     <h2>Cow Care</h2>
     <p>Ajouter ici les nouveaux traitements</p>
 
-    <form id="form-care" action="{{ url_for('pharma.update_care') }}" method="POST" enctype="multipart/form-data">
+    <form id="form-care" action="{{ url_for('pharma.update_care') }}" method="POST" enctype="multipart/form-data" class="ajax-form">
       {# Numéro Vache #}
       <div>
         <label for="id">Numéro :</label>
@@ -63,7 +63,7 @@
     <h2>Add In Pharma Liste</h2>
     <p>Ajoutez ici les médicaments que vous utiliserez</p>
 
-    <form id="form-pharma" action="{{ url_for('pharma.add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data">
+    <form id="form-pharma" action="{{ url_for('pharma.add_medic_in_pharma_list') }}" method="POST" enctype="multipart/form-data" class="ajax-form">
       {# medic a ajouter a la list #}
       <div>
         <label for="medic">medicament :</label>
@@ -93,7 +93,7 @@
     <h2>New prescription</h2>
     <p>Ajoutez ici les nouvelles ordonnances vétérinaires</p>
 
-    <form id="form-prescription" action="{{ url_for('pharma.add_prescription') }}" method="POST">
+    <form id="form-prescription" action="{{ url_for('pharma.add_prescription') }}" method="POST" class="ajax-form">
       {# date de l'ordonnance #}
       <div>
         <label for="prescription_date">Date de l'ordonnance :</label>
@@ -129,7 +129,7 @@
     <h2>Médicament DLC</h2>
     <p>Sortez ici les médicaments pour DLC passée</p>
 
-    <form id="form-dlc_left" action="{{ url_for('pharma.add_dlc_left') }}" method="POST">
+    <form id="form-dlc_left" action="{{ url_for('pharma.add_dlc_left') }}" method="POST" class="ajax-form">
       {# date de la sortie #}
       <div>
         <label for="prescription_date">Date de l'ordonnance :</label>
@@ -190,7 +190,7 @@
     <h2>export_stock</h2>
     <p>Téléchargez ici le récapitulatif annuel</p>
 
-    <form id="form-export_stock" action="{{ url_for('pharma.download') }}" method="POST" enctype="multipart/form-data">
+    <form id="form-export_stock" action="{{ url_for('pharma.download') }}" method="POST" enctype="multipart/form-data" class="ajax-form">
       {# date de l'année à exporter #}
       <div>
         <label for="export_year">Date des stocks à exporter :</label>
@@ -211,7 +211,7 @@
     <h2>export_traitement</h2>
     <p>Téléchargez ici le récapitulatif annuel</p>
 
-    <form id="form-download_remaining_care" action="{{ url_for('pharma.download_remaining_care') }}" class="standalone-button" method="POST" enctype="multipart/form-data">
+    <form id="form-download_remaining_care" action="{{ url_for('pharma.download_remaining_care') }}" class="standalone-button" method="POST" enctype="multipart/form-data" class="ajax-form">
       {# button download #}
       <button type="submit">Téléchargez traitement</button>
     </form>
