@@ -4,7 +4,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background-color: var(--app-bg-color);
+  background-color: var(--app-background-color);
 }
 
 form {
@@ -23,7 +23,7 @@ form {
   padding: 15px;
   border-radius: 15px;
 
-  background-color: var(--form-background-color);
+  background-color: var(--theme-background-color);
   border: 2px solid var(--theme-accent-color);
 }
 

@@ -4,7 +4,7 @@ html, body {
   margin: 0;
   padding: 0;
 
-  background-color: var(--app-bg-color);
+  background-color: var(--app-background-color);
 }
 
 main {
@@ -77,7 +77,7 @@ nav ul li a:hover {
 }
 
 section#content {
-  background-color: var(--form-background-color);
+  background-color: var(--theme-background-color);
 
   box-sizing: border-box;
   padding: 15px;
@@ -125,7 +125,7 @@ section#content form div select {
   padding: 2px;
   border: 1px solid var(--theme-accent-color);
 
-  background: var(--form-background-color);
+  background: var(--theme-background-color);
   border-radius: 2px;
 }
 
