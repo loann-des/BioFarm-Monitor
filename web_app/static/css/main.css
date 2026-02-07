@@ -106,17 +106,39 @@ section#content form div {
 }
 
 section#content form div label,
-section#content form div input {
+section#content form div input,
+section#content form div select {
   display: block;
   box-sizing: border-box;
-  width: 50%;
   margin-top: 2px;
   margin-bottom: 2px;
 }
 
-section#content form div input[type="number"] {
-  border: 1px solid #ccc;
+section#content form div input,
+section#content form div select{
+  flex-grow: 1;
+  margin-left: 5px;
+}
+
+section#content form div select {
+  box-sizing: border-box;
+  padding: 2px;
+  border: 1px solid var(--theme-accent-color);
+
+  background: var(--form-background-color);
+  border-radius: 2px;
+}
+
+section#content form div input {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px solid var(--theme-accent-color);
   padding: 5px;
+}
+
+section#content form div input:focus {
+  outline: 1px solid rgba(0, 0, 0, 0.125);
 }
 
 section#content form input[type="file"] {
