@@ -33,8 +33,6 @@ window.addEventListener("load", () => {
           messageBox.textContent = result.message;
           messageBox.innerHTML = result.message;
           messageBox.style.display = "block";
-
-          window.location = "/pharmacie";
         } else {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
