@@ -288,3 +288,21 @@ section#content div.cow-div form button {
   background-color: red;
   border-radius: 5px;
 }
+
+div.alert {
+  margin: 5px;
+  padding: 5px;
+  border: 1px solid #cc0000;
+
+  background-color: #ffcccc;
+  color: #cc0000;
+}
+
+div.success {
+  margin: 5px;
+  padding: 5px;
+  border: 1px solid #008800;
+
+  background-color: #ccffcc;
+  color: #008800;
+}
