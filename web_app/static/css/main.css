@@ -213,3 +213,37 @@ section#content button.standalone-button {
   font-weight: bold;
   cursor: pointer;
 }
+
+table {
+  width: 100%;
+  border: 1px solid var(--theme-accent-color);
+  margin: 5px;
+}
+
+table th {
+  background-color: var(--theme-accent-color);
+}
+
+table tr:nth-child(2n+1) {
+  background-color: white;
+}
+
+table tr:nth-child(2n) {
+  background-color: #f5f5f5;
+}
+
+td {
+  text-align: center;
+}
+
+table td button {
+  box-sizing: border-box;
+  padding: 5px;
+  border: none;
+
+  border-radius: 5px;
+  background-color: green;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
