@@ -29,9 +29,10 @@
       </div>
 
       {# traitement #}
-      <div>
+      <div class="form-variable-list">
         {% for nb_care in range(pharma_list|length) %}
           <label for="medic_{{ nb_care + 1 }}">Médicament {{ nb_care + 1 }} :</label>
+
           <div>
             <select name="medic_{{ nb_care + 1 }}" id="medic_{{ nb_care + 1 }}">
               {% for care in pharma_list %}
@@ -101,7 +102,7 @@
       </div>
 
       {# medicament sur l'ordonnance #}
-      <div>
+      <div class="form-variable-list">
         {% for nb_care in range(pharma_list|length) %}
           <label for="medic_{{ nb_care + 1 }}">Médicament {{ nb_care + 1 }} :</label>
           <div>
@@ -137,7 +138,7 @@
       </div>
 
       {# medicament sortie #}
-      <div>
+      <div class="form-variable-list">
         {% for nb_care in range(pharma_list|length) %}
           <label for="medic_{{ nb_care + 1 }}">Médicament {{ nb_care + 1 }} :</label>
           <div>

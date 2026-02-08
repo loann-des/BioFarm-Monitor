@@ -127,6 +127,11 @@ input[type="file"]::file-selector-button {
   border-radius: 2px;
 }
 
+section#content form div.form-variable-list {
+  display: flex;
+  flex-direction: column;
+}
+
 section#content form div select {
   box-sizing: border-box;
   padding: 2px;
