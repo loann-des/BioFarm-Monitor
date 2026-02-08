@@ -247,3 +247,44 @@ table td button {
   font-weight: bold;
   cursor: pointer;
 }
+
+div.cow-div {
+  background-color: white;
+  margin: 10px;
+
+  border: 2px solid var(--theme-accent-color);
+  border-radius: 5px;
+}
+
+div.cow-div div.header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+
+  background-color: var(--theme-accent-color);
+}
+
+div.cow-div div.header h2 {
+  margin: 5px;
+  padding: 0;
+
+  color: white;
+}
+
+div.cow-div div.header a {
+  display: block;
+
+  margin: 5px;
+  color: white;
+}
+
+section#content div.cow-div form {
+  padding: 0;
+  margin-bottom: 10px;
+  border: none;
+}
+
+section#content div.cow-div form button {
+  background-color: red;
+  border-radius: 5px;
+}
