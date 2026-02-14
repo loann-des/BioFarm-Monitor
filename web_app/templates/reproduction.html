@@ -114,6 +114,30 @@
 
     <button id="load-dry" class="standalone-button" type="submit">Afficher les tarissements</button>
   </section>
+
+  <template id="dry-table-template">
+    <table cellspacing="0">
+      <thead>
+        <tr>
+          <th>Vache</th>
+          <th>Tarissement</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+    </table>
+    <tbody>
+    </tbody>
+  </template>
+
+  <template id="dry-entry-template">
+    <tr>
+      <td>cowid</td>
+      <td>formattedDate</td>
+      <td>
+        <button>Valider</button>
+      </td>
+    </tr>
+  </template>
   <!-- END show_dry Section -->
 
   <!-- show_calving_preparation Section -->
@@ -175,30 +199,6 @@
     <div id="message-form-new_calf" class="alert" style="display: none;"></div>
   </section>
   <!-- End new_calf Section -->
-
-  <template id="dry-table-template">
-    <table cellspacing="0">
-      <thead>
-        <tr>
-          <th>Vache</th>
-          <th>Tarissement</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-    </table>
-    <tbody>
-    </tbody>
-  </template>
-
-  <template id="dry-entry-template">
-    <tr>
-      <td>cowid</td>
-      <td>formattedDate</td>
-      <td>
-        <button>Valider</button>
-      </td>
-    </tr>
-  </template>
 {% endblock %}
 {% block JS %}
   <!--<script src="{{ url_for('static', filename='js/forms.js') }}"></script>-->

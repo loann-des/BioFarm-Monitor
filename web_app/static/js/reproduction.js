@@ -55,64 +55,66 @@ window.addEventListener("load", () => {
   });
 
   const dryButton = document.getElementById("load-dry");
+
+  dryButton.addEventListener("click", updateDryDates);
+});
+
+async function updateDryDates() {
   const dryResults = document.getElementById("dry-result");
+  const response = await fetch("/show_dry");
+  const data = JSON.parse(await response.text());
 
-  dryButton.addEventListener("click", async () => {
-    const response = await fetch("/show_dry");
-    const data = JSON.parse(await response.text());
+  console.log(data);
 
-    console.log(data);
+  if (data.success) {
+    const { dry } = data;
 
-    if (data.success) {
-      const { dry } = data;
+    const sortedEntries = Object.entries(dry).sort((a, b) => {
+        return new Date(a[1]) - new Date(b[1]);
+    });
 
-      const sortedEntries = Object.entries(dry).sort((a, b) => {
-          return new Date(a[1]) - new Date(b[1]);
-      });
+    if (Object.keys(dry).length !== 0) {
+      if (!(dryResults.children[0] instanceof HTMLTableElement)) {
+        console.log("No table");
 
-      if (Object.keys(dry).length !== 0) {
-        if (!(dryResults.children[0] instanceof HTMLTableElement)) {
-          console.log("No table");
+        const tpl = document.querySelector("template#dry-table-template");
+        const table = tpl.content.children[0].cloneNode(true);
+        table.appendChild(document.createElement("tbody"));
 
-          const tpl = document.querySelector("template#dry-table-template");
-          const table = tpl.content.children[0].cloneNode(true);
-          table.appendChild(document.createElement("tbody"));
+        dryResults.appendChild(table);
+      }
 
-          dryResults.appendChild(table);
+      const tbody = document.querySelector("div#dry-result table tbody");
+
+      for (const [cowId, dateStr] of sortedEntries) {
+        var found = false;
+
+        const formattedDate = new Date(dateStr).toLocaleDateString("fr-FR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+
+        for (const row of tbody.children) {
+          if ((row.children[0].textContent == cowId.toString() || row.children[0].innerHTML == cowId.toString()) &&
+              (row.children[1].textContent == formattedDate || row.children[1].innerHTML == formattedDate)) {
+            found = true;
+          }
         }
 
-        const tbody = document.querySelector("div#dry-result table tbody");
+        if (!found) {
+          const tpl = document.querySelector("template#dry-entry-template");
+          const entry = tpl.content.children[0].cloneNode(true);
 
-        for (const [cowId, dateStr] of sortedEntries) {
-          var found = false;
+          entry.children[0].textContent = cowId.toString();
+          entry.children[0].innerHTML = cowId.toString();
 
-          const formattedDate = new Date(dateStr).toLocaleDateString("fr-FR", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric"
-          });
+          entry.children[1].textContent = formattedDate;
+          entry.children[1].innerHTML = formattedDate;
 
-          for (const row of tbody.children) {
-            if ((row.children[0].textContent == cowId.toString() || row.children[0].innerHTML == cowId.toString()) &&
-                (row.children[1].textContent == formattedDate || row.children[1].innerHTML == formattedDate)) {
-              found = true;
-            }
-          }
-
-          if (!found) {
-            const tpl = document.querySelector("template#dry-entry-template");
-            const entry = tpl.content.children[0].cloneNode(true);
-
-            entry.children[0].textContent = cowId.toString();
-            entry.children[0].innerHTML = cowId.toString();
-
-            entry.children[1].textContent = formattedDate;
-            entry.children[1].innerHTML = formattedDate;
-
-            tbody.appendChild(entry);
-          }
+          tbody.appendChild(entry);
         }
       }
     }
-  });
-});
+  }
+}
