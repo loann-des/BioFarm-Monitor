@@ -56,9 +56,11 @@ window.addEventListener("load", () => {
 
   const dryButton = document.getElementById("load-dry");
   const calvingPrepButton = document.getElementById("load-calving_preparation");
+  const calvingButton = document.getElementById("load-calving");
 
   dryButton.addEventListener("click", updateDryDates);
   calvingPrepButton.addEventListener("click", updateCalvingPreps);
+  calvingButton.addEventListener("click", updateCalvingDates);
 });
 
 async function updateDryDates() {
@@ -169,6 +171,66 @@ async function updateCalvingPreps() {
 
         if (!found) {
           const tpl = document.querySelector("template#calving-prep-entry-template");
+          const entry = tpl.content.children[0].cloneNode(true);
+
+          entry.children[0].textContent = cowId.toString();
+          entry.children[0].innerHTML = cowId.toString();
+
+          entry.children[1].textContent = formattedDate;
+          entry.children[1].innerHTML = formattedDate;
+
+          tbody.appendChild(entry);
+        }
+      }
+    }
+  }
+}
+
+async function updateCalvingDates() {
+  const calvingResults = document.getElementById("calving-result");
+  const response = await fetch("/show_calving_date");
+  const data = JSON.parse(await response.text());
+
+  console.log(data);
+
+  if (data.success) {
+    const calvings = data["calving"];
+
+    const sortedEntries = Object.entries(calvings).sort((a, b) => {
+        return new Date(a[1]) - new Date(b[1]);
+    });
+
+    if (Object.keys(calvings).length !== 0) {
+      if (!(calvingResults.children[0] instanceof HTMLTableElement)) {
+        console.log("No table");
+
+        const tpl = document.querySelector("template#calving-table-template");
+        const table = tpl.content.children[0].cloneNode(true);
+        table.appendChild(document.createElement("tbody"));
+
+        calvingResults.appendChild(table);
+      }
+
+      const tbody = document.querySelector("div#calving-result table tbody");
+
+      for (const [cowId, dateStr] of sortedEntries) {
+        var found = false;
+
+        const formattedDate = new Date(dateStr).toLocaleDateString("fr-FR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+
+        for (const row of tbody.children) {
+          if ((row.children[0].textContent == cowId.toString() || row.children[0].innerHTML == cowId.toString()) &&
+              (row.children[1].textContent == formattedDate || row.children[1].innerHTML == formattedDate)) {
+            found = true;
+          }
+        }
+
+        if (!found) {
+          const tpl = document.querySelector("template#calving-entry-template");
           const entry = tpl.content.children[0].cloneNode(true);
 
           entry.children[0].textContent = cowId.toString();
