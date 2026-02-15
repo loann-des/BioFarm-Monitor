@@ -53,4 +53,23 @@ window.addEventListener("load", () => {
       }
     });
   });
+
+  const stockButton = document.querySelector("button#load-stock");
+  stockButton.addEventListener("click", updateStock);
 });
+
+async function updateStock() {
+  const stockResults = document.querySelector("div#stock-result");
+  const response = await fetch("/get_stock");
+  const data = JSON.parse(await response.text());
+
+  console.log(data);
+
+  if (data.success) {
+    console.log("Success");
+  }
+
+  else {
+    alert(data.message);
+  }
+}
