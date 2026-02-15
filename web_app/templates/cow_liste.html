@@ -10,7 +10,7 @@
   Liste des vaches
 {% endblock %}
 {% block content %}
-  <section id="cow_liste" class="contact section">
+  <section id="cow_liste">
 
   {% for cow in cows %}
     <div class="cow-div">
@@ -38,5 +38,5 @@
 
 {% endblock %}
 {% block JS %}
-  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/cow_liste.js') }}"></script>
 {% endblock %}
