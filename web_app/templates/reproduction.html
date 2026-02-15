@@ -149,6 +149,28 @@
 
     <button id="load-calving_preparation" class="standalone-button" type="submit">Afficher les prépas vêlage</button>
   </section>
+
+  <template id="calving-prep-table-template">
+    <table cellspacing='0' class='table table-bordered'>
+      <thead>
+        <tr>
+          <th>Vache</th>
+          <th>Prépa Véllage</th>
+          <th></th>
+        </tr>
+      </thead>
+    </table>
+  </template>
+
+  <template id="calving-prep-entry-template">
+    <tr>
+      <td>cowid</td>
+      <td>formattedDate</td>
+      <td>
+        <button data-cow="${cowId}">Valider</button>
+      </td>
+    </tr>
+  </template>
   <!-- END show_calving_preparation Section -->
 
   <!-- show_calving_date Section -->

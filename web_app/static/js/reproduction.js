@@ -55,8 +55,10 @@ window.addEventListener("load", () => {
   });
 
   const dryButton = document.getElementById("load-dry");
+  const calvingPrepButton = document.getElementById("load-calving_preparation");
 
   dryButton.addEventListener("click", updateDryDates);
+  calvingPrepButton.addEventListener("click", updateCalvingPreps);
 });
 
 async function updateDryDates() {
@@ -104,6 +106,69 @@ async function updateDryDates() {
 
         if (!found) {
           const tpl = document.querySelector("template#dry-entry-template");
+          const entry = tpl.content.children[0].cloneNode(true);
+
+          entry.children[0].textContent = cowId.toString();
+          entry.children[0].innerHTML = cowId.toString();
+
+          entry.children[1].textContent = formattedDate;
+          entry.children[1].innerHTML = formattedDate;
+
+          tbody.appendChild(entry);
+        }
+      }
+    }
+  }
+}
+
+async function updateCalvingPreps() {
+  const calvingPrepResults = document.getElementById("calving_preparation-result");
+  const response = await fetch("/show_calving_preparation");
+  const data = JSON.parse(await response.text());
+
+  console.log(data);
+
+  if (data.success) {
+    console.log(`data is ${data}`);
+    const calvingPreps = data["calving_preparation"];
+
+    console.log(`calvingPreps is ${calvingPreps}`);
+
+    const sortedEntries = Object.entries(calvingPreps).sort((a, b) => {
+        return new Date(a[1]) - new Date(b[1]);
+    });
+
+    if (Object.keys(calvingPreps).length !== 0) {
+      if (!(calvingPrepResults.children[0] instanceof HTMLTableElement)) {
+        console.log("No table");
+
+        const tpl = document.querySelector("template#calving-prep-table-template");
+        const table = tpl.content.children[0].cloneNode(true);
+        table.appendChild(document.createElement("tbody"));
+
+        calvingPrepResults.appendChild(table);
+      }
+
+      const tbody = document.querySelector("div#calving_preparation-result table tbody");
+
+      for (const [cowId, dateStr] of sortedEntries) {
+        var found = false;
+
+        const formattedDate = new Date(dateStr).toLocaleDateString("fr-FR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+
+        for (const row of tbody.children) {
+          if ((row.children[0].textContent == cowId.toString() || row.children[0].innerHTML == cowId.toString()) &&
+              (row.children[1].textContent == formattedDate || row.children[1].innerHTML == formattedDate)) {
+            found = true;
+          }
+        }
+
+        if (!found) {
+          const tpl = document.querySelector("template#calving-prep-entry-template");
           const entry = tpl.content.children[0].cloneNode(true);
 
           entry.children[0].textContent = cowId.toString();
