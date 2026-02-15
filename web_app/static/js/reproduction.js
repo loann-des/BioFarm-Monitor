@@ -110,11 +110,43 @@ async function updateDryDates() {
           const tpl = document.querySelector("template#dry-entry-template");
           const entry = tpl.content.children[0].cloneNode(true);
 
-          entry.children[0].textContent = cowId.toString();
-          entry.children[0].innerHTML = cowId.toString();
+          const idColumn = entry.children[0];
+          const dateColumn = entry.children[1];
+          const validateButton = entry.children[2].children[0];
 
-          entry.children[1].textContent = formattedDate;
-          entry.children[1].innerHTML = formattedDate;
+          idColumn.textContent = cowId.toString();
+          idColumn.innerHTML = cowId.toString();
+
+          dateColumn.textContent = formattedDate;
+          dateColumn.innerHTML = formattedDate;
+
+          validateButton.setAttribute("data-cow", cowId.toString());
+
+          validateButton.addEventListener("click", async (e) => {
+            const cowId = parseInt(e.target.getAttribute("data-cow"));
+
+            try {
+              const res = await fetch("/validate_dry", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ cow_id: cowId })
+              });
+
+              const result = await res.json();
+
+              if (result.success) {
+                alert(`Tarissement validé pour la vache ${cowId}`);
+                e.target.closest("tr").remove();
+              } else {
+                alert(`Erreur lors de la validation`);
+                console.error(result.message);
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          });
 
           tbody.appendChild(entry);
         }
@@ -173,11 +205,42 @@ async function updateCalvingPreps() {
           const tpl = document.querySelector("template#calving-prep-entry-template");
           const entry = tpl.content.children[0].cloneNode(true);
 
-          entry.children[0].textContent = cowId.toString();
-          entry.children[0].innerHTML = cowId.toString();
+          console.log(entry);
 
-          entry.children[1].textContent = formattedDate;
-          entry.children[1].innerHTML = formattedDate;
+          const idColumn = entry.children[0];
+          const dateColumn = entry.children[1];
+          const validateButton = entry.children[2].children[0];
+
+          idColumn.textContent = cowId.toString();
+          idColumn.innerHTML = cowId.toString();
+
+          dateColumn.textContent = formattedDate;
+          dateColumn.innerHTML = formattedDate;
+
+          validateButton.setAttribute("data-cow", cowId.toString());
+
+          validateButton.addEventListener("click", async (e) => {
+            const cowId = e.target.dataset.cow;
+            try {
+                const res = await fetch("/validate_calving_preparation", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ cow_id: cowId })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert(`Préparation au vếlage validée pour la vache ${cowId}`);
+                    e.target.closest("tr").remove(); // Supprime la ligne du tableau
+                } else {
+                    alert(`Erreur : ${result.message}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la validation.");
+            }
+          });
 
           tbody.appendChild(entry);
         }
