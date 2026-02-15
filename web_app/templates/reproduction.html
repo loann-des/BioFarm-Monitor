@@ -41,12 +41,12 @@
       {# ID de la vache à supprimer #}
       <div>
         <label for="id" class="form-label">Numéro :</label>
-        <input type="number" name="id" id="id" class="form-control" required />
+        <input type="number" name="id" id="id" required />
       </div>
 
       {# button submit #}
-      <div class="col d-flex flex-column align-items-center text-center">
-        <button type="submit" class="btn btn-primary">Supprimer</button>
+      <div>
+        <button type="submit"">Supprimer</button>
       </div>
     </form>
     <div id="message-form-remove_cow" class="alert" style="display: none;"></div>
@@ -141,17 +141,17 @@
   <!-- END show_dry Section -->
 
   <!-- show_calving_preparation Section -->
-  <section id="show_calving_preparation" class="contact section">
+  <section id="show_calving_preparation">
     <h2>show_calving_preparation</h2>
     <p>Ici les prochain prépa vêlage</p>
 
-    <div id="calving_preparation-result""></div>
+    <div id="calving_preparation-result"></div>
 
     <button id="load-calving_preparation" class="standalone-button" type="submit">Afficher les prépas vêlage</button>
   </section>
 
   <template id="calving-prep-table-template">
-    <table cellspacing='0' class='table table-bordered'>
+    <table cellspacing='0'>
       <thead>
         <tr>
           <th>Vache</th>
@@ -184,7 +184,7 @@
   </section>
 
   <template id="calving-table-template">
-    <table cellspacing='0' class='table table-bordered'>
+    <table cellspacing='0'>
       <thead>
         <tr>
           <th>Vache</th>
@@ -203,7 +203,7 @@
   <!-- END show_calving_date Section -->
 
   <!-- new_calf Section -->
-  <section id="new_calf" class="contact section">
+  <section id="new_calf">
     <h2>New Calf</h2>
     <p>Ajoutez ici les naissances</p>
 
