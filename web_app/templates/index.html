@@ -1,94 +1,23 @@
 {% extends 'base.html' %}
-{% block title %}
-  Home
-{% endblock title %}
-{% block body_class %}
-  "index-page"
-{% endblock body_class %}
 
-{% block page_title %}Accueil{% endblock page_title %}
+{% block title %}Accueil | BioFarm Monitor{% endblock title %}
+
 {% block content %}
+  <h1>Accueil</h1>
 
-  <!-- set_user_setting Section -->
-  <section id="user_setting">
-    <h2>user_setting</h2>
-    <p>Rentrez ici vos paramètres</p>
+  <section>
+    <h2>Événements à venir</h2>
 
-    <form id="form-user_setting" action="{{ url_for('views.user_setting') }}" method="POST" enctype="multipart/form-data">
-        {# selection Durée tarissement #}
-        <div>
-          <label for="dry_time">Durée tarissement</label>
-          <input type="number" name="dry_time" id="dry_time"placeholder="{{dry_time}}" required />
-        </div>
+    <h3>Préparations de vêlage</h3>
 
-        {# selection Durée prépa vêlage #}
-        <div>
-          <label for="calving_preparation_time">Durée prépa vêlage</label>
-          <input type="number" name="calving_preparation_time" id="calving_preparation_time" placeholder="{{calving_preparation_time}}" required />
-        </div>
+    <span>Aucun événement planifié</span>
 
-        {# button submit #}
-        <button type="submit">Set</button>
-    </form>
-    <div id="message-form-user_setting" class="alert" style="display: none;"></div>
+    <h3>Tarissements</h3>
+
+    <span>Aucun événement planifié</span>
+
+    <h3>Vêlages</h3>
+
+    <span>Aucun événement à venir</span>
   </section>
-  <!--END set_user_setting Care Section -->
-
-  <!-- init vache-->
-  <section id="init_cow">
-    <h2>Initialiser vos vaches</h2>
-    <p>Importer un fichier Excel (colonne ID de vache)</p>
-
-    <form id="form-init_cow" action="{{ url_for('views.upload_cows') }}" method="POST" enctype="multipart/form-data">
-      {# selection fichier #}
-      <label for="file">Fichier</label>
-      <input type="file" name="file" accept=".xls,.xlsx,.ods" required>
-
-      {# button submit #}
-      <button type="submit">Importer</button>
-    </form>
-
-    <div id="message-form-init_cow" class="alert" style="display: none;"></div>
-  </section>
-  <!-- END init vache-->
-
-  <!-- init veaux-->
-  <section id="init_calf">
-    <h2>Initialiser vos veaux</h2>
-    <p>Importer un fichier Excel (colonne ID de veaux)</p>
-
-    <form id="form-init_calf" action="{{ url_for('views.upload_calfs') }}" method="POST" enctype="multipart/form-data">
-      {# selection fichier #}
-      <label for="file">Fichier</label>
-      <input type="file" name="file" accept=".xls,.xlsx,.ods" required>
-
-      {# button submit #}
-      <button type="submit">Importer</button>
-    </form>
-    <div id="message-form-init_calf" class="alert" style="display: none;"></div>
-  </section>
-  <!-- END init veaux-->
-
-  <!-- init Médicament-->
-  <section id="init_medicament">
-    <h2>Initialiser vos médicaments</h2>
-    <p>Importer un fichier Excel (colonne médicaments , colonne qte)</p>
-
-    <form id="form-init_medicament" action="{{ url_for('views.init_stock') }}" method="POST" enctype="multipart/form-data">
-        {# selection fichier #}
-        <label for="file">Fichier</label>
-        <input type="file" name="file" accept=".xls,.xlsx,.ods" required>
-
-        {# button submit #}
-        <button type="submit">Importer</button>
-    </form>
-    <div id="message-form-init_medicament" class="alert" style="display: none;"></div>
-  </section>
-  <!-- END init Médicament-->
-
- {# TODO afficher setting #}
-
-{% endblock content %}
-{% block JS %}
-  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
-{% endblock JS %}
+{% endblock %}

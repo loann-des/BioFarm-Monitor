@@ -40,22 +40,28 @@ def index():
 
 
 @login_required
+@views.route("/herd", methods=["GET"])
+def cow_liste():
+    #TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
+    return render_template("herd.html", cows=CowUtils.get_all_cows(current_user.id))
+
+
+@login_required
 @views.route("/reproduction", methods=["GET"])
 def reproduction():
     return render_template("reproduction.html")
 
 
 @login_required
-@views.route("/pharmacie", methods=["GET"])
+@views.route("/medicine_cabinet", methods=["GET"])
 def pharmacie():
-    return render_template("pharmacie.html", pharma_list = current_user.medic_list)
+    return render_template("medicine-cabinet.html", pharma_list = current_user.medic_list)
 
 
 @login_required
-@views.route("/cow_liste", methods=["GET"])
-def cow_liste():
-    #TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
-    return render_template("cow_liste.html", cows=CowUtils.get_all_cows(current_user.id))
+@views.route("/settings", methods=["GET"])
+def settings():
+    return render_template("medicine-cabinet.html", pharma_list = current_user.medic_list)
 
 
 @login_required
