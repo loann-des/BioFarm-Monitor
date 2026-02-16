@@ -27,7 +27,7 @@ from . import db
 class Traitement(TypedDict):
     """
     Represente un traitement administré à une vache.
-    
+
     :var date_traitement: str, Date du traitement au format 'YYYY-MM-DD'
     :var medicaments: dict[str, int], Dictionnaire des médicaments et dosages administrés
     :var annotation: str, Annotation ou remarque sur le traitement
@@ -44,15 +44,15 @@ class Traitement_signe(TypedDict):
     :var traitement: Traitement, Traitement administré à la vache
     """
     cow_id: int  # date au format 'YYYY-MM-DD'
-    traitement: Traitement  
+    traitement: Traitement
 
 class Note(TypedDict):
     """
     Represente une note generale sur une vache.
-    
+
     :var date_note: str, Date au format 'YYYY-MM-DD'
     :var information: str, information de la note
-    
+
     """
     Redate_note: str  # date au format 'YYYY-MM-DD'
     information: str
@@ -60,7 +60,7 @@ class Note(TypedDict):
 
 class Reproduction(TypedDict):
     """Représente le statut reproductif d'une  vache.
-    
+
     :var insemination: str, Date d'insémination au format 'YYYY-MM-DD'
     :var ultrasound: bool | None, Résultats de l'échographie. True si la vache porte un veau, False sinon
     :var dry: str | None, Date de tarissement au format 'YYYY-MM-DD'
@@ -119,7 +119,7 @@ class Prescription_export_format(TypedDict):
 class Setting(TypedDict):
     """Stocke des réglages utilisateur, en l'occurrence les durées de
     tarissement et de préparation au vêlage.
-    
+
     :var dry_time: int, Temps de tarissement (en jour)
     :var calving_preparation_time: int, Temps de préparation au vêlage (en jour)
     """
@@ -200,6 +200,18 @@ class Cow(db.Model):
         self.reproduction = reproduction
         self.is_calf = is_calf
         self.init_as_cow = init_as_cow
+
+    def to_json(self):
+        return {
+            "user_id": self.user_id,
+            "cow_id": self.cow_id,
+            "cow_cares": self.cow_cares,
+            "info": self.info,
+            "in_farm": self.in_farm,
+            "born_date": self.born_date,
+            "reproduction": self.reproduction,
+            "is_calf": self.is_calf
+        }
 
 
 class Prescription(db.Model):
@@ -426,7 +438,7 @@ class CowUtils:
 
     @staticmethod
     def get_all_cows(user_id: int) -> list[Cow]:
-        # TODO A été modifier 
+        # TODO A été modifier
         """Renvoie l'ensemble des vaches d'un utilisateur.
 
         Cette fonction interroge la base de données et renvoie une liste de

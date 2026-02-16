@@ -41,7 +41,7 @@ def index():
 
 @login_required
 @views.route("/herd", methods=["GET"])
-def cow_liste():
+def herd():
     #TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
     return render_template("herd.html", cows=CowUtils.get_all_cows(current_user.id))
 

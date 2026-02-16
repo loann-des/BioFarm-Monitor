@@ -1,3 +1,38 @@
 {% extends 'base.html' %}
 
 {% block title %}Troupeau | BioFarm Monitor{% endblock title %}
+
+{% block content %}
+  <h1>Gestion du troupeau</h1>
+
+  <section>
+    <h2>Liste des vaches</h2>
+
+    <table cellspacing="0">
+      <thead>
+        <tr>
+          <th>Identifiant</th>
+          <th>Date de naissance</th>
+          <th>
+            <button id="add-cow-button">+</button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+
+  </section>
+
+  <template id="herd-table-template">
+    <tr>
+      <td><a>Cow ID</a></td>
+      <td>Date de naissance</td>
+      <td></td>
+    </tr>
+  </template>
+{% endblock content %}
+
+{% block js %}
+  <script src="{{ url_for('static', filename='js/herd.js') }}"></script>
+{% endblock js %}

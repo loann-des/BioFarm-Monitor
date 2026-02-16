@@ -67,3 +67,54 @@ main section h2 {
   box-sizing: border-box;
   border-bottom: 1px solid var(--theme-accent-color);
 }
+
+table {
+  width: 100%;
+
+  border: 2px solid var(--theme-accent-color);
+}
+
+table thead {
+  background-color: var(--theme-accent-color);
+}
+
+table thead tr th {
+  padding: 5px;
+}
+
+table thead tr th:last-child {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+table thead tr th button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+  width: 1.25em;
+  height: 1.25em;
+  margin: 0;
+  padding: 0;
+
+  background-color: white;
+  border: none;
+  font-size: 1.25em;
+  cursor: pointer;
+}
+
+table tbody tr {
+  background-color: white;
+}
+
+table tbody tr:nth-of-type(2n) {
+  background-color: #efefef;
+}
+
+table tbody tr td {
+  padding: 5px;
+  text-align: center;
+}

@@ -33,6 +33,15 @@ def check_authentication():
     if current_user.is_anonymous:
         return redirect(url_for('auth.logout'))
 
+
+@login_required
+@cow_liste.route("/cow_liste/list_cows")
+def list_cows():
+    cows = CowUtils.get_all_cows(current_user.id)
+
+    return [cow.to_json() for cow in cows]
+
+
 @login_required
 @cow_liste.route("/cow_liste/view_cow/<int:cow_id>", methods=["GET", "POST"])
 def view_cow(cow_id):
