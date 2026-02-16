@@ -1,46 +1,48 @@
-//JavaScript document
 window.addEventListener("load", () => {
-  const form = document.querySelector("form");
-  const errorDiv = document.querySelector("form div#error-div");
-  const errorText = document.querySelector("form div#error-div span");
+  const loginForm = document.querySelector("form");
+  const errorContainer = document.querySelector("div#error-div");
+  const errorTextContainer = document.querySelector("div#error-div span");
 
-  form.addEventListener("submit", async (e) => {
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const action = e.target.getAttribute("action");
-    const formData = new FormData(e.target);
+    const method = e.target.getAttribute("method");
+    const data = new FormData(e.target);
 
     try {
       const response = await fetch(action, {
-        method: "POST",
-        body: formData
+        method: method,
+        body: data
       });
 
-      const contentType = response.headers.get("Content-Type") || "";
-      console.log("Have response type " + contentType);
+      const contentType = response.headers.get("Content-Type");
 
       if (contentType.includes("application/json")) {
-        const result = JSON.parse(await response.text());
+        const result = await response.json();
 
         if (result.success) {
-          console.log("Success");
-        } else {
-          errorText.textContent = result.message;
-          // innerHTML retains compatibility with legacy browsers.
-          // To be used with care as its content is added to the target as HTML.
-          errorText.innerHTML = result.message;
+          console.log("Authentication succeeded but redirection failed");
 
-          errorDiv.style.display = "block";
+          errorTextContainer.textContent = "Authentification réussie, mais échec de redirection";
+          errorTextContainer.innerHTML = "Authentification réussie, mais échec de redirection";
+          errorContainer.style.display = "block";
+        } else {
+          console.log(`Authentication failed: ${result.message}`);
+
+          errorTextContainer.textContent = result.message;
+          errorTextContainer.innerHTML = result.message;
+          errorContainer.style.display = "block";
         }
       } else {
         window.location = "/";
       }
     } catch (error) {
-      console.error("Failed to complete AJAX transaction: " + error);
+      console.log(`AJAX request failed due to ${error}`);
 
-      errorText.textContent = "Connexion impossible.";
-      errorText.innerHTML = "Connexion impossible.";
-      errorDiv.style.display = "block";
+      errorTextContainer.textContent = "Connexion impossible";
+      errorTextContainer.innerHTML = "Connexion impossible";
+      errorContainer.style.display = "block";
     }
   });
 });
