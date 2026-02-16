@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const messageElement = document.getElementById("message-" + formId);
           messageElement.classList.remove("alert-success", "alert-danger");
           messageElement.style.display = "block";
-                    
+
           // Réponse JSON → affiche status
           const result = await response.json();
           if (result.redirect) {
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (Object.keys(stock).length === 0) {
                     resultDiv.innerHTML = "Aucun stock disponible pour l'année en cours.";
                 } else {
-                    let html = "<table class='table table-bordered'><thead><tr><th>Médicament</th><th>Quantité</th></tr></thead><tbody>";
+                    let html = "<table cellspacing='0' class='table table-bordered'><thead><tr><th>Médicament</th><th>Quantité</th></tr></thead><tbody>";
                     for (const [medic, qty] of Object.entries(stock)) {
                         html += `<tr><td>${medic}</td><td>${qty}</td></tr>`;
                     }
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (Object.keys(dry).length === 0) {
                     resultDiv.innerHTML = "Aucun tarissement à prévoir.";
                 } else {
-                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Tarissement</th><th>Action</th></tr></thead><tbody>";
+                    let html = "<table cellspacing='0'><thead><tr><th>Vache</th><th>Tarissement</th><th>Action</th></tr></thead><tbody>";
 
                     const sortedEntries = Object.entries(dry).sort((a, b) => {
                         return new Date(a[1]) - new Date(b[1]);
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (Object.keys(calving_preparation).length === 0) {
                     resultDiv.innerHTML = "Aucun prepa velage à prévoir.";
                 } else {
-                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Prépa Véllage</th></tr></thead><tbody>";
+                    let html = "<table cellspacing='0' class='table table-bordered'><thead><tr><th>Vache</th><th>Prépa Véllage</th><th></th></tr></thead><tbody>";
 
                     const sortedEntries = Object.entries(calving_preparation).sort((a, b) => {
                         return new Date(a[1]) - new Date(b[1]);
@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (Object.keys(calving).length === 0) {
                     resultDiv.innerHTML = "Aucun prepa velage à prévoir.";
                 } else {
-                    let html = "<table class='table table-bordered'><thead><tr><th>Vache</th><th>Tarrissement</th></tr></thead><tbody>";
+                    let html = "<table cellspacing='0' class='table table-bordered'><thead><tr><th>Vache</th><th>Tarrissement</th></tr></thead><tbody>";
 
                     const sortedEntries = Object.entries(calving).sort((a, b) => {
                         return new Date(a[1]) - new Date(b[1]);
@@ -345,6 +345,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-
-
-

@@ -1,0 +1,80 @@
+/* CSS stylesheet */
+@import url("theme-wheat.css");
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--app-background-color);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  box-sizing: border-box;
+  width: 400px;
+  padding: 15px;
+  border-radius: 15px;
+
+  background-color: var(--theme-background-color);
+  border: 2px solid var(--theme-accent-color);
+}
+
+form h1 {
+  box-sizing: border-box;
+  width: 100%;
+  text-align: center;
+  margin-top: 0;
+  font-family: "Liberation Sans", sans-serif;
+}
+
+form div#error-div {
+  display: none;
+  background-color: #ffcccc;
+  border: 1px solid #cc0000;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+form div#error-div span {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 5px;
+  padding: 0;
+
+  text-align: center;
+  font-family: "Liberation Sans", sans-serif;
+  font-size: 0.9em;
+  color: #cc0000;
+}
+
+form input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 0;
+  border: 1px solid var(--theme-accent-color);
+
+  outline: none;
+}
+
+form input:focus {
+  outline: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+form input[type="submit"] {
+  background-color: var(--theme-accent-color);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}

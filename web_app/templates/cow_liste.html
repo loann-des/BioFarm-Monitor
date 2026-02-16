@@ -10,50 +10,33 @@
   Liste des vaches
 {% endblock %}
 {% block content %}
-  <section id="cow_liste" class="contact section">
-    <div class="col-12">
+  <section id="cow_liste">
 
-      {% for cow in cows %}
-      <div class="row row-cols-1 row-cols-lg-5 g-5 justify-content-center" id="cow-block-{{ cow.cow_id }}">
-        <div class="php-email-form mt-5">
-          <div class="col d-flex flex-column align-items-center text-center">
-            <p>
-              <strong>{{ cow.cow_id }}</strong>
-            </p>
-          </div>
+  {% for cow in cows %}
+    <div class="cow-div">
+      <div class="header">
+        <h2>{{ cow.cow_id }}</h2>
 
-          <div class="col d-flex flex-column align-items-center text-center">
-            <p>
-              <strong>Dans la ferme :</strong> {{ cow.in_farm }}
-            </p>
-          </div>
-
-          <div class="col d-flex flex-column align-items-center text-center">
-            <a href="{{ url_for('cow_liste.view_cow', cow_id=cow.cow_id) }}" class="btn btn-primary">
-              View
-            </a>
-          </div>
-
-          <div class="col d-flex flex-column align-items-center text-center">
-            <a href="{{ url_for('cow_liste.edit_cow', cow_id=cow.cow_id) }}" class="btn btn-primary">
-              Edit
-            </a>
-          </div>
-
-          <div class="col d-flex flex-column align-items-center text-center">
-            <form id="form-suppress-{{ cow.cow_id }}" action="{{ url_for('cow_liste.suppress_cow', cow_id=cow.cow_id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
-              <button type="submit" class="btn btn-danger">Supprimer</button>
-            </form>
-          </div>
-
-          <div id="message-form-suppress-{{cow.cow_id}}" class="alert" style="display: none;"></div>
-        </div>
-        </div>
-        {% endfor %}
+        <a href="{{ url_for('cow_liste.view_cow', cow_id=cow.cow_id) }}">View</a>
+        <a href="{{ url_for('cow_liste.edit_cow', cow_id=cow.cow_id) }}">Edit</a>
       </div>
+
+      <div>
+        <p>
+          <strong>Dans la ferme :</strong> {{ cow.in_farm }}
+        </p>
+      </div>
+
+      <form id="form-suppress-{{ cow.cow_id }}" action="{{ url_for('cow_liste.suppress_cow', cow_id=cow.cow_id) }}" method="POST" enctype="multipart/form-data" class="ajax-form">
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+      </form>
+
+      <div id="message-form-suppress-{{cow.cow_id}}" class="alert" style="display: none;"></div>
+    </div>
+    {% endfor %}
   </section>
 
 {% endblock %}
 {% block JS %}
-  <script src="{{ url_for('static', filename='js/forms.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/cow_liste.js') }}"></script>
 {% endblock %}

@@ -10,120 +10,79 @@
 {% block content %}
 
   <!-- set_user_setting Section -->
-  <section id="user_setting" class="contact section">
-    <div class="container section-title">
-      <h2>user_setting</h2>
-      <p>Rentrez ici vos paramètres</p>
-    </div>
-    <div class="row justify-content-center">
-      <form id="form-user_setting" action="{{ url_for('views.user_setting') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-        <div class="row row-cols-1 row-cols-lg-2 g-3 justify-content-center">
+  <section id="user_setting">
+    <h2>user_setting</h2>
+    <p>Rentrez ici vos paramètres</p>
 
-          {# selection Durée tarissement #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <label for="dry_time" class="form-label">Durée tarissement</label>
-            <input type="number" name="dry_time" id="dry_time" class="form-control" placeholder="{{dry_time}}" required />
-          </div>
-
-          {# selection Durée prépa vêlage #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <label for="calving_preparation_time" class="form-label">Durée prépa vêlage</label>
-            <input type="number" name="calving_preparation_time" id="calving_preparation_time" class="form-control" placeholder="{{calving_preparation_time}}" required />
-          </div>
-
-          {# button submit #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <button type="submit" class="btn btn-primary">Set</button>
-          </div>
-
+    <form id="form-user_setting" action="{{ url_for('views.user_setting') }}" method="POST" enctype="multipart/form-data">
+        {# selection Durée tarissement #}
+        <div>
+          <label for="dry_time">Durée tarissement</label>
+          <input type="number" name="dry_time" id="dry_time"placeholder="{{dry_time}}" required />
         </div>
-      </form>
-      <div id="message-form-user_setting" class="alert" style="display: none;"></div>
-    </div>
+
+        {# selection Durée prépa vêlage #}
+        <div>
+          <label for="calving_preparation_time">Durée prépa vêlage</label>
+          <input type="number" name="calving_preparation_time" id="calving_preparation_time" placeholder="{{calving_preparation_time}}" required />
+        </div>
+
+        {# button submit #}
+        <button type="submit">Set</button>
+    </form>
+    <div id="message-form-user_setting" class="alert" style="display: none;"></div>
   </section>
   <!--END set_user_setting Care Section -->
 
   <!-- init vache-->
-  <section id="init_cow" class="contact section">
-    <div class="container section-title">
-      <h2>Initialiser vos vaches</h2>
-      <p>Importer un fichier Excel (colonne ID de vache)</p>
-    </div>
-    <div class="row justify-content-center">
-      <form id="form-init_cow" action="{{ url_for('views.upload_cows') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+  <section id="init_cow">
+    <h2>Initialiser vos vaches</h2>
+    <p>Importer un fichier Excel (colonne ID de vache)</p>
 
-          {# selection fichier #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <label for="file" class="form-label">Fichier</label>
-            <input type="file" name="file" accept=".xls,.xlsx,.ods" class="form-control" required>
-          </div>
+    <form id="form-init_cow" action="{{ url_for('views.upload_cows') }}" method="POST" enctype="multipart/form-data">
+      {# selection fichier #}
+      <label for="file">Fichier</label>
+      <input type="file" name="file" accept=".xls,.xlsx,.ods" required>
 
-          {# button submit #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <button type="submit" class="btn btn-primary">Importer</button>
-          </div>
+      {# button submit #}
+      <button type="submit">Importer</button>
+    </form>
 
-        </div>
-      </form>
-      <div id="message-form-init_cow" class="alert" style="display: none;"></div>
-    </div>
+    <div id="message-form-init_cow" class="alert" style="display: none;"></div>
   </section>
   <!-- END init vache-->
 
   <!-- init veaux-->
-  <section id="init_calf" class="contact section">
-    <div class="container section-title">
-      <h2>Initialiser vos veaux</h2>
-      <p>Importer un fichier Excel (colonne ID de veaux)</p>
-    </div>
-    <div class="row justify-content-center">
-      <form id="form-init_calf" action="{{ url_for('views.upload_calfs') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+  <section id="init_calf">
+    <h2>Initialiser vos veaux</h2>
+    <p>Importer un fichier Excel (colonne ID de veaux)</p>
 
-          {# selection fichier #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <label for="file" class="form-label">Fichier</label>
-            <input type="file" name="file" accept=".xls,.xlsx,.ods" class="form-control" required>
-          </div>
+    <form id="form-init_calf" action="{{ url_for('views.upload_calfs') }}" method="POST" enctype="multipart/form-data">
+      {# selection fichier #}
+      <label for="file">Fichier</label>
+      <input type="file" name="file" accept=".xls,.xlsx,.ods" required>
 
-          {# button submit #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <button type="submit" class="btn btn-primary">Importer</button>
-          </div>
-
-        </div>
-      </form>
-      <div id="message-form-init_calf" class="alert" style="display: none;"></div>
-    </div>
+      {# button submit #}
+      <button type="submit">Importer</button>
+    </form>
+    <div id="message-form-init_calf" class="alert" style="display: none;"></div>
   </section>
   <!-- END init veaux-->
 
   <!-- init Médicament-->
-  <section id="init_medicament" class="contact section">
-    <div class="container section-title">
-      <h2>Initialiser vos médicaments</h2>
-      <p>Importer un fichier Excel (colonne médicaments , colonne qte)</p>
-    </div>
-    <div class="row justify-content-center">
-      <form id="form-init_medicament" action="{{ url_for('views.init_stock') }}" method="POST" enctype="multipart/form-data" class="ajax-form php-email-form">
-        <div class="row row-cols-1 row-cols-lg-1 g-3 justify-content-center">
+  <section id="init_medicament">
+    <h2>Initialiser vos médicaments</h2>
+    <p>Importer un fichier Excel (colonne médicaments , colonne qte)</p>
 
-          {# selection fichier #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <label for="file" class="form-label">Fichier</label>
-            <input type="file" name="file" accept=".xls,.xlsx,.ods" class="form-control" required>
-          </div>
+    <form id="form-init_medicament" action="{{ url_for('views.init_stock') }}" method="POST" enctype="multipart/form-data">
+        {# selection fichier #}
+        <label for="file">Fichier</label>
+        <input type="file" name="file" accept=".xls,.xlsx,.ods" required>
 
-          {# button submit #}
-          <div class="col d-flex flex-column align-items-center text-center">
-            <button type="submit" class="btn btn-primary">Importer</button>
-          </div>
-
-        </div>
-      </form>
-      <div id="message-form-init_medicament" class="alert" style="display: none;"></div>
-    </div>
+        {# button submit #}
+        <button type="submit">Importer</button>
+    </form>
+    <div id="message-form-init_medicament" class="alert" style="display: none;"></div>
   </section>
   <!-- END init Médicament-->
 

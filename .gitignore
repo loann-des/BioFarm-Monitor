@@ -6,3 +6,5 @@ app.log
 app.db
 app.db-journal
 .~lock*
+
+*.old
