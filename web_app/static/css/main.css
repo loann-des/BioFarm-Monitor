@@ -10,7 +10,7 @@ html, body {
 
 nav {
   box-sizing: border-box;
-  width: 21cm;
+  width: 800px;
   margin-right: auto;
   margin-left: auto;
   margin-top: 25px;
@@ -19,6 +19,10 @@ nav {
   border-radius: 15px 15px 0 0;
 
   background-color: #555555;
+}
+
+nav button#narrow-menu-button {
+  display: none;
 }
 
 nav ul {
@@ -50,7 +54,7 @@ nav ul li a img {
 
 main {
   box-sizing: border-box;
-  width: 21cm;
+  width: 800px;
   padding: 15px;
   margin-top: 0;
   margin-bottom: 25px;
@@ -61,6 +65,43 @@ main {
   border-radius: 0 0 15px 15px;
 
   background-color: var(--theme-background-color);
+}
+
+@media (max-width: 864px) {
+  nav {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  nav button#narrow-menu-button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+    box-sizing: border-box;
+    width: 1em;
+    height: 1em;
+    font-size: 3em;
+
+    background: none;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+
+  nav ul {
+    flex-direction: column;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.25s ease;
+  }
+
+  main {
+    width: 100%;
+    border-radius: 0;
+  }
 }
 
 main section h2 {

@@ -12,6 +12,10 @@
   </head>
   <body>
     <nav>
+      <button id="narrow-menu-button">
+        &equiv;
+      </button>
+
       <ul>
         <li><a href="/">Accueil</a></li>
         <li><a href="/herd">Troupeau</a></li>
@@ -30,6 +34,19 @@
       {% block content %}
       {% endblock content %}
     </main>
+
+    <script>
+      const menuButton = document.querySelector("button#narrow-menu-button");
+      const menu = document.querySelector("nav ul");
+
+      menuButton.addEventListener("click", () => {
+        if (menu.style.height == "50vh") {
+          menu.style.height = "0";
+        } else {
+          menu.style.height = "50vh";
+        }
+      });
+    </script>
 
     {% block js %}
     {% endblock js %}
