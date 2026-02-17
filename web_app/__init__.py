@@ -37,19 +37,19 @@ def create_app():
 
 
     # Register blueprints
-    from .modul.auth import auth as auth_blueprint
+    from .modules.auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
 
-    from .modul.views import views as views_blueprint
+    from .modules.views import views as views_blueprint
     app.register_blueprint(views_blueprint)
 
-    from .modul.pharmacie import pharma as pharma_blueprint
+    from .modules.pharmacie import pharma as pharma_blueprint
     app.register_blueprint(pharma_blueprint)
 
-    from .modul.reproduction import repro as repro_blueprint
+    from .modules.reproduction import repro as repro_blueprint
     app.register_blueprint(repro_blueprint)
 
-    from .modul.cow_liste import cow_liste as cow_liste_blueprint
+    from .modules.cow_liste import cow_liste as cow_liste_blueprint
     app.register_blueprint(cow_liste_blueprint)
 
 
