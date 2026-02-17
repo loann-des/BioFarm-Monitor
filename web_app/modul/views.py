@@ -62,7 +62,6 @@ def cow_liste():
 @views.route("/user_setting", methods=["POST"])
 def user_setting():
     try:
-        # current_user : Users = current_user
         user_id = current_user.id
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
@@ -71,7 +70,7 @@ def user_setting():
             user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time) # type: ignore
         )
 
-        CowUtils.reload_all_reproduction(user_id=user_id) # type: ignore
+        CowUtils.reload_all_reproduction(user_id=current_user.id) # type: ignore
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 

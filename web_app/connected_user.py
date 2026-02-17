@@ -31,9 +31,15 @@ class Pharma_list_event(TypedDict):
     medicaments : dict[str, int]
     event_type : str
 
+class Command(TypedDict):
+    status: str
+    command: str
+    pre_cmd: str | None
+    post_cmd: str | None
+    
 
 class ConnectedUser(Users) :
-    cmd_history = []
+    cmd_history : list[Command] = []
     # cows : Cows  #TODO interface a iplementer plus tard pour L'api 
     
     

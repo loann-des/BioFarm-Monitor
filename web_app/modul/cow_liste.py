@@ -132,7 +132,7 @@ def update_cow_care(cow_id, care_index):
 @cow_liste.route('/delete_cow_care/<int:cow_id>/<int:care_index>', methods=['POST'])
 def delete_cow_care(cow_id, care_index):
     try:
-        CowUtils.delete_cow_care(cow_id=cow_id, care_index=care_index)
+        CowUtils.delete_cow_care(user_id=current_user.id, cow_id=cow_id, care_index=care_index)
         flash("Soin supprimé.")
     except IndexError:
         flash("Soin introuvable.")
