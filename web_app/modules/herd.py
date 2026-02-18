@@ -12,6 +12,7 @@ from datetime import datetime
 from flask_login import login_required, current_user
 
 from ..connected_user import ConnectedUser
+from ..fonction import parse_date
 from ..models import CowUtils
 
 herd = Blueprint("herd", __name__)
@@ -41,6 +42,10 @@ def acquire():
         lg.info(f"Adding new cow {cow_id}...")
 
         CowUtils.add_cow(user_id=user_id, cow_id=cow_id, init_as_cow=True)
+
+        birth_date = parse_date(request.form["birth_date"])
+
+        CowUtils.update_cow(user_id=user_id, cow_id=cow_id, born_date = birth_date)
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}
