@@ -49,6 +49,10 @@ window.addEventListener("load", async () => {
     popup.style.display = "none";
   });
 
+  const filterInput = document.querySelector("div#id-filter-box input");
+
+  filterInput.addEventListener("keyup", updateHerdFiltered);
+
   updateHerd();
 });
 
@@ -101,5 +105,68 @@ async function updateHerd() {
   } catch (error) {
     console.error(`AJAX request failed due to: ${error}`);
     alert("Impossible de récupérer la liste des vaches.");
+  }
+}
+
+async function updateHerdFiltered(e) {
+  const filterInput = e.target;
+  const filterId = parseInt(filterInput.value);
+
+  if (filterId === undefined || isNaN(filterId)) {
+    updateHerd();
+    return;
+  }
+
+  const action = "/herd/list/filter";
+  const method = "POST";
+  var data = new FormData();
+  data.append("id_filter", filterId);
+
+  const response = await fetch(action, {
+    method: method,
+    body: data
+  });
+
+  const contentType = response.headers.get("Content-Type");
+
+  if (!contentType.includes("application/json")) {
+    console.error(`Filter failed: wrong response type (expected application/json, got ${contentType}`);
+    console.log(response);
+    return;
+  }
+
+  const herdTable = document.querySelector("table tbody");
+
+  while (herdTable.children.length > 0) {
+    herdTable.children[0].remove();
+  }
+
+  const cows = await response.json();
+
+  for (const cow of cows) {
+    const herdTableTemplate = document.querySelector("template#herd-table-template");
+    const entry = herdTableTemplate.content.children[0].cloneNode(true);
+
+    const cowIdContainer = entry.children[0].children[0];
+    const cowBirthDateContainer = entry.children[1];
+
+    cowIdContainer.textContent = cow.cow_id;
+    cowIdContainer.innerHTML = cow.cow_id;
+
+    if (cow.born_date == null) {
+      cowBirthDateContainer.textContent = "Unknown";
+      cowBirthDateContainer.innerHTML = "Unknown";
+    } else {
+      const formattedDate = new Date(cow.born_date).toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+      });
+
+      cowBirthDateContainer.textContent = formattedDate;
+      cowBirthDateContainer.innerHTML = formattedDate;
+    }
+
+    herdTable.appendChild(entry);
   }
 }

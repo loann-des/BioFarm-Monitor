@@ -32,6 +32,16 @@ def list():
     return [cow.to_json() for cow in cows]
 
 @login_required
+@herd.route("/herd/list/filter", methods=["POST"])
+def list_filter():
+    idsearch = str(request.form["id_filter"])
+
+    cows = filter(lambda cow: idsearch in str(cow.cow_id),
+            CowUtils.get_all_cows(current_user.id))
+
+    return [cow.to_json() for cow in cows]
+
+@login_required
 @herd.route("/herd/acquire", methods=["POST"])
 def acquire():
     try:

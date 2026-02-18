@@ -1,5 +1,29 @@
 @import url("theme-wheat.css");
 
+div#id-filter-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+div#id-filter-box input {
+  display: block;
+
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px;
+
+  border-radius: 5px;
+  border: 2px solid var(--theme-accent-color);
+}
+
+div#id-filter-box input:focus {
+  outline: none;
+}
+
 div#overlay {
   display: none;
   position: fixed;
