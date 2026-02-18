@@ -43,15 +43,8 @@ def create_app():
     from .modules.views import views as views_blueprint
     app.register_blueprint(views_blueprint)
 
-    from .modules.pharmacie import pharma as pharma_blueprint
-    app.register_blueprint(pharma_blueprint)
-
-    from .modules.reproduction import repro as repro_blueprint
-    app.register_blueprint(repro_blueprint)
-
-    from .modules.cow_liste import cow_liste as cow_liste_blueprint
-    app.register_blueprint(cow_liste_blueprint)
-
+    from .modules.herd import herd as herd_blueprint
+    app.register_blueprint(herd_blueprint)
 
     # Jinja2 global functions
     from .fonction import format_bool_fr, date_to_str

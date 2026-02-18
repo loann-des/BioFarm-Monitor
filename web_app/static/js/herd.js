@@ -60,12 +60,13 @@ async function updateHerd() {
   }
 
   try {
-    const response = await fetch("/cow_liste/list_cows");
+    const response = await fetch("/herd/list");
 
     const contentType = response.headers.get("Content-Type");
 
     if (!(contentType.includes("application/json"))) {
-      console.error(`AJAX request failed: expected application/json response, got ${contentType}`);
+      console.error(`list: AJAX request failed: expected application/json response, got ${contentType}`);
+      console.log(await response.text());
       return;
     }
 

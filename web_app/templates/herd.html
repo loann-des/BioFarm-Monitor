@@ -38,7 +38,7 @@
     <p>ATTENTION&nbsp;: ce fromulaire sert à enregistrer une acquisition et non
       une naissance.</p>
 
-    <form action="{{ url_for('repro.add_cow') }}" method="POST">
+    <form action="{{ url_for('herd.acquire') }}" method="POST">
       <label for="id">Numéro de la vache&nbsp;:</label>
       <input name="id" type="number" required>
 
