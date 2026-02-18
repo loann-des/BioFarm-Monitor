@@ -1,0 +1,104 @@
+@import url("theme-wheat.css");
+
+div#overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+
+  background: rgba(0, 0, 0, 0.25);
+}
+
+div.popup {
+  display: none;
+  flex-direction: column;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 400px;
+  padding: 15px;
+  border-radius: 15px;
+
+  background-color: white;
+}
+
+div.popup .popup-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+  box-sizing: border-box;
+  width: 100%;
+}
+
+div.popup .popup-header button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  box-sizing: border-box;
+  width: 1.25em;
+  height: 1.25em;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+
+  font-size: 1.25em;
+  font-weight: bold;
+  background-color: #ff0000;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+div.popup .popup-header button:hover {
+  background-color: #cc0000;
+}
+
+div.popup form {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+div.popup form label,
+div.popup form input,
+div.popup form button {
+  display: block;
+
+  box-sizing: border-box;
+  width: 100%;
+}
+
+div.popup form label {
+  font-size: 0.75em;
+}
+
+div.popup form input {
+  padding: 5px;
+  margin-bottom: 15px;
+  border: 2px solid var(--theme-accent-color);
+  border-radius: 5px;
+}
+
+div.popup form button {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--theme-accent-color);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+}

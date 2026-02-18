@@ -2,6 +2,10 @@
 
 {% block title %}Troupeau | BioFarm Monitor{% endblock title %}
 
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/herd.css') }}">
+{% endblock head %}
+
 {% block content %}
   <h1>Gestion du troupeau</h1>
 
@@ -21,8 +25,29 @@
       <tbody>
       </tbody>
     </table>
-
   </section>
+
+  <div id="overlay"></div>
+
+  <div class="popup">
+    <div class="popup-header">
+      <h3>Acquisition d'une vache</h3>
+      <button>&times;</button>
+    </div>
+
+    <p>ATTENTION&nbsp;: ce fromulaire sert à enregistrer une acquisition et non
+      une naissance.</p>
+
+    <form action="{{ url_for('repro.add_cow') }}" method="POST">
+      <label for="id">Numéro de la vache&nbsp;:</label>
+      <input name="id" type="number" required>
+
+      <label for="birth_date">Date de naissance&nbsp;:</label>
+      <input name="birth_date" type="date" required>
+
+      <button type="submit">Ajouter</button>
+    </form>
+  </div>
 
   <template id="herd-table-template">
     <tr>
