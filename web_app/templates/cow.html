@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Cow {{ cow.cow_id }} | BioFarm Monitor{% endblock title %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cow.css') }}">
+{% endblock head %}
+
+{% block content %}
+  <h1>Vache numéro {{ cow.cow_id }} </h1>
+
+  <section>
+    <ul>
+      <li>Date de naissance: {{ date_to_str(cow.born_date) }}</li>
+    </ul>
+
+    <div id="action-buttons-wrapper">
+      <button id="change-button">Modifier</button>
+      <button id="delete-button">Supprimer</button>
+    </div>
+  </section>
+
+  <section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;Historique de reproduction</h2>
+
+    <div class="collapsible-content">
+      <span>Aucun élément</span>
+    </div>
+  </section>
+
+  <section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;Historique médical</h2>
+
+    <div class="collapsible-content">
+      <span>Aucun élément</span>
+    </div>
+  </section>
+{% endblock %}

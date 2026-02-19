@@ -48,6 +48,20 @@
           menu.style.height = "50vh";
         }
       });
+
+      const collapsibles = document.querySelectorAll("section.collapsible");
+
+      collapsibles.forEach((collapsible) => {
+        const collapsibleTitle = collapsible.children[0];
+
+        collapsibleTitle.addEventListener("click", () => {
+          if (collapsible.getAttribute("aria-expanded") == "false") {
+            collapsible.setAttribute("aria-expanded", "true");
+          } else {
+            collapsible.setAttribute("aria-expanded", "false");
+          }
+        });
+      });
     </script>
 
     {% block js %}

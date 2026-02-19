@@ -159,3 +159,24 @@ table tbody tr td {
   padding: 5px;
   text-align: center;
 }
+
+section.collapsible h2 {
+  user-select: none;
+  cursor: pointer;
+}
+
+section.collapsible[aria-expanded="false"] h2::before {
+  content: "\25b8";
+}
+
+section.collapsible[aria-expanded="true"] h2::before {
+  content: "\25be";
+}
+
+section.collapsible[aria-expanded="false"] div {
+  display: none;
+}
+
+section.collapsible[aria-expanded="true"] div {
+  display: block;
+}

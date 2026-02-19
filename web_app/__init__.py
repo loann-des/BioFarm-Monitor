@@ -46,6 +46,9 @@ def create_app():
     from .modules.herd import herd as herd_blueprint
     app.register_blueprint(herd_blueprint)
 
+    from .modules.cow import cowbp as cow_blueprint
+    app.register_blueprint(cow_blueprint)
+
     # Jinja2 global functions
     from .fonction import format_bool_fr, date_to_str
     from .models import CowUtils
