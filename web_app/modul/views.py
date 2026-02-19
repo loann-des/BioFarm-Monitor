@@ -36,7 +36,8 @@ def check_authentication():
 @login_required
 @views.route("/", methods=["GET","POST"])
 def index():
-    return render_template("index.html",dry_time=current_user.setting["dry_time"], calving_preparation_time=current_user.setting["calving_preparation_time"])
+    return render_template("index.html",dry_time=current_user.user_utils_client.setting["dry_time"], 
+                           calving_preparation_time=current_user.user_utils_client.setting["calving_preparation_time"])
 
 
 @login_required
@@ -48,7 +49,7 @@ def reproduction():
 @login_required
 @views.route("/pharmacie", methods=["GET"])
 def pharmacie():
-    return render_template("pharmacie.html", pharma_list = current_user.medic_list)
+    return render_template("pharmacie.html", pharma_list = current_user.user_utils_client.medic_list)
 
 
 @login_required

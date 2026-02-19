@@ -13,6 +13,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from ..models import Users, db
 from ..connected_user import ConnectedUser
 
+nb_user : int
+nb_connected_user : int
+
 auth = Blueprint('auth', __name__)
 
 @auth.route('/login')

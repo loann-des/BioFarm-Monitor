@@ -339,7 +339,7 @@ class Pharmacie(db.Model):
         self.remaining_stock = remaining_stock
 
 
-class Users(UserMixin, db.Model):
+class Users(db.Model):
     """Représente un utilisateur dans la base de données. Inclut les durées de
     tarissement et de préparation du vêlage.
 
@@ -1536,7 +1536,7 @@ class UserUtils:
         return Users.query.get(user_id) # type: ignore
 
     @staticmethod
-    def add_medic_in_pharma_list(user_id: int, medic: str, mesur: int) -> None:
+    def add_medic_in_pharma_list(user_id: int, medic: str, mesur: str) -> None:
         """Ajoute un médicament à la pharmacie.
 
         Cette fonction ajoute un médicament à la pharmacie de l'utilisateur s'il

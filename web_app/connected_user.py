@@ -1,9 +1,12 @@
 from typing import TypedDict
+
+from flask_login import UserMixin
+
+from web_app.connected_user_dependences.UserUtils_client import UserUtilsClient
 from .fonction import *
 from .models import (
     Prescription_export_format,
     Traitement_signe,
-    Users,
     Cow,
     Prescription,
     Pharmacie,
@@ -11,12 +14,7 @@ from .models import (
     PrescriptionUtils,
     PharmacieUtils,
     Traitement,
-    UserUtils,
 )
-
-
-nb_user : int
-nb_connected_user : int
 
 
 class Pharma_list_event(TypedDict):
@@ -37,8 +35,11 @@ class Command(TypedDict):
     pre_cmd: str | None
     post_cmd: str | None
     
-
-class ConnectedUser(Users) :
+    
+class ConnectedUser(UserMixin) :
+    id : int
+    """Identifiant unique de l'utilisateur"""
+    user_utils_client = UserUtilsClient
     cmd_history : list[Command] = []
     # cows : Cows  #TODO interface a iplementer plus tard pour L'api 
     
@@ -46,15 +47,11 @@ class ConnectedUser(Users) :
     
     
     def __init__(self, user_id:int) :
-        user:Users = Users.query.get(int(user_id)) # type: ignore
-        self.id = user.id
-        self.email = user.email
-        self.password = user.password
-        self.setting = user.setting
-        self.medic_list = user.medic_list
+        self.user_utils_client = UserUtilsClient(user_id=user_id, connected_user=self)
+        
         
     def get_id(self) :
-        return str(self.id)
+        return str(self.user_utils_client.id)
     
 
     def nb_cares_years(self, cow_id: int) -> int:
@@ -85,7 +82,7 @@ class ConnectedUser(Users) :
         Returns:
             int: The number of medication.
         """
-        return len(pharma_list) if (pharma_list := self.medic_list) else 0
+        return len(pharma_list) if (pharma_list := self.user_utils_client.medic_list) else 0
 
     def sum_pharmacie_in(self, year: int) -> dict[str, int]:
         """Sums the quantities of each medication prescribed in a given year.
@@ -99,7 +96,7 @@ class ConnectedUser(Users) :
             dict[str, int]: A dictionary mapping medication names to their total prescribed quantities for the year.
         """
 
-        res = {f"{x}": 0 for x in self.medic_list}
+        res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
         prescription: Prescription
         for prescription in PrescriptionUtils.get_year_prescription(user_id=self.id, year=year):
             for medic, quantity in prescription.care.items():
@@ -117,7 +114,7 @@ class ConnectedUser(Users) :
         Returns:
             dict[str, int]: A dictionary mapping medication names to their total used quantities for the year.
         """
-        res = {f"{x}": 0 for x in self.medic_list}
+        res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
         cow_care: Traitement
         for cow_care in CowUtils.get_care_on_year(user_id=self.id, year=year):
             for medic, quantity in cow_care["medicaments"].items():
@@ -135,7 +132,7 @@ class ConnectedUser(Users) :
         Returns:
             dict[str, int]: A dictionary mapping medication names to their total used quantities for calves in the year.
         """
-        res = {str(x): 0 for x in self.medic_list}
+        res = {str(x): 0 for x in self.user_utils_client.medic_list}
         cow_care: Traitement
         for cow_care in CowUtils.get_calf_care_on_year(user_id=self.id, year=year):
             lg.info(cow_care)
@@ -154,7 +151,7 @@ class ConnectedUser(Users) :
         Returns:
             dict[str, int]: A dictionary mapping medication names to their total quantities removed due to expired DLC for the year.
         """
-        res = {f"{x}": 0 for x in self.medic_list}
+        res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
         cow_care: Prescription
         for cow_care in PrescriptionUtils.get_dlc_left_on_year(user_id=self.id, year=year):
             for medic, quantity in cow_care.care.items():
@@ -292,7 +289,7 @@ class ConnectedUser(Users) :
         remaining_stock_last_year = getattr(prev_pharmacie, "remaining_stock", {})
 
         # Obtenir tous les médicaments à partir des données
-        all_meds = sorted(self.medic_list)
+        all_meds = sorted(self.user_utils_client.medic_list.keys())
 
         output = io.StringIO()
         writer = csv.writer(output)
