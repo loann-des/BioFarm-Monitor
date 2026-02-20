@@ -48,18 +48,6 @@ class Traitement_signe(TypedDict):
     traitement: Traitement
 
 
-class Medicament_Quantite(TypedDict):
-    """Dictionnaire associant les noms de traitements et leurs quantités.
-
-    :var name: str, Nom du médicament
-    :var quantity: int, Quantité du médicament
-    """
-    name: str
-    """Nom du médicament."""
-    quantity: int
-    """Quantité du médicament."""
-
-
 class Note(TypedDict):
     """
     Represente une note generale sur une vache.
@@ -282,33 +270,33 @@ class Pharmacie(db.Model):
     year: Mapped[int] = mapped_column(Integer)
     """Année du bilan de pharmacie."""
 
-    total_enter: Mapped[Medicament_Quantite] = mapped_column(MutableDict.as_mutable(JSON),
-                                                             default=dict, nullable=True)
+    total_enter: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
+                                                        default=dict, nullable=False)
     """Quantité de traitements entrés dans la pharmacie au cours de l'année.
     Forme un dictionnaire {<nom>: <quantité entrée>}."""
 
-    total_used: Mapped[Medicament_Quantite] = mapped_column(MutableDict.as_mutable(JSON),
-                                                            default=dict, nullable=True)
+    total_used: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
+                                                       default=dict, nullable=False)
     """Quantité de traitements utilisés au cours de l'année. Forme un
     dictionnaire {<nom>: <quantité utilisée>}."""
 
-    total_used_calf: Mapped[Medicament_Quantite] = mapped_column(MutableDict.as_mutable(JSON),
-                                                                 default=dict, nullable=True)
+    total_used_calf: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
+                                                            default=dict, nullable=False)
     """Quantité de traitement utilisés sur des veaux au cours de l'année. Forme
     un dictionnaire {<nom>: <quantité utilisée>}."""
 
-    total_out_dlc: Mapped[Medicament_Quantite] = mapped_column(MutableDict.as_mutable(JSON),
-                                                               default=dict, nullable=True)
+    total_out_dlc: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
+                                                          default=dict, nullable=False)
     """Quantité de médicaments périmés éliminés au cours de l'année. Forme un
     dictionnaire {<nom>: <quantité éliminée>}."""
 
-    total_out: Mapped[Medicament_Quantite] = mapped_column(MutableDict.as_mutable(JSON),
-                                                           default=dict, nullable=True)
+    total_out: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
+                                                      default=dict, nullable=False)
     """Quantité de médicaments retirés de la pharmacie au cours de l'année.
     Forme un dictionnaire {<nom>: <quantité retirée>}."""
 
-    remaining_stock: Mapped[Medicament_Quantite] = mapped_column(MutableDict.as_mutable(JSON),
-                                                                 default=dict, nullable=False)
+    remaining_stock: Mapped[dict[str, int]] = mapped_column(MutableDict.as_mutable(JSON),
+                                                            default=dict, nullable=False)
     """Stocks restants à la fin de l'année. Forme un dictionnaire
     {<nom>: <quantité>}."""
 
@@ -322,12 +310,12 @@ class Pharmacie(db.Model):
         self,
         user_id: int,
         year: int,
-        remaining_stock: Medicament_Quantite,
-        total_enter: Medicament_Quantite | None = None,
-        total_used: Medicament_Quantite | None = None,
-        total_used_calf: Medicament_Quantite | None = None,
-        total_out_dlc: Medicament_Quantite | None = None,
-        total_out: Medicament_Quantite | None = None
+        remaining_stock: dict[str, int],
+        total_enter: dict[str, int],
+        total_used: dict[str, int],
+        total_used_calf: dict[str, int],
+        total_out_dlc: dict[str, int],
+        total_out: dict[str, int]
     ):
         """Initialise un objet Pharmacie à partir des statistiques et stocks
         fournis.
@@ -349,16 +337,11 @@ class Pharmacie(db.Model):
         """
         self.user_id = user_id
         self.year = year
-        if total_enter:
-            self.total_enter = total_enter
-        if total_used:
-            self.total_used = total_used
-        if total_used_calf:
-            self.total_used_calf = total_used_calf
-        if total_out_dlc:
-            self.total_out_dlc = total_out_dlc
-        if total_out:
-            self.total_out = total_out
+        self.total_enter = total_enter
+        self.total_used = total_used
+        self.total_used_calf = total_used_calf
+        self.total_out_dlc = total_out_dlc
+        self.total_out = total_out
         self.remaining_stock = remaining_stock
 
 
@@ -1424,12 +1407,12 @@ class PharmacieUtils:
     def set_pharmacie_year(
         user_id: int,
         year: int,
-        total_enter: Medicament_Quantite,
-        total_used: Medicament_Quantite,
-        total_used_calf: Medicament_Quantite,
-        total_out_dlc: Medicament_Quantite,
-        total_out: Medicament_Quantite,
-        remaining_stock: Medicament_Quantite,
+        total_enter: dict[str, int],
+        total_used: dict[str, int],
+        total_used_calf: dict[str, int],
+        total_out_dlc: dict[str, int],
+        total_out: dict[str, int],
+        remaining_stock: dict[str, int],
     ) -> None:
         """Créée et enregistre une nouvelle entrée de pharmacie pour une année
         spécifique, en utilisant les informations fournies en argument.
@@ -1440,16 +1423,16 @@ class PharmacieUtils:
         Arguments:
             * user_id (int): Identifiant de l'utilisateur
             * year (int): Année de l'entrée de pharmacie
-            * total_enter (Medicament_Quantite): Dictionnaire associant les noms et
+            * total_enter (dict[str,int]): Dictionnaire associant les noms et
             quantités de traitements ajoutés à la pharmacie au cours de l'année
-            * total_used (Medicament_Quantite): Dictionnaire associant les noms et
+            * total_used (dict[str,int]): Dictionnaire associant les noms et
             quantités de traitements utilisés au cours de l'année
-            * total_out_dlc (Medicament_Quantite): Dictionnaire associant les noms et
+            * total_out_dlc (dict[str,int]): Dictionnaire associant les noms et
             quantités de traitements expirés dans la pharmacie au cours de
             l'année
-            * total_out (Medicament_Quantite): Dictionnaire associant les noms et
+            * total_out (dict[str,int]): Dictionnaire associant les noms et
             quantités de traitements retirés de la pharmacie au cours de l'année
-            * remaining_stock (Medicament_Quantite): Dictionnaire associant les noms
+            * remaining_stock (dict[str,int]): Dictionnaire associant les noms
             et quantités de traitements restant à la fin de l'année
         """
         pharmacie = Pharmacie(
@@ -1466,7 +1449,7 @@ class PharmacieUtils:
         db.session.commit()
 
     @staticmethod
-    def upload_pharmacie_year(user_id: int, year: int, remaining_stock: Medicament_Quantite) -> None:
+    def upload_pharmacie_year(user_id: int, year: int, remaining_stock: dict[str, int]) -> None:
         """Créée et enregistre une nouvelle entrée de pharmacie, pour l'année
         spécifiée, avec les stocks restants spécifiés.
 
@@ -1478,7 +1461,7 @@ class PharmacieUtils:
         Arguments:
             * user_id (int): Identifiant de l'utilisateur
             * year (int): Année de la nouvelle entrée de pharmacie
-            * remaining_stock (Medicament_Quantite): Dictionnaire associant les noms
+            * remaining_stock (dict[str,int]): Dictionnaire associant les noms
             et quantités de traitements restant en stock
 
         Lance:
@@ -1492,6 +1475,11 @@ class PharmacieUtils:
             user_id=user_id,
             year=year,
             remaining_stock=remaining_stock,
+            total_enter={},
+            total_used={},
+            total_used_calf={},
+            total_out_dlc={},
+            total_out={},
         )
         db.session.add(pharmacie)
         db.session.commit()

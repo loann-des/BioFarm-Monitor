@@ -1,15 +1,6 @@
-from typing import TypedDict
-
+from typing import TYPE_CHECKING
 
 from ..models import Pharmacie, PharmacieUtils
-
-import web_app.connected_user as Connected_user
-import json
-
-class Medicament_Quantite(TypedDict):
-    """Dictionnaire associant les noms de traitements et leurs quantités."""
-    name: str
-    quantity: int
 
 
 class PharmacieClient:
@@ -17,69 +8,90 @@ class PharmacieClient:
     year: int
     """Année de l'entrée de pharmacie"""
 
-    total_enter: Medicament_Quantite | None
+    total_enter: dict[str, int]
     """Quantité de médicaments ajoutés à la pharmacie durant l'année. """
 
-    total_used: Medicament_Quantite | None
+    total_used: dict[str, int]
     """Quantité de médicaments utilisés durant l'année. """
 
-    total_used_calf: Medicament_Quantite | None
+    total_used_calf: dict[str, int]
     """Quantité de médicaments utilisés pour les veaux durant l'année. """
 
-    total_out_dlc: Medicament_Quantite | None
+    total_out_dlc: dict[str, int]
     """Quantité de médicaments retirés de la pharmacie durant l'année pour cause de DLC dépassée. """
 
-    total_out: Medicament_Quantite | None
+    total_out: dict[str, int]
     """Quantité de médicaments retirés de la pharmacie durant l'année pour cause de DLC et utilisation . """
 
-    remaining_stock: Medicament_Quantite | None
+    remaining_stock: dict[str, int]
     """Quantité de médicaments restant en stock à la fin de l'année. """
 
     def __init__(self, year: int,
-                remaining_stock: Medicament_Quantite,
-                 total_enter: Medicament_Quantite | None = None,
-                 total_used: Medicament_Quantite | None = None,
-                 total_used_calf: Medicament_Quantite | None = None,
-                 total_out_dlc: Medicament_Quantite | None = None,
-                 total_out: Medicament_Quantite | None = None
+                 remaining_stock: dict[str, int],
+                 total_enter: dict[str, int] | None = None,
+                 total_used: dict[str, int] | None = None,
+                 total_used_calf: dict[str, int] | None = None,
+                 total_out_dlc: dict[str, int] | None = None,
+                 total_out: dict[str, int] | None = None
                  ) -> None:
+        """Initialise un objet PharmacieClient pour une année donnée.
+
+        Cette méthode configure les quantités totales entrées, utilisées, sorties et le stock restant pour l'année spécifiée.
+
+        Arguments:
+            * year (int): Année de l'entrée de pharmacie.
+            * remaining_stock (dict[str,int]): Dictionnaire des médicaments restants en stock à la fin de l'année.
+            * total_enter (dict[str,int] | None): Dictionnaire des quantités de médicaments entrés dans la pharmacie durant l'année.
+            * total_used (dict[str,int] | None): Dictionnaire des quantités de médicaments utilisés durant l'année.
+            * total_used_calf (dict[str,int] | None): Dictionnaire des quantités de médicaments utilisés pour les veaux durant l'année.
+            * total_out_dlc (dict[str,int] | None): Dictionnaire des quantités de médicaments sortis pour cause de DLC dépassée durant l'année.
+            * total_out (dict[str,int] | None): Dictionnaire des quantités totales de médicaments sortis de la pharmacie durant l'année.
+        """
         self.year = year
-        self.total_enter = total_enter
-        self.total_used = total_used
-        self.total_used_calf = total_used_calf
-        self.total_out_dlc = total_out_dlc
-        self.total_out = total_out
+        self.total_enter = total_enter or {}
+        self.total_used = total_used or {}
+        self.total_used_calf = total_used_calf or {}
+        self.total_out_dlc = total_out_dlc or {}
+        self.total_out = total_out or {}
         self.remaining_stock = remaining_stock
 
-    def to_pharmacie_json(self) -> str:
-        """Convertit l'objet PharmacieClient en une chaîne JSON.
+    def to_pharmacie(self, user_id: int) -> Pharmacie:
+        """Convertit l'objet PharmacieClient en objet Pharmacie.
 
-        Cette fonction convertit les attributs de l'objet PharmacieClient en un format JSON, en utilisant les noms d'attributs correspondants de la classe Pharmacie.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur associé à l'entrée de pharmacie
 
         Renvoie:
-            * str: Chaîne JSON représentant l'objet PharmacieClient.
+            * Pharmacie: L'entrée de pharmacie correspondante à l'objet PharmacieClient
         """
-        pharmacie_dict = {
-            "id": self.year,
-            "year": self.year,
-            "total_enter": self.total_enter,
-            "total_used": self.total_used,
-            "total_used_calf": self.total_used_calf,
-            "total_out_dlc": self.total_out_dlc,
-            "total_out": self.total_out,
-            "remaining_stock": self.remaining_stock
-        }
-        return json.dumps(pharmacie_dict)
+        return Pharmacie(
+            user_id=user_id,
+            year=self.year,
+            total_enter=self.total_enter,
+            total_used=self.total_used,
+            total_used_calf=self.total_used_calf,
+            total_out_dlc=self.total_out_dlc,
+            total_out=self.total_out,
+            remaining_stock=self.remaining_stock
+        )
+        # TODO ne plus utiliser cette fonction au passage a l'api et evoiyer le to_json directement a l'api
 
-class PharmacieUtils_client:
-    connected_user: Connected_user.ConnectedUser
+
+class PharmacieUtilsClient:
+    if TYPE_CHECKING:
+        from connected_user import ConnectedUser
+
+    connected_user: "ConnectedUser"
     """L'utilisateur connecté associé à ce client utils"""
 
     list_pharmacie: list[PharmacieClient]
     """Liste de toutes les entrées de pharmacie de la base de données associées à l'utilisateur connecté, chacune correspondant à une année différente. """
 
-    def __init__(self, user_id: int) -> None:
-        pharmacies_list = PharmacieUtils.get_all_pharmacie(user_id)
+    def __init__(self, connected_user: "ConnectedUser") -> None:
+        self.connected_user = connected_user
+        pharmacies_list = PharmacieUtils.get_all_pharmacie(
+            user_id=self.connected_user.id)
+
         self.list_pharmacie = [PharmacieClient(year=pharmacy.year,
                                                total_enter=pharmacy.total_enter,
                                                total_used=pharmacy.total_used,
@@ -127,8 +139,12 @@ class PharmacieUtils_client:
         Renvoie:
             * PharmacieClient: L'entrée modifiée ou créée pour l'année spécifiée
         """
+        try:
+            pharmacie = self.get_pharmacie_year(year)
+        except ValueError:
+            pharmacie = None
 
-        if pharmacie := self.get_pharmacie_year(year):
+        if pharmacie:
             for attr in default.__dict__:
                 if not attr.startswith("_") and hasattr(pharmacie, attr):
                     setattr(pharmacie, attr, getattr(default, attr))
@@ -140,7 +156,7 @@ class PharmacieUtils_client:
             user_id=self.connected_user.id,
             year=pharmacie.year,
             # TODO gestion formating pharmacie client -> pharmacie # type: ignore
-            default=pharmacie.to_pharmacie()
+            default=pharmacie.to_pharmacie(self.connected_user.id)
         )
         return pharmacie
 
@@ -157,12 +173,12 @@ class PharmacieUtils_client:
     def set_pharmacie_year(
         self,
         year: int,
-        remaining_stock: Medicament_Quantite,
-        total_enter: Medicament_Quantite | None = None,
-        total_used: Medicament_Quantite | None = None,
-        total_used_calf: Medicament_Quantite | None = None,
-        total_out_dlc: Medicament_Quantite | None = None,
-        total_out: Medicament_Quantite | None = None,
+        remaining_stock: dict[str, int],
+        total_enter: dict[str, int],
+        total_used: dict[str, int],
+        total_used_calf: dict[str, int],
+        total_out_dlc: dict[str, int],
+        total_out: dict[str, int],
     ) -> None:
         """Créée et enregistre une nouvelle entrée de pharmacie pour une année
         spécifique, en utilisant les informations fournies en argument.
@@ -196,8 +212,11 @@ class PharmacieUtils_client:
             total_out=total_out,
             remaining_stock=remaining_stock
         )
+        self.updateOrDefault_pharmacie_year(
+            year=year, default=pharmacie_client)
 
-        pharmacie = Pharmacie(
+        # TODO ne plus utiliser cette fonction au passage a l'api et evoiyer le to_json directement a l'api
+        PharmacieUtils.set_pharmacie_year(
             user_id=self.connected_user.id,
             year=year,
             total_enter=total_enter,
@@ -205,13 +224,10 @@ class PharmacieUtils_client:
             total_used_calf=total_used_calf,
             total_out_dlc=total_out_dlc,
             total_out=total_out,
-            remaining_stock=remaining_stock,
+            remaining_stock=remaining_stock
         )
-        db.session.add(pharmacie)
-        db.session.commit()
 
-    @staticmethod
-    def upload_pharmacie_year(user_id: int, year: int, remaining_stock: dict[str, int]) -> None:
+    def upload_pharmacie_year(self, year: int, remaining_stock: dict[str, int]) -> None:
         """Créée et enregistre une nouvelle entrée de pharmacie, pour l'année
         spécifiée, avec les stocks restants spécifiés.
 
@@ -230,21 +246,28 @@ class PharmacieUtils_client:
             * ValueError s'il existe déjà une entrée de pharmacie pour l'année
             spécifiée
         """
-        if Pharmacie.query.get({"user_id": user_id, "year": year}):
+        try:
+            pharmacie = self.get_pharmacie_year(year)
+        except ValueError:
+            pharmacie = None
+
+        if pharmacie:
             raise ValueError(f"{year} already existe.")
 
-        pharmacie = Pharmacie(
-            user_id=user_id,
+        pharmacie = PharmacieClient(
             year=year,
-            total_enter={},
-            total_used={},
-            total_used_calf={},
-            total_out_dlc={},
-            total_out={},
+            total_enter=None,
+            total_used=None,
+            total_used_calf=None,
+            total_out_dlc=None,
+            total_out=None,
             remaining_stock=remaining_stock,
         )
-        db.session.add(pharmacie)
-        db.session.commit()
+        self.list_pharmacie.append(pharmacie)
 
-
-# END PHARMACIE FONCTION
+        # TODO ne plus utiliser cette fonction au passage a l'api et evoiyer le to_json directement a l'api
+        PharmacieUtils.upload_pharmacie_year(
+            user_id=self.connected_user.id,
+            year=year,
+            remaining_stock=remaining_stock
+        )

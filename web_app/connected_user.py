@@ -1,59 +1,72 @@
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from flask_login import UserMixin
 
+from web_app.connected_user_dependences.PharmacieUtils_client import PharmacieClient, PharmacieUtilsClient
 from web_app.connected_user_dependences.UserUtils_client import UserUtilsClient
+
 from .fonction import *
 from .models import (
     Prescription_export_format,
     Traitement_signe,
-    Cow,
-    Prescription,
-    Pharmacie,
-    CowUtils,
-    PrescriptionUtils,
-    PharmacieUtils,
     Traitement,
+    Cow,
+    CowUtils,
+    Prescription,
+    PrescriptionUtils,
 )
+
+
+def to_json(obj: object) -> str:
+    def is_primitive(obj: object) -> bool:
+        return isinstance(obj, (str, int, float, bool, list, dict)) or obj is None
+
+    s = "{ "
+    s += f'"type": {obj.__class__.__name__},'
+    for key, value in obj.__dict__.items():
+        s += f'"{key}": {value if is_primitive(value) else to_json(value)},'
+    s = s[:-1] + " }"
+    return s
 
 
 class Pharma_list_event(TypedDict):
     """
     Représente un événement lié à la pharmacie.
-    
+
     :var date: str, Date de l'événement au format 'YYYY-MM-DD'
     :var medicaments: dict[str, int], Dictionnaire des médicaments , quantités.
     :var event_type: str, Type d'événement (par exemple, 'Traitement', 'prescription', 'sortie pour dlc').
     """
     date: str
-    medicaments : dict[str, int]
-    event_type : str
+    medicaments: dict[str, int]
+    event_type: str
+
 
 class Command(TypedDict):
     status: str
     command: str
     pre_cmd: str | None
     post_cmd: str | None
-    
-    
-class ConnectedUser(UserMixin) :
-    id : int
+
+class ConnectedUser(UserMixin):
+
+    id: int
     """Identifiant unique de l'utilisateur"""
-    user_utils_client : UserUtilsClient
-    cmd_history : list[Command] = []
-    # cows : Cows  #TODO interface a iplementer plus tard pour L'api 
-    
-    
-    
-    
-    def __init__(self, user_id:int) :
-        self.user_utils_client = UserUtilsClient(user_id=user_id, connected_user=self)
+    user_utils_client: "UserUtilsClient"
+    """Classe utilitaire pour gérer les interactions avec les utilisateurs"""
+    pharmacie_utils_client: "PharmacieUtilsClient"
+    """Classe utilitaire pour gérer les interactions avec la pharmacie"""
+
+    cmd_history: list[Command] = []
+    # cows : Cows  #TODO interface a iplementer plus tard pour L'api
+
+    def __init__(self, user_id: int):
         self.id = user_id
-        
-        
-    def get_id(self) :
+        self.user_utils_client = UserUtilsClient(connected_user=self)
+        self.pharmacie_utils_client = PharmacieUtilsClient(connected_user=self)
+
+    def get_id(self):
         return str(self.user_utils_client.id)
-    
 
     def nb_cares_years(self, cow_id: int) -> int:
         """Compte le nombre de traitements administrés à une vache au cours de
@@ -70,7 +83,8 @@ class ConnectedUser(UserMixin) :
         Renvoie:
             * int: le nombre de traitements administrés dans les 365 derniers jours
         """
-        cares: list[Traitement] = CowUtils.get_care_by_id(user_id=self.id, cow_id=cow_id)  # type: ignore
+        cares: list[Traitement] = CowUtils.get_care_by_id(
+            user_id=self.id, cow_id=cow_id)  # type: ignore
         return sum(
             day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
         )  # sum boolean if True 1 else 0
@@ -171,7 +185,7 @@ class ConnectedUser(UserMixin) :
             dict[str, int]: A dictionary mapping medication names to their total quantities taken out of the pharmacy for the year.
         """
 
-        return dict(Counter(self.sum_pharmacie_used(year=year)) 
+        return dict(Counter(self.sum_pharmacie_used(year=year))
                     + Counter(self.sum_dlc_left(year=year)))
 
     def remaining_pharmacie_stock(self, year: int) -> dict[str, int]:
@@ -187,12 +201,12 @@ class ConnectedUser(UserMixin) :
         """
         return dict(
             Counter(self.sum_pharmacie_in(year=year))
-            + Counter(PharmacieUtils.get_pharmacie_year(user_id=self.id, year=year - 1).remaining_stock)
+            + Counter(self.pharmacie_utils_client.get_pharmacie_year(year=year - 1).remaining_stock)
             - Counter(self.sum_pharmacie_left(year=year))
         )
 
     def get_history_pharmacie(self) -> list[Pharma_list_event]:
-        #TODO Type de retour modifier : list[tuple[date, dict[str:int], str]] -> list[Pharma_list_event]
+        # TODO Type de retour modifier : list[tuple[date, dict[str:int], str]] -> list[Pharma_list_event]
         # fair le modification en consequence dans les autres fonctions qui l'utilise
         """Builds a chronological history of all pharmacy-related events.
 
@@ -203,16 +217,18 @@ class ConnectedUser(UserMixin) :
         """
 
         # Récupère les données
-        cares_raw : list[Traitement_signe] = CowUtils.get_all_care(user_id=self.id) or []
-        prescriptions_raw : list[Prescription_export_format]= PrescriptionUtils.get_all_prescriptions_cares(user_id=self.id) or []
+        cares_raw: list[Traitement_signe] = CowUtils.get_all_care(
+            user_id=self.id) or []
+        prescriptions_raw: list[Prescription_export_format] = PrescriptionUtils.get_all_prescriptions_cares(
+            user_id=self.id) or []
 
-        care_data : list[Pharma_list_event] = [
+        care_data: list[Pharma_list_event] = [
             Pharma_list_event(date=care_raw["traitement"]["date_traitement"],
                               medicaments=care_raw["traitement"]["medicaments"],
                               event_type=f"care {care_raw['cow_id']}")
             for care_raw in cares_raw
-            ]
-        prescription_data : list[Pharma_list_event] = [
+        ]
+        prescription_data: list[Pharma_list_event] = [
             Pharma_list_event(date=prescription["date_prescription"],
                               medicaments=prescription["prescription"],
                               event_type="dlc left" if prescription["dlc_left"] else "prescription")
@@ -226,7 +242,7 @@ class ConnectedUser(UserMixin) :
 
         return full_history
 
-    def update_pharmacie_year(self, year: int) -> Pharmacie:
+    def update_pharmacie_year(self, year: int) -> "PharmacieClient":
         """Updates or creates the pharmacy record for a given year with all relevant medication statistics.
 
         This function calculates and aggregates medication entries, usages, removals, and remaining stock for the specified year, then updates or creates the corresponding pharmacy record.
@@ -245,11 +261,10 @@ class ConnectedUser(UserMixin) :
         total_out = dict(Counter(total_used) + Counter(total_out_dlc))
         remaining_stock = dict(
             Counter(total_enter)
-            + Counter(PharmacieUtils.get_pharmacie_year(user_id=self.id, year=year - 1).remaining_stock)
+            + Counter(self.pharmacie_utils_client.get_pharmacie_year(year=year - 1).remaining_stock)
             - Counter(total_out)
         )
-        pharmacie = Pharmacie(
-            user_id=self.id,
+        pharmacie = PharmacieClient(
             year=year,
             total_enter=total_enter,
             total_used=total_used,
@@ -258,7 +273,7 @@ class ConnectedUser(UserMixin) :
             total_out=total_out,
             remaining_stock=remaining_stock,
         )
-        return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=self.id, year=year, default=pharmacie)
+        return self.pharmacie_utils_client.updateOrDefault_pharmacie_year(year=year, default=pharmacie)
 
     def pharmacie_to_csv(self, year: int) -> str:
         """Generates a CSV report of pharmacy medication statistics for a given year.
@@ -286,8 +301,10 @@ class ConnectedUser(UserMixin) :
         ]
 
         # Récupère les données de l'année précédente
-        prev_pharmacie = PharmacieUtils.get_pharmacie_year(user_id=self.id, year=year - 1)
-        remaining_stock_last_year = getattr(prev_pharmacie, "remaining_stock", {})
+        prev_pharmacie = self.pharmacie_utils_client.get_pharmacie_year(
+            year=year - 1)
+        remaining_stock_last_year = getattr(
+            prev_pharmacie, "remaining_stock", {})
 
         # Obtenir tous les médicaments à partir des données
         all_meds = sorted(self.user_utils_client.medic_list.keys())
@@ -306,8 +323,8 @@ class ConnectedUser(UserMixin) :
         # === AJOUT : lignes des prescriptions par date ===
         # Construire dict : date_str -> med -> qty
         prescriptions_per_date = {
-            pres.date.strftime("%d %b %Y"): pres.care # type: ignore
-            for pres in PrescriptionUtils.get_year_prescription(user_id=self.id,year=year)
+            pres.date.strftime("%d %b %Y"): pres.care  # type: ignore
+            for pres in PrescriptionUtils.get_year_prescription(user_id=self.id, year=year)
         }
 
         # Trier les dates
@@ -328,7 +345,8 @@ class ConnectedUser(UserMixin) :
         for field in fields[1:]:  # on saute 'remaining_stock_last_year' car déjà écrit
             row = [field]
             field_data = getattr(pharmacie, field, {})
-            row.extend(field_data.get(med, 0) for med in all_meds)#TODO Verif le get
+            row.extend(field_data.get(med, 0)
+                       for med in all_meds)  # TODO Verif le get
             writer.writerow(row)
 
         result = output.getvalue()
@@ -345,11 +363,11 @@ class ConnectedUser(UserMixin) :
         """
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.title = "Traitements Restants" # type: ignore
+        ws.title = "Traitements Restants"  # type: ignore
 
         headers = ["Numéro Vache",
-                    "Nb Traitements Restants", "Date Renouvellement"]
-        ws.append(headers) # type: ignore
+                   "Nb Traitements Restants", "Date Renouvellement"]
+        ws.append(headers)  # type: ignore
 
         color_map = {
             3: "00FF00",  # vert
@@ -361,7 +379,7 @@ class ConnectedUser(UserMixin) :
         cow: Cow
         for cow in CowUtils.get_all_cows(user_id=self.id):
             cow_id = cow.cow_id
-            print("cow_id ",cow.cow_id)
+            print("cow_id ", cow.cow_id)
             nb_remaining = remaining_care_on_year(cow)
             print(" "*3, "nb_remaining: ", nb_remaining)
             renewal_date = new_available_care(cow)
@@ -370,8 +388,8 @@ class ConnectedUser(UserMixin) :
                 "%d %b %Y") if renewal_date else "N/A"
             print(" "*3, "renewal_date_str: ", renewal_date_str)
 
-            ws.append([cow_id, nb_remaining, renewal_date_str]) # type: ignore
-            cell = ws.cell(row=ws.max_row, column=2) # type: ignore
+            ws.append([cow_id, nb_remaining, renewal_date_str])  # type: ignore
+            cell = ws.cell(row=ws.max_row, column=2)  # type: ignore
             color = color_map.get(nb_remaining, "000000")
 
             # case coloré
@@ -384,7 +402,7 @@ class ConnectedUser(UserMixin) :
         excel_io = BytesIO()
         wb.save(excel_io)
         excel_io.seek(0)
-        return excel_io # type: ignore
+        return excel_io  # type: ignore
 
     def get_all_dry_date(self) -> dict[int, date]:
         """Retrieves and sorts the dry dates for all cows with valid reproduction records.
@@ -401,10 +419,11 @@ class ConnectedUser(UserMixin) :
                 if not reproduction.get("dry_status", False)
             }
         except Exception as e:
-            lg.error(f"Erreur lors de récupération des dates de tarisement : {e}")
+            lg.error(
+                f"Erreur lors de récupération des dates de tarisement : {e}")
             dry_dates = {}
 
-        return dict(sorted(dry_dates.items(), key=lambda item: item[1])) # type: ignore
+        return dict(sorted(dry_dates.items(), key=lambda item: item[1]))
 
     def get_all_calving_preparation_date(self) -> dict[int, date]:
         """Retrieves and sorts the calving preparation dates for all cows with valid reproduction records.
@@ -421,7 +440,7 @@ class ConnectedUser(UserMixin) :
             if not reproduction["calving_preparation_status"]
         }
 
-        return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1])) # type: ignore
+        return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1]))
 
     def get_all_calving_date(self) -> dict[int, date]:
         """Retrieves and sorts the calving dates for all cows with valid reproduction records.
@@ -437,4 +456,4 @@ class ConnectedUser(UserMixin) :
             for cow_id, reproduction in CowUtils.get_valid_reproduction(user_id=self.id).items()
         }
 
-        return dict(sorted(calving_dates.items(), key=lambda item: item[1])) # type: ignore
+        return dict(sorted(calving_dates.items(), key=lambda item: item[1]))

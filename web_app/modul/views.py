@@ -4,20 +4,19 @@ import pandas as pd
 from datetime import datetime
 from flask import (
     Blueprint,
-    flash,
     jsonify,
     redirect,
     render_template,
     request,
     url_for,
 )
-from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
+from flask_login import login_required, current_user, AnonymousUserMixin  # type: ignore
 from io import BytesIO
 
 from ..connected_user import ConnectedUser
 
 from ..fonction import *
-from ..models import CowUtils, UserUtils, Users
+from ..models import CowUtils
 
 views = Blueprint('views', __name__)
 
@@ -26,17 +25,19 @@ views = Blueprint('views', __name__)
 # TODO gestion de la reintroduction d'une vache
 
 
-current_user : ConnectedUser
+current_user: ConnectedUser
+
 
 @views.before_request
 def check_authentication():
     if current_user.is_anonymous:
         return redirect(url_for('auth.logout'))
 
+
 @login_required
-@views.route("/", methods=["GET","POST"])
+@views.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html",dry_time=current_user.user_utils_client.setting["dry_time"], 
+    return render_template("index.html", dry_time=current_user.user_utils_client.setting["dry_time"],
                            calving_preparation_time=current_user.user_utils_client.setting["calving_preparation_time"])
 
 
@@ -49,13 +50,13 @@ def reproduction():
 @login_required
 @views.route("/pharmacie", methods=["GET"])
 def pharmacie():
-    return render_template("pharmacie.html", pharma_list = current_user.user_utils_client.medic_list)
+    return render_template("pharmacie.html", pharma_list=current_user.user_utils_client.medic_list)
 
 
 @login_required
 @views.route("/cow_liste", methods=["GET"])
 def cow_liste():
-    #TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
+    # TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
     return render_template("cow_liste.html", cows=CowUtils.get_all_cows(current_user.id))
 
 
@@ -67,11 +68,12 @@ def user_setting():
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
 
-        UserUtils.set_user_setting(
-            user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time) # type: ignore
+        current_user.user_utils_client.set_user_setting(
+            dry_time=int(dry_time), calving_preparation=int(calving_preparation_time)
         )
 
-        CowUtils.reload_all_reproduction(user_id=current_user.id) # type: ignore
+        CowUtils.reload_all_reproduction(
+            user_id=current_user.id)  # type: ignore
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -81,6 +83,8 @@ def user_setting():
 
 # TODO securiser import de fichier.
 # sur import de fichier verifier que c'est bien des entier et pas du BASH !!!
+
+
 @login_required
 @views.route("/upload_cow/", methods=["POST"])
 def upload_cows():
@@ -99,12 +103,13 @@ def upload_cows():
         added, skipped = 0, 0
         for cow_id in cow_ids:
             try:
-                CowUtils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True) # type: ignore
+                CowUtils.add_cow(user_id=user_id, cow_id=int(
+                    cow_id), init_as_cow=True)  # type: ignore
                 added += 1
             except ValueError:
                 skipped += 1
 
-        return jsonify({"success": True,"message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
+        return jsonify({"success": True, "message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
@@ -127,13 +132,14 @@ def upload_calfs():
         added, skipped = 0, 0
         for calf_id in calf_ids:
             try:
-                CowUtils.add_calf(user_id=user_id, calf_id=int(calf_id)) # type: ignore
+                CowUtils.add_calf(user_id=user_id, calf_id=int(
+                    calf_id))  # type: ignore
                 added += 1
             except ValueError:
                 skipped += 1
 
-        #TODO message a madofier
-        return jsonify({"success": True,"message": f"{added} veaux(s) ajoutée(s), {skipped} déjà existante(s)."})
+        # TODO message a madofier
+        return jsonify({"success": True, "message": f"{added} veaux(s) ajoutée(s), {skipped} déjà existante(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
 
@@ -147,7 +153,7 @@ def init_stock():
 
     try:
         user_id = current_user.id
-        year = datetime.now().year -1
+        year = datetime.now().year - 1
         remaining_stock: dict[str, int] = {}
 
         # Lire le fichier Excel directement en mémoire
@@ -163,17 +169,18 @@ def init_stock():
         units = df.iloc[0:, 2].to_list()
         print(units)
 
-
         added, skipped = 0, 0
-        for medic,qt_medic,unit in zip(medics,qt_medics,units):
+        for medic, qt_medic, unit in zip(medics, qt_medics, units):
             try:
                 remaining_stock[medic] = int(qt_medic)
-                UserUtils.add_medic_in_pharma_list(user_id=user_id, medic=medic, mesur=unit) # type: ignore
+                current_user.user_utils_client.add_medic_in_pharma_list(
+                    medic=medic, mesur=unit)
                 added += 1
             except ValueError:
                 skipped += 1
-        PharmacieUtils.upload_pharmacie_year(user_id=user_id, year=year, remaining_stock=remaining_stock) # type: ignore
+        current_user.pharmacie_utils_client.upload_pharmacie_year(
+            year=year, remaining_stock=remaining_stock)
 
-        return jsonify({"success": True,"message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
+        return jsonify({"success": True, "message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
