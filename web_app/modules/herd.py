@@ -32,9 +32,9 @@ def list():
     return [cow.to_json() for cow in cows]
 
 @login_required
-@herd.route("/herd/list/filter", methods=["POST"])
+@herd.route("/herd/list/filter", methods=["GET"])
 def list_filter():
-    idsearch = str(request.form["id_filter"])
+    idsearch = str(request.args.get("id_filter"))
 
     cows = filter(lambda cow: idsearch in str(cow.cow_id),
             CowUtils.get_all_cows(current_user.id))

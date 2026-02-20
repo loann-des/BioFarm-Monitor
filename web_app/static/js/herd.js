@@ -117,15 +117,12 @@ async function updateHerdFiltered(e) {
     return;
   }
 
-  const action = "/herd/list/filter";
-  const method = "POST";
-  var data = new FormData();
-  data.append("id_filter", filterId);
+  const action = "/herd/list/filter?";
 
-  const response = await fetch(action, {
-    method: method,
-    body: data
-  });
+  const response = await fetch(action + new URLSearchParams({
+    id_filter: filterId
+  })
+  );
 
   const contentType = response.headers.get("Content-Type");
 
