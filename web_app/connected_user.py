@@ -39,7 +39,7 @@ class Command(TypedDict):
 class ConnectedUser(UserMixin) :
     id : int
     """Identifiant unique de l'utilisateur"""
-    user_utils_client = UserUtilsClient
+    user_utils_client : UserUtilsClient
     cmd_history : list[Command] = []
     # cows : Cows  #TODO interface a iplementer plus tard pour L'api 
     
@@ -48,6 +48,7 @@ class ConnectedUser(UserMixin) :
     
     def __init__(self, user_id:int) :
         self.user_utils_client = UserUtilsClient(user_id=user_id, connected_user=self)
+        self.id = user_id
         
         
     def get_id(self) :

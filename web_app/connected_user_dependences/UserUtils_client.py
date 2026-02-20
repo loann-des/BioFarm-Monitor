@@ -2,6 +2,7 @@ from typing import TypedDict, TYPE_CHECKING
 
 from ..models import UserUtils, Users
     
+import web_app.connected_user as Connected_user
 class Setting(TypedDict):
     """Stocke des réglages utilisateur, en l'occurrence les durées de
     tarissement et de préparation au vêlage.
@@ -14,8 +15,10 @@ class Setting(TypedDict):
     calving_preparation_time: int  # Temps de prepa vellage (en jour)
 
 class UserUtilsClient:
-    if TYPE_CHECKING:
-        from ..connected_user import ConnectedUser
+    
+    # if TYPE_CHECKING:
+    #     from ..connected_user import ConnectedUser
+        
     id : int
     """Identifiant unique de l'utilisateur"""
     setting : Setting
@@ -24,7 +27,7 @@ class UserUtilsClient:
     """TODO doc"""
     medic_list : dict[str, str]
     """Un dictionaitre de medicament : type de mesure ( ex : doliprane : ml)"""
-    connected_user = None
+    connected_user= None # : Connected_user.ConnectedUser
     """L'utilisateur connecté associé à ce client utils"""
     
     def __init__(self, user_id: int, connected_user) -> None:
