@@ -15,6 +15,8 @@ from .models import (
     Prescription,
     PrescriptionUtils,
 )
+from datetime import date
+from sqlalchemy import Date
 
 
 def to_json(obj: object) -> str:
@@ -84,7 +86,7 @@ class ConnectedUser(UserMixin):
             * int: le nombre de traitements administrés dans les 365 derniers jours
         """
         cares: list[Traitement] = CowUtils.get_care_by_id(
-            user_id=self.id, cow_id=cow_id)  # type: ignore
+            user_id=self.id, cow_id=cow_id) or []
         return sum(
             day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
         )  # sum boolean if True 1 else 0
@@ -321,22 +323,22 @@ class ConnectedUser(UserMixin):
         writer.writerow(row)
 
         # === AJOUT : lignes des prescriptions par date ===
-        # Construire dict : date_str -> med -> qty
-        prescriptions_per_date = {
-            pres.date.strftime("%d %b %Y"): pres.care  # type: ignore
-            for pres in PrescriptionUtils.get_year_prescription(user_id=self.id, year=year)
+        # Construire dict : date -> med -> qty
+        prescriptions_per_date : dict[date, dict[str, int]] = {
+            prescription.date : prescription.care
+            for prescription in PrescriptionUtils.get_year_prescription(user_id=self.id, year=year)
         }
 
         # Trier les dates
         sorted_dates = sorted(
-            prescriptions_per_date.keys(), key=lambda d: datetime.strptime(d, "%d %b %Y")
+            prescriptions_per_date.keys(), key=lambda d: d
         )
 
         # Écrire en CSV avec "prescription DATE" dans la première colonne pour bien identifier
-        for date_str in sorted_dates:
-            row = [date_str]
-            row.extend(prescriptions_per_date[date_str].get(
-                med, 0) for med in all_meds)
+        date_row : date 
+        for date_row in sorted_dates:
+            row = [date_to_str(date_row)] 
+            row.extend(str(prescriptions_per_date[date_row].get(med, 0)) for med in all_meds) #TODO Verif le get
             writer.writerow(row)
 
         # === FIN AJOUT ===
@@ -413,17 +415,17 @@ class ConnectedUser(UserMixin):
             dict[int, date]: A dictionary mapping cow IDs to their dry dates, sorted by date.
         """
         try:
-            dry_dates = {
-                cow_id: reproduction["dry"]
+            dry_dates : dict[int, date] = {
+                cow_id: parse_date(reproduction["dry"])
                 for cow_id, reproduction in CowUtils.get_valid_reproduction(user_id=self.id).items()
-                if not reproduction.get("dry_status", False)
+                if not reproduction["dry_status"] and reproduction["dry"] is not None
             }
         except Exception as e:
             lg.error(
                 f"Erreur lors de récupération des dates de tarisement : {e}")
             dry_dates = {}
 
-        return dict(sorted(dry_dates.items(), key=lambda item: item[1]))
+        return dict(sorted(dry_dates.items(), key=lambda item : item[1]))
 
     def get_all_calving_preparation_date(self) -> dict[int, date]:
         """Retrieves and sorts the calving preparation dates for all cows with valid reproduction records.
@@ -434,10 +436,10 @@ class ConnectedUser(UserMixin):
             dict[int, date]: A dictionary mapping cow IDs to their calving preparation dates, sorted by date.
         """
 
-        calving_preparation_dates = {
-            cow_id: reproduction["calving_preparation"]
+        calving_preparation_dates : dict[int, date] = {
+            cow_id: parse_date(reproduction["calving_preparation"])
             for cow_id, reproduction in CowUtils.get_valid_reproduction(user_id=self.id).items()
-            if not reproduction["calving_preparation_status"]
+            if not reproduction["calving_preparation_status"] and reproduction["calving_preparation"] is not None
         }
 
         return dict(sorted(calving_preparation_dates.items(), key=lambda item: item[1]))
@@ -451,9 +453,10 @@ class ConnectedUser(UserMixin):
             dict[int, date]: A dictionary mapping cow IDs to their calving dates, sorted by date.
         """
 
-        calving_dates = {
-            cow_id: reproduction["calving_date"]
+        calving_dates : dict[int, date] = {
+            cow_id: parse_date(reproduction["calving_date"])
             for cow_id, reproduction in CowUtils.get_valid_reproduction(user_id=self.id).items()
+            if reproduction["calving_date"] is not None
         }
 
         return dict(sorted(calving_dates.items(), key=lambda item: item[1]))

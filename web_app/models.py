@@ -212,6 +212,7 @@ class Prescription(db.Model):
     """Représente un traitement dans la base de données. Sont inclus la date de
     prescription, le contenu du traitement, et la date limite de consommation.
     """
+    from datetime import date as dateType
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     """Identifiant du traitement."""
@@ -219,7 +220,7 @@ class Prescription(db.Model):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
                                          nullable=False)
 
-    date: Mapped[Date] = mapped_column(Date, nullable=False)
+    date: Mapped[dateType] = mapped_column(Date, nullable=False)
     """Date de la prescription."""
 
     # Traitement stocké au format JSON en base
@@ -235,7 +236,7 @@ class Prescription(db.Model):
 
     def __init__(self,
                  user_id: int,
-                 date: DATE,
+                 date: dateType,
                  care: dict[str, int],
                  dlc_left: bool
                  ):
