@@ -1,6 +1,15 @@
+from collections import Counter
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from ..models import Pharmacie, PharmacieUtils
+
+class PharmacieClientAttr(Enum):
+    total_enter = "total_enter"
+    total_used = "total_used"
+    total_used_calf = "total_used_calf"
+    total_out_dlc = "total_out_dlc"
+    
 
 
 class PharmacieClient:
@@ -271,3 +280,51 @@ class PharmacieUtilsClient:
             year=year,
             remaining_stock=remaining_stock
         )
+
+    def modify_pharmacie_year(self, year: int, attr: PharmacieClientAttr, stock: dict[str, int]) -> None:
+        """Modifie une entrée de pharmacie pour une année spécifique, en
+        mettant à jour un attribut spécifique avec les données fournies.
+
+        Cette fonction met à jour l'attribut de l'entrée de pharmacie
+        correspondant à l'année fournie en argument, avec les données fournies
+        en argument. Et met à jour les attributs "total_out" et "remaining_stock" en conséquence.
+        commit les changements dans la base de données.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année de l'entrée de pharmacie à modifier
+            * attr (str): Attribut de l'entrée de pharmacie à modifier, parmi
+            "total_enter", "total_used", "total_used_calf", "total_out_dlc"
+        """
+        pharmacie = self.get_pharmacie_year(year)
+
+        setattr(pharmacie, attr.value, dict(Counter(getattr(pharmacie, attr.value)) + Counter(stock)))
+        
+        if attr == PharmacieClientAttr.total_used or attr == PharmacieClientAttr.total_used_calf or attr == PharmacieClientAttr.total_out_dlc:
+            setattr(pharmacie, "total_out", dict(Counter(getattr(pharmacie, "total_out")) + Counter(stock))) # on set le total out
+            if attr == PharmacieClientAttr.total_used_calf:
+                setattr(pharmacie, "total_used", dict(Counter(getattr(pharmacie, "total_used")) + Counter(stock))) # on set le total used egalement si c'est du used calf
+            setattr(pharmacie, "remaining_stock", dict(Counter(getattr(pharmacie, "remaining_stock")) - Counter(stock))) # on retire du stock restant si c'est du used ou du out dlc
+        if attr == PharmacieClientAttr.total_enter:
+            setattr(pharmacie, "remaining_stock", dict(Counter(getattr(pharmacie, "remaining_stock")) + Counter(stock))) # on ajoute au stock restant si c'est du total enter
+            
+        PharmacieUtilsClient.updateOrDefault_pharmacie_year(
+            self,
+            year=year,
+            default=pharmacie
+        )
+        
+    def verify_pharmacie_out(self, year: int, stock: dict[str, int]) -> bool:
+        """Vérifie si les quantités de médicaments à retirer de la pharmacie pour une année spécifique sont disponibles en stock.
+
+        Cette fonction vérifie que les quantités de médicaments à retirer de la pharmacie pour l'année fournie en argument sont disponibles en stock
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année de l'entrée de pharmacie à vérifier
+            * stock (dict[str, int]): Dictionnaire associant les noms et quantités de traitements à retirer de la pharmacie
+        """
+        remaining_stock_year = self.get_pharmacie_year(year).remaining_stock
+        remaining_stock_after_op = dict(Counter(remaining_stock_year) - Counter(stock))
+        return all(quantity >= 0 for quantity in remaining_stock_after_op.values())
+        
+        
