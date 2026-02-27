@@ -4,6 +4,7 @@ from flask_login import UserMixin
 
 from web_app.connected_user_dependences.PharmacieUtils_client import PharmacieClient, PharmacieUtilsClient
 from web_app.connected_user_dependences.UserUtils_client import UserUtilsClient
+from web_app.connected_user_dependences.PrescriptionUtils_client import PrescriptionClient, PrescriptionUtilsClient
 
 from .fonction import *
 from .models import (
@@ -12,8 +13,6 @@ from .models import (
     Traitement,
     Cow,
     CowUtils,
-    Prescription,
-    PrescriptionUtils,
 )
 from datetime import date
 from sqlalchemy import Date
@@ -58,6 +57,8 @@ class ConnectedUser(UserMixin):
     """Classe utilitaire pour gérer les interactions avec les utilisateurs"""
     pharmacie_utils_client: "PharmacieUtilsClient"
     """Classe utilitaire pour gérer les interactions avec la pharmacie"""
+    prescription_utils_client: "PrescriptionUtilsClient"
+    """Classe utilitaire pour gérer les interactions avec les prescriptions"""
 
     cmd_history: list[Command] = []
     # cows : Cows  #TODO interface a iplementer plus tard pour L'api
@@ -113,12 +114,13 @@ class ConnectedUser(UserMixin):
             dict[str, int]: A dictionary mapping medication names to their total prescribed quantities for the year.
         """
 
-        res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
-        prescription: Prescription
-        for prescription in PrescriptionUtils.get_year_prescription(user_id=self.id, year=year):
-            for medic, quantity in prescription.care.items():
-                res[medic] += quantity
-        return res
+        # res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
+        # prescription: PrescriptionClient
+        # for prescription in self.prescription_utils_client.get_year_prescription(year=year):
+        #     for medic, quantity in prescription.care.items():
+        #         res[medic] += quantity
+        # return res
+        return self.pharmacie_utils_client.get_pharmacie_year(year=year).total_enter
 
     def sum_pharmacie_used(self, year: int) -> dict[str, int]:
         """Sums the quantities of each medication actually used (administered to cows) in a given year.
@@ -131,12 +133,13 @@ class ConnectedUser(UserMixin):
         Returns:
             dict[str, int]: A dictionary mapping medication names to their total used quantities for the year.
         """
-        res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
-        cow_care: Traitement
-        for cow_care in CowUtils.get_care_on_year(user_id=self.id, year=year):
-            for medic, quantity in cow_care["medicaments"].items():
-                res[medic] += quantity
-        return res
+        # res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
+        # cow_care: Traitement
+        # for cow_care in CowUtils.get_care_on_year(user_id=self.id, year=year):
+        #     for medic, quantity in cow_care["medicaments"].items():
+        #         res[medic] += quantity
+        # return res
+        return self.pharmacie_utils_client.get_pharmacie_year(year=year).total_used
 
     def sum_calf_used(self, year: int) -> dict[str, int]:
         """Sums the quantities of each medication used for calves in a given year.
@@ -149,13 +152,14 @@ class ConnectedUser(UserMixin):
         Returns:
             dict[str, int]: A dictionary mapping medication names to their total used quantities for calves in the year.
         """
-        res = {str(x): 0 for x in self.user_utils_client.medic_list}
-        cow_care: Traitement
-        for cow_care in CowUtils.get_calf_care_on_year(user_id=self.id, year=year):
-            lg.info(cow_care)
-            for medic, quantity in cow_care["medicaments"].items():
-                res[medic] += quantity
-        return res
+        # res = {str(x): 0 for x in self.user_utils_client.medic_list}
+        # cow_care: Traitement
+        # for cow_care in CowUtils.get_calf_care_on_year(user_id=self.id, year=year):
+        #     lg.info(cow_care)
+        #     for medic, quantity in cow_care["medicaments"].items():
+        #         res[medic] += quantity
+        # return res
+        return self.pharmacie_utils_client.get_pharmacie_year(year=year).total_used_calf
 
     def sum_dlc_left(self, year: int) -> dict[str, int]:
         """Sums the quantities of each medication removed due to expired shelf life (DLC) in a given year.
@@ -168,12 +172,13 @@ class ConnectedUser(UserMixin):
         Returns:
             dict[str, int]: A dictionary mapping medication names to their total quantities removed due to expired DLC for the year.
         """
-        res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
-        cow_care: Prescription
-        for cow_care in PrescriptionUtils.get_dlc_left_on_year(user_id=self.id, year=year):
-            for medic, quantity in cow_care.care.items():
-                res[medic] += quantity
-        return res
+        # res = {f"{x}": 0 for x in self.user_utils_client.medic_list}
+        # cow_care: PrescriptionClient
+        # for cow_care in self.prescription_utils_client.get_dlc_left_on_year(year=year):
+        #     for medic, quantity in cow_care.care.items():
+        #         res[medic] += quantity
+        # return res
+        return self.pharmacie_utils_client.get_pharmacie_year(year=year).total_out_dlc
 
     def sum_pharmacie_left(self, year: int) -> dict[str, int]:
         """Sums all medications taken out of the pharmacy cabinet in a given year.
@@ -187,8 +192,9 @@ class ConnectedUser(UserMixin):
             dict[str, int]: A dictionary mapping medication names to their total quantities taken out of the pharmacy for the year.
         """
 
-        return dict(Counter(self.sum_pharmacie_used(year=year))
-                    + Counter(self.sum_dlc_left(year=year)))
+        # return dict(Counter(self.sum_pharmacie_used(year=year))
+        #             + Counter(self.sum_dlc_left(year=year)))
+        return self.pharmacie_utils_client.get_pharmacie_year(year=year).total_out
 
     def remaining_pharmacie_stock(self, year: int) -> dict[str, int]:
         """Calculates the remaining stock of each medication in the pharmacy for a given year.
@@ -201,11 +207,12 @@ class ConnectedUser(UserMixin):
         Returns:
             dict[str, int]: A dictionary mapping medication names to their remaining quantities for the year.
         """
-        return dict(
-            Counter(self.sum_pharmacie_in(year=year))
-            + Counter(self.pharmacie_utils_client.get_pharmacie_year(year=year - 1).remaining_stock)
-            - Counter(self.sum_pharmacie_left(year=year))
-        )
+        # return dict(
+        #     Counter(self.sum_pharmacie_in(year=year))
+        #     + Counter(self.pharmacie_utils_client.get_pharmacie_year(year=year - 1).remaining_stock)
+        #     - Counter(self.sum_pharmacie_left(year=year))
+        # )
+        return self.pharmacie_utils_client.get_pharmacie_year(year=year).remaining_stock
 
     def get_history_pharmacie(self) -> list[Pharma_list_event]:
         # TODO Type de retour modifier : list[tuple[date, dict[str:int], str]] -> list[Pharma_list_event]
@@ -221,8 +228,7 @@ class ConnectedUser(UserMixin):
         # Récupère les données
         cares_raw: list[Traitement_signe] = CowUtils.get_all_care(
             user_id=self.id) or []
-        prescriptions_raw: list[Prescription_export_format] = PrescriptionUtils.get_all_prescriptions_cares(
-            user_id=self.id) or []
+        prescriptions_raw: list[Prescription_export_format] = self.prescription_utils_client.get_all_prescriptions_cares() or []
 
         care_data: list[Pharma_list_event] = [
             Pharma_list_event(date=care_raw["traitement"]["date_traitement"],
@@ -244,7 +250,7 @@ class ConnectedUser(UserMixin):
 
         return full_history
 
-    def update_pharmacie_year(self, year: int) -> "PharmacieClient":
+    def update_pharmacie_year(self, year: int) -> "PharmacieClient": #TODO Methode obsolete a supprimer plus tard
         """Updates or creates the pharmacy record for a given year with all relevant medication statistics.
 
         This function calculates and aggregates medication entries, usages, removals, and remaining stock for the specified year, then updates or creates the corresponding pharmacy record.
@@ -326,7 +332,7 @@ class ConnectedUser(UserMixin):
         # Construire dict : date -> med -> qty
         prescriptions_per_date : dict[date, dict[str, int]] = {
             prescription.date : prescription.care
-            for prescription in PrescriptionUtils.get_year_prescription(user_id=self.id, year=year)
+            for prescription in self.prescription_utils_client.get_year_prescription(year=year)
         }
 
         # Trier les dates

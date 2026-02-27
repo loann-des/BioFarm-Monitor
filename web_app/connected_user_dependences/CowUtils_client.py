@@ -1,6 +1,6 @@
 import logging as lg
 
-from typing import TypedDict, TYPE_CHECKING
+from typing import Any, TypedDict, TYPE_CHECKING
 
 from ..models import Cow, CowUtils, UserUtils, Users, Traitement, Note, Reproduction
 
@@ -48,15 +48,22 @@ class Cow_Client:
     
     def __init__(self,
                 cow_id : int,
-                cow_cares: list[Traitement],
-                info: list[Note],
-                in_farm: bool,
-                born_date: date | None,
-                reproduction: list[Reproduction],
-                is_calf: bool,
-                init_as_cow: bool
+                cow_cares: list[Traitement] = [],
+                info: list[Note] = [],
+                in_farm: bool = True,
+                born_date: date | None = None,
+                reproduction: list[Reproduction] = [],
+                is_calf: bool = False,
+                init_as_cow: bool = True
                  ) -> None:
-        pass
+        self.cow_id = cow_id
+        self.cow_cares = cow_cares
+        self.info = info
+        self.in_farm = in_farm
+        self.born_date = born_date
+        self.reproduction = reproduction
+        self.is_calf = is_calf
+        self.init_as_cow = init_as_cow
 
 
 class CowUtilsClient:
@@ -66,6 +73,10 @@ class CowUtilsClient:
     l'historique des traitements, et des données de reproduction.
     """
     cow_list: list[Cow_Client]
+    """Cache local de l'ensemble des vaches d'un utilisateur pour limiter les accès à la base de données."""
+    
+    connected_user: "ConnectedUser.ConnectedUser"
+    """connected_user est une référence à l'utilisateur connecté, utilisée pour accéder à son identifiant"""
 
     def __init__(self,
                  connected_user: ConnectedUser.ConnectedUser
@@ -86,7 +97,7 @@ class CowUtilsClient:
 
     # general cow functions ------------------------------------------------
 
-    def get_cow(self, cow_id: int) -> Cow_Client:
+    def get_cow(self, cow_id: int) -> Cow_Client | None:
         """Recherche une vache dans la base de données et renvoie un objet Cow
         si la vache a été trouvée.
 
@@ -104,7 +115,7 @@ class CowUtilsClient:
         for cow in self.cow_list:
             if cow.cow_id == cow_id:
                 return cow
-        raise ValueError(f"{cow_id} doesn't exist")
+        return None
 
 
     def get_all_cows(self) -> list[Cow_Client]:
@@ -135,21 +146,29 @@ class CowUtilsClient:
             * cow_id (int): Identifiant de la vache à ajouter
             * born_date (date|None): Date de naissance
         """
-        
-        if not Cow.query.get({"self": self, "cow_id": cow_id}):
-            new_cow = Cow(
-                self=self,
-                cow_id=cow_id,
-                born_date=born_date,
-                init_as_cow=init_as_cow
-            )
-            db.session.add(new_cow)
-            db.session.commit()
-            lg.info(f"(user :{self}, cow: {cow_id}) : upload in database")
-        else:
-            lg.error(f"(user :{self}, cow: {cow_id}) : already in database")
+        if self.get_cow(cow_id) is not None:
+            lg.warning(f"(user :{self}, cow: {cow_id}) : already in database")
             raise ValueError(
                 f"(user :{self}, cow: {cow_id}) : already in database")
+
+        new_cow = Cow_Client(
+            cow_id=cow_id,
+            born_date=born_date,
+            init_as_cow=init_as_cow
+        )
+        if (
+            CowUtils.add_cow(
+                user_id=self.connected_user.id,
+                cow_id=cow_id,
+                born_date=born_date,
+                init_as_cow=init_as_cow,
+            ) ##TODO remplaser au passage a l'api
+            or True #TODO retirer le or True pour activer la vérification du succès de l'ajout dans la base de données
+        ):
+            self.cow_list.append(new_cow)
+            lg.info(f"(user :{self}, cow: {cow_id}) : upload in database")
+        else:
+            lg.warning(f"(user :{self}, cow: {cow_id}) : upload failed")
 
     
     def update_cow(self, cow_id: int, **kwargs: dict[str, Any]) -> None:
@@ -163,15 +182,29 @@ class CowUtilsClient:
             * **kwargs (dict[str, Any]): Les attributs à modifier (e.g. in_farm,
             born_date, etc.)
         """
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        #TODO Gere les maintin de stock des medicament si modification de traitement
+        cow: Cow_Client | None = self.get_cow(cow_id)
+        
+        if cow is None:
+            lg.error(f"(user: {self}, cow: {cow_id}, fonction: update_cow): not in local list")
+            raise ValueError(
+                f"(user :{self}, cow: {cow_id}) : doesn't exist in local list")
+            
+
+        
+        if CowUtils.update_cow(
+            user_id=self.connected_user.id,
+            cow_id=cow_id,
+            **kwargs
+        )or True :#TODO remplaser au passage a l'api
             for key, value in kwargs.items():
                 setattr(cow, key, value)
-            db.session.commit()
             lg.info(f"(user :{self}, cow: {cow_id}) : updated in database")
+        
         else:
-            lg.error(f"(user :{self}, cow: {cow_id}) : not in database")
+            lg.error(f"(user: {self}, cow: {cow_id}, fonction: update_cow): update_cow failed")
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : doesn't exist in database")
+                f"(user :{self}, cow: {cow_id}) : update_cow failed")
 
     
     def suppress_cow(self, cow_id: int) -> None:
@@ -185,14 +218,21 @@ class CowUtilsClient:
             * self (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
         """
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
-            db.session.delete(cow)
-            db.session.commit()
-            lg.info(f"(user :{self}, cow: {cow_id}) : delete in database")
-        else:
-            lg.error(f"(user :{self}, cow: {cow_id}) : not in database")
+        cow: Cow_Client | None = self.get_cow(cow_id)
+        
+        if cow is None:
+            lg.error(f"(user: {self}, cow: {cow_id}, fonction: suppress_cow): not in local list")
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : doesn't exist in database")
+                f"(user :{self}, cow: {cow_id}) : doesn't exist in local list")
+
+        if CowUtils.suppress_cow(user_id=self.connected_user.id, cow_id=cow_id) or True: #TODO remplaser au passage a l'api
+             self.cow_list.remove(cow)
+             lg.info(f"(user :{self}, cow: {cow_id}) : delete in database")
+             
+        else:
+            lg.error(f"(user: {self}, cow: {cow_id}, fonction: suppress_cow): delete failed")
+            raise ValueError(
+                f"(user :{self}, cow: {cow_id}) : delete failed")
 
     
     def remove_cow(self, cow_id: int) -> None:
