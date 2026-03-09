@@ -12,7 +12,7 @@ from datetime import datetime
 from random import randint, sample
 from web_app import app
 from web_app.fonction import my_strftime
-from web_app.models import Cow, CowUtils, init_db
+from tmp.models import Cow, CowUtils, init_db
 
 
 class CowUtilsUnitTests(unittest.TestCase):

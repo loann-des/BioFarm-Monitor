@@ -5,13 +5,13 @@ from datetime import datetime
 from flask import Blueprint, jsonify, redirect, request, url_for
 from flask_login import login_required, current_user  # type: ignore
 
-from web_app.models import CowUtils
-from ..connected_user import ConnectedUser
+from tmp.models import CowUtils
+from ..models.user import Users
 
 
 repro = Blueprint('repro', __name__)
 
-current_user : ConnectedUser
+current_user : Users
 
 # Reproduction form
 @repro.before_request

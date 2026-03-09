@@ -11,12 +11,14 @@ from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-from ..models import CowUtils, Users, db
+from ..models.cow import CowUtils
+from ..models.user import Users
+from .. import db
 import logging as lg
 from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
 from datetime import datetime
 
-from ..connected_user import ConnectedUser
+# from ..connected_user import ConnectedUser
 
 
 
@@ -26,7 +28,7 @@ from ..connected_user import ConnectedUser
 
 cow_liste = Blueprint('cow_liste', __name__)
 
-current_user : ConnectedUser
+current_user : Users
 
 @cow_liste.before_request
 def check_authentication():

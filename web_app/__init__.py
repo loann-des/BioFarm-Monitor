@@ -21,11 +21,11 @@ def create_app():
     login_manager.init_app(app)
 
     # User loader function for Flask-Login
-    from .connected_user import ConnectedUser
+    from .models.user import Users
 
     @login_manager.user_loader
     def load_user(user_id:int):
-        return ConnectedUser(user_id=user_id)
+        return Users.query.get(user_id)
 
 
     @app.before_request
@@ -54,7 +54,7 @@ def create_app():
 
     # Jinja2 global functions
     from .fonction import format_bool_fr, date_to_str
-    from .models import CowUtils
+    from .models.cow import CowUtils
     app.jinja_env.globals.update(enumerate=enumerate)
     app.jinja_env.globals.update(get_all_cows=CowUtils.get_all_cows)
     app.jinja_env.globals.update(date_to_str=date_to_str)
@@ -68,5 +68,6 @@ app = create_app()
 
 @app.cli.command("init_db")
 def init_db():
-    from .models import init_db
+    from ..tmp.models import init_db
     init_db()
+

@@ -16,5 +16,6 @@
 - [ ] Protection sur consitence des donnée : ex medic utiliser > au sock, date dans le futur...
 
 - [ ] Version API
+- [ ] utiliser mashmallow pour conversion obj py en json pour les com de l'api
 
 - [ ] Interface client mobile/Desktop

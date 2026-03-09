@@ -1,61 +1,89 @@
+# Standard
 import logging as lg
 
-from typing import Any, TypedDict, TYPE_CHECKING
-
-from ..models import Cow, CowUtils, UserUtils, Users, Traitement, Note, Reproduction
-
 from datetime import date
+from sqlalchemy import (
+    Boolean,
+    Date,
+    ForeignKey,
+    Integer,
+    PrimaryKeyConstraint,
+    JSON
+    )
+from sqlalchemy.ext.mutable import MutableList
+from sqlalchemy.orm import Mapped, mapped_column
+from typing import Any
+from type_dict import Note, Reproduction, Traitement, Traitement_signe
 
-import web_app.connected_user as ConnectedUser
+from web_app.models.user import UserUtils, Users
 
+from .. import db
 
-class Traitement_signe(TypedDict):
-    """
-    Represente un traitement administré à une vache signé par son identifiant.
+class Cow(db.Model):
+    """Représente une vache dans la base de données, incluant ses traitements,
+    des notes générales, son statut, sa date de naissance et son historique de
+    reproduction."""
 
-    :var cow_id: int, Identifiant de la vache
-    :var traitement: Traitement, Traitement administré à la vache
-    """
-    cow_id: int  # date au format 'YYYY-MM-DD'
-    traitement: Traitement
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
+                                         nullable=False)
+    cow_id: Mapped[int] = mapped_column(
+        Integer, nullable=False)  # numero Vache
 
-
-
-class Cow_Client:
-    cow_id: int
-
-    cow_cares: list[Traitement]
+    cow_cares: Mapped[list[Traitement]] = mapped_column(
+        MutableList.as_mutable(JSON),
+        default=list,
+        nullable=False)
     """Liste de Traitement. Forme un dict {date_traitement: str,
     medicaments: dict[str, int], annotation: str)."""
 
-    info: list[Note]
+    info: Mapped[list[Note]] = mapped_column(MutableList.as_mutable(JSON),
+                                             default=list, nullable=False)  # TODO modif doc sur Type
     """Notes générales. Forme une liste de tuples (date, contenu)."""
 
-    in_farm: bool
-    """True si la vache se trouve dans la ferme, False si elle en est sortie."""
+    in_farm: Mapped[bool] = mapped_column(Boolean)
+    """True si la vache se trouve dans la ferme, False si elle en est sortie."""  # TODO modif doc sur Type
 
-    born_date: date | None
+    born_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     """Date de naissance de la vache."""
 
-    reproduction: list[Reproduction]
+    reproduction: Mapped[list[Reproduction]] = mapped_column(MutableList.as_mutable(JSON),
+                                                             default=list, nullable=False)  # TODO modif doc sur Type
     """Liste des reproductions de la vache."""
 
-    is_calf: bool
+    is_calf: Mapped[bool] = mapped_column(Boolean, default=False,
+                                          nullable=False)
     """True si la vache est une génisse, False sinon."""
 
-    init_as_cow: bool
-    """True si la vache est comme vache adulte, False sinon."""
-    
-    def __init__(self,
-                cow_id : int,
-                cow_cares: list[Traitement] = [],
-                info: list[Note] = [],
-                in_farm: bool = True,
-                born_date: date | None = None,
-                reproduction: list[Reproduction] = [],
-                is_calf: bool = False,
-                init_as_cow: bool = True
-                 ) -> None:
+    init_as_cow: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False)
+    """True si la vache est comme vache adult, False sinon."""
+
+    __table_args__: tuple[PrimaryKeyConstraint, dict[str, Any]] = (
+        PrimaryKeyConstraint(
+            user_id,
+            cow_id),
+        {})
+
+    def __init__(
+        self,
+        user_id: int,
+        cow_id: int,
+        cow_cares: list[Traitement] | None = None,
+        info: list[Note] | None = None,
+        in_farm: bool = True,
+        born_date: date | None = None,
+        reproduction: list[Reproduction] | None = None,
+        is_calf: bool = False,
+        init_as_cow: bool = False
+    ):
+        if cow_cares is None:
+            cow_cares = []
+        if info is None:
+            info = []
+        if reproduction is None:
+            reproduction = []
+
+        self.user_id = user_id
         self.cow_id = cow_id
         self.cow_cares = cow_cares
         self.info = info
@@ -66,38 +94,17 @@ class Cow_Client:
         self.init_as_cow = init_as_cow
 
 
-class CowUtilsClient:
+class CowUtils:
     """Cette classe est un namespace. Tous ses membres sont statiques.
 
     Ce namespace regroupe les fonctions de gestion des vaches, de
     l'historique des traitements, et des données de reproduction.
     """
-    cow_list: list[Cow_Client]
-    """Cache local de l'ensemble des vaches d'un utilisateur pour limiter les accès à la base de données."""
-    
-    connected_user: "ConnectedUser.ConnectedUser"
-    """connected_user est une référence à l'utilisateur connecté, utilisée pour accéder à son identifiant"""
-
-    def __init__(self,
-                 connected_user: ConnectedUser.ConnectedUser
-                 ) -> None:
-        cows: list[Cow] = CowUtils.get_all_cows(connected_user.id)
-        self.cow_list = [
-            Cow_Client(cow_id=cow.cow_id,
-                       cow_cares = cow.cow_cares,
-                       info = cow.info,
-                       in_farm = cow.in_farm,
-                       born_date = cow.born_date,
-                       reproduction = cow.reproduction,
-                       is_calf = cow.is_calf,
-                       init_as_cow = cow.init_as_cow)
-            for cow in cows
-
-        ]
 
     # general cow functions ------------------------------------------------
 
-    def get_cow(self, cow_id: int) -> Cow_Client | None:
+    @staticmethod
+    def get_cow(user_id: int, cow_id: int) -> Cow:
         """Recherche une vache dans la base de données et renvoie un objet Cow
         si la vache a été trouvée.
 
@@ -111,14 +118,13 @@ class CowUtilsClient:
             * ValueError si la vache recherchée n'existe pas dans la base de
             données.
         """
-        
-        for cow in self.cow_list:
-            if cow.cow_id == cow_id:
-                return cow
-        return None
 
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            return cow
+        raise ValueError(f"Cow with ID {cow_id} not found")
 
-    def get_all_cows(self) -> list[Cow_Client]:
+    @staticmethod
+    def get_all_cows(user_id: int) -> list[Cow]:
         # TODO A été modifier
         """Renvoie l'ensemble des vaches d'un utilisateur.
 
@@ -129,10 +135,10 @@ class CowUtilsClient:
             * list[Cow]: Une liste contenant l'ensemble des vaches d'un
             utilisateur
         """
-        return self.cow_list
+        return Cow.query.filter_by(user_id=user_id).all()
 
-    
-    def add_cow(self, cow_id: int, born_date: date | None = None,
+    @staticmethod
+    def add_cow(user_id: int, cow_id: int, born_date: date | None = None,
                 init_as_cow: bool = True) -> None:
         """Ajoute une nouvelle vache à la base de données si elle n'existe pas
         déjà.
@@ -142,36 +148,27 @@ class CowUtilsClient:
         journal.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache à ajouter
             * born_date (date|None): Date de naissance
         """
-        if self.get_cow(cow_id) is not None:
-            lg.warning(f"(user :{self}, cow: {cow_id}) : already in database")
-            raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : already in database")
-
-        new_cow = Cow_Client(
-            cow_id=cow_id,
-            born_date=born_date,
-            init_as_cow=init_as_cow
-        )
-        if (
-            CowUtils.add_cow(
-                user_id=self.connected_user.id,
+        if not Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            new_cow = Cow(
+                user_id=user_id,
                 cow_id=cow_id,
                 born_date=born_date,
-                init_as_cow=init_as_cow,
-            ) ##TODO remplaser au passage a l'api
-            or True #TODO retirer le or True pour activer la vérification du succès de l'ajout dans la base de données
-        ):
-            self.cow_list.append(new_cow)
-            lg.info(f"(user :{self}, cow: {cow_id}) : upload in database")
+                init_as_cow=init_as_cow
+            )
+            db.session.add(new_cow)
+            db.session.commit()
+            lg.info(f"(user :{user_id}, cow: {cow_id}) : upload in database")
         else:
-            lg.warning(f"(user :{self}, cow: {cow_id}) : upload failed")
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : already in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}) : already in database")
 
-    
-    def update_cow(self, cow_id: int, **kwargs: dict[str, Any]) -> None:
+    @staticmethod
+    def update_cow(user_id: int, cow_id: int, **kwargs: dict[str, Any]) -> None:
         """Met à jour les attributs d'une vache dans la base de données.
 
         Cette fonction recherche la vache associée à l'identifiant fourni, et
@@ -182,32 +179,18 @@ class CowUtilsClient:
             * **kwargs (dict[str, Any]): Les attributs à modifier (e.g. in_farm,
             born_date, etc.)
         """
-        #TODO Gere les maintin de stock des medicament si modification de traitement
-        cow: Cow_Client | None = self.get_cow(cow_id)
-        
-        if cow is None:
-            lg.error(f"(user: {self}, cow: {cow_id}, fonction: update_cow): not in local list")
-            raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : doesn't exist in local list")
-            
-
-        
-        if CowUtils.update_cow(
-            user_id=self.connected_user.id,
-            cow_id=cow_id,
-            **kwargs
-        )or True :#TODO remplaser au passage a l'api
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             for key, value in kwargs.items():
                 setattr(cow, key, value)
-            lg.info(f"(user :{self}, cow: {cow_id}) : updated in database")
-        
+            db.session.commit()
+            lg.info(f"(user :{user_id}, cow: {cow_id}) : updated in database")
         else:
-            lg.error(f"(user: {self}, cow: {cow_id}, fonction: update_cow): update_cow failed")
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : update_cow failed")
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
-    
-    def suppress_cow(self, cow_id: int) -> None:
+    @staticmethod
+    def suppress_cow(user_id: int, cow_id: int) -> None:
         """Retire une vache associée à un identifiant de la base de données.
 
         Cette fonction retire de la base de données la vache associée à
@@ -215,27 +198,20 @@ class CowUtilsClient:
         Si la vache n'existe pas, une erreur est marquée dans le journal.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
         """
-        cow: Cow_Client | None = self.get_cow(cow_id)
-        
-        if cow is None:
-            lg.error(f"(user: {self}, cow: {cow_id}, fonction: suppress_cow): not in local list")
-            raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : doesn't exist in local list")
-
-        if CowUtils.suppress_cow(user_id=self.connected_user.id, cow_id=cow_id) or True: #TODO remplaser au passage a l'api
-             self.cow_list.remove(cow)
-             lg.info(f"(user :{self}, cow: {cow_id}) : delete in database")
-             
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            db.session.delete(cow)
+            db.session.commit()
+            lg.info(f"(user :{user_id}, cow: {cow_id}) : delete in database")
         else:
-            lg.error(f"(user: {self}, cow: {cow_id}, fonction: suppress_cow): delete failed")
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : delete failed")
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
-    
-    def remove_cow(self, cow_id: int) -> None:
+    @staticmethod
+    def remove_cow(user_id: int, cow_id: int) -> None:
         """Enregistre la sortie d'une vache de la ferme en mettant à jour le
         statut de la vache.
 
@@ -244,24 +220,24 @@ class CowUtilsClient:
         n'existe pas, une erreur est marquée dans le journal.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache à retirer de la ferme
         """
         cow: Cow | None
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm:
                 raise ValueError(
-                    f"user :{self}, cow: {cow_id}: deja supprimé.")
+                    f"user :{user_id}, cow: {cow_id}: deja supprimé.")
             cow.in_farm = False
             db.session.commit()
-            lg.info(f"(user :{self}, cow: {cow_id}): left the farm.")
+            lg.info(f"(user :{user_id}, cow: {cow_id}): left the farm.")
         else:
-            lg.warning(f"(user :{self}, cow: {cow_id}): not found.")
+            lg.warning(f"(user :{user_id}, cow: {cow_id}): not found.")
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}): n'existe pas.")
+                f"(user :{user_id}, cow: {cow_id}): n'existe pas.")
 
-    
-    def add_calf(self, calf_id: int,
+    @staticmethod
+    def add_calf(user_id: int, calf_id: int,
                  born_date: date | None = None) -> None:
         """Ajoute un veau à la base de données s'il n'existe pas déjà.
 
@@ -270,35 +246,35 @@ class CowUtilsClient:
         le journal et une ValueError est lancée.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * calf_id (int): Identifiant du veau
             * born_date (date): Date de naissance du veau
 
         Lance:
             * ValueError s'il existe déjà un veau associé à l'identifiant fourni
         """
-        if not Cow.query.get({"self": self, "cow_id": calf_id}):
+        if not Cow.query.get({"user_id": user_id, "cow_id": calf_id}):
             new_cow = Cow(
-                self=self,
+                user_id=user_id,
                 cow_id=calf_id,
                 born_date=born_date,
                 is_calf=True
             )
             db.session.add(new_cow)
             db.session.commit()
-            lg.info(f"(user :{self}, cow: {calf_id}) : upload in database")
+            lg.info(f"(user :{user_id}, cow: {calf_id}) : upload in database")
         else:
             lg.error(
-                f"(user :{self}, cow: {calf_id}) : already in database")
+                f"(user :{user_id}, cow: {calf_id}) : already in database")
             raise ValueError(
-                f"(user :{self}, cow: {calf_id}) : already in database")
+                f"(user :{user_id}, cow: {calf_id}) : already in database")
 
     # END general cow functions ------------------------------------------------
 
     # cow care functions ------------------------------------------------
-    
+    @staticmethod
     def add_cow_care(
-        self, cow_id: int,  cow_care: Traitement
+        user_id: int, cow_id: int,  cow_care: Traitement
     ) -> tuple[int, date | None]:
         """Met à jour l'historique des traitements de la vache associée à
         l'identifiant fourni en argument.
@@ -309,7 +285,7 @@ class CowUtilsClient:
         et la fonction renvoie None.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * cow_care (Traitement): Traitement à ajouter
 
@@ -321,12 +297,12 @@ class CowUtilsClient:
         # TODO Pas plus de traitements que de qt en stock
         # Récupérer la vache depuis la BDD
         cow: Cow | None
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return CowUtils.add_care(cow, cow_care)
-        lg.error(f"(user :{self}, cow: {cow_id})  not found.")
-        raise ValueError(f"(user :{self}, cow: {cow_id})  n'existe pas.")
+        lg.error(f"(user :{user_id}, cow: {cow_id})  not found.")
+        raise ValueError(f"(user :{user_id}, cow: {cow_id})  n'existe pas.")
 
-    
+    @staticmethod
     def add_care(
         cow: Cow, cow_care: Traitement
     ) -> tuple[int, date | None]:
@@ -348,22 +324,22 @@ class CowUtilsClient:
         prochain
         """
 
-        from .fonction import remaining_care_on_year, new_available_care
+        from ..fonction import remaining_care_on_year, new_available_care
         # Ajouter le traitement à la liste
         cow.cow_cares.append(cow_care)
 
         # Commit les changements
         db.session.commit()
 
-        lg.info(f"Care add to (user :{cow.self}, cow: {cow.cow_id}).")
+        lg.info(f"Care add to (user :{cow.user_id}, cow: {cow.cow_id}).")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
         # type: ignore
         return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
 
-    
+    @staticmethod
     def update_cow_care(
-        self, cow_id: int, care_index: int, new_care: Traitement
+        user_id: int, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
         """Met à jour la liste de traitements d'une vache.
 
@@ -373,13 +349,13 @@ class CowUtilsClient:
         n'existe pas déjà dans la base de données.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache concernée
             * care_index (int): Position dans la liste du traitement à modifier
             * new_care (Traitement): Nouvelles données de traitement
         """
         cow: Cow | None
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             # Remplacement du soin dans la liste
             if care_index >= len(cow.cow_cares):
                 raise IndexError("index out of bounds")
@@ -387,13 +363,13 @@ class CowUtilsClient:
             db.session.commit()
 
             lg.info(
-                f"(user :{self}, cow: {cow_id}) : care updated in database")
+                f"(user :{user_id}, cow: {cow_id}) : care updated in database")
         else:
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : doesn't exist in database")
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
-    
-    def delete_cow_care(self, cow_id: int, care_index: int) -> None:
+    @staticmethod
+    def delete_cow_care(user_id: int, cow_id: int, care_index: int) -> None:
         """Retire un traitement de la liste de traitements d'une vache
 
         Cette fonction retire le traitement à l'indice spécifié de la liste de
@@ -401,49 +377,45 @@ class CowUtilsClient:
         (commit) le changement dans la base de données
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * care_index (int): Indice du traitement dans la liste
         """
         cow: Cow | None
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             del cow.cow_cares[care_index]
             db.session.commit()
             lg.info(
-                f"(user :{self}, cow: {cow_id}) : care deleted in database")
+                f"(user :{user_id}, cow: {cow_id}) : care deleted in database")
         else:
-            lg.error(f"(user :{self}, cow: {cow_id}) : not in database")
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
             raise ValueError(
-                f"(user :{self}, cow: {cow_id}) : doesn't exist in database")
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
-    
-    def get_all_care(self) -> list[Traitement_signe]:
-        """Retrieves all non-empty care records for all cows, sorted by date in
-        descending order.
+    @staticmethod
+    def get_all_care(user_id: int) -> list[Traitement_signe]:
+        """Retrieves all non-empty care records for all cows, sorted by date in descending order.
 
-        This function collects all care records with non-empty treatment
-        dictionaries from every cow and returns them as a list sorted by
-        treatment date, most recent first.
+        This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
 
         Returns:
-            list[Traitement_signe]: A list of objects containing the cow ID and
-            the associated treatment.
+            list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
         """
+        cows: list[Cow] = Cow.query.filter_by(user_id=user_id).all()
         all_cares: list[Traitement_signe] = [
-            Traitement_signe(cow_id=cow.cow_id, traitement=care)
-            for cow in self.cow_list
-            for care in cow.cow_cares
-            if care  # filter out falsy / empty treatments
+            Traitement_signe(cow_id=cow.cow_id, traitement=care_dict)
+            for cow in cows
+            for care_dict in cow.cow_cares
+            if bool(cow.cow_cares) and bool(care_dict)
         ]
         # tri par date décroissante
-        all_cares.sort(
-            key=lambda t: t["traitement"]["date_traitement"],
-            reverse=True,
-        )
+        # TODO verif sort
+        all_cares.sort(key=lambda x: x["traitement"]
+                       ["date_traitement"], reverse=True)
         return all_cares
 
-    
-    def get_care_by_id(self, cow_id: int,) -> list[Traitement] | None:
+    @staticmethod
+    def get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement] | None:
         """Renvoie la liste des traitements d'une vache
 
         Renvoie la liste des traitements de la vache associée à l'identifiant
@@ -451,54 +423,47 @@ class CowUtilsClient:
         renvoie None.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
 
         Renvoie:
-            * list[Traitement]: La liste des traitements de la vache
-            spécifiéé si elle existe
+            * list[Traitement] | : La liste des traitements de la vache
+            spécifiéé si elle existe, None sinon
         """
-        cow: Cow_Client
-        for cow in self.cow_list:
-            if cow.cow_id == cow_id:
-                return cow.cow_cares
-        lg.error(f"(user :{self}, cow: {cow_id}) : not found.")
-        raise ValueError(f"(user :{self}, cow: {cow_id}) : n'existe pas.")
+        # Récupérer la vache depuis la BDD
+        cow: Cow | None
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            return cow.cow_cares
+        lg.error(f"(user :{user_id}, cow: {cow_id}) : not found.")
+        raise ValueError(f"(user :{user_id}, cow: {cow_id}) : n'existe pas.")
 
-    
-    def get_care_on_year(self, year: int) -> list[Traitement]:
-        """Récupère l'ensemble de l'historique de traitement des veaux sur une
-        année spécifique.
+    @staticmethod
+    def get_care_on_year(user_id: int, year: int) -> list[Traitement]:
+        """Récupère la liste des traitements sur l'ensemble des vaches effectués
+        l'année spécifiée.
 
-        Cette fonction s'appuie sur le cache local `self.cow_list` pour
-        collecter:
-        - les traitements effectués sur les vaches marquées comme veaux, et
-        - les traitements effectués avant la première insémination pour les
-          vaches non initialisées comme adulte.
+        Cette fonction itère sur l'ensemble des vaches et collecte les
+        traitements dont l'année correspond à l'année fournie en argument.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année à laquelle ont eu lieu les traitements que l'on
+            souhaite collecter
+
+        Renvoie:
+            * list[Traitement]: La liste des traitements qui ont eu lieu l'année
+            spécifiée
         """
         from web_app.fonction import parse_date
 
-        res: list[Traitement] = [
-            cow_care
-            for cow in self.cow_list
-            for cow_care in cow.cow_cares
-            if (
-                parse_date(cow_care["date_traitement"]).year == year
-                and (
-                    cow.is_calf
-                    or (
-                        not cow.init_as_cow
-                        and cow.reproduction
-                        and parse_date(cow_care["date_traitement"])
-                        <= parse_date(cow.reproduction[0]["insemination"])
-                    )
-                )
-            )
-        ]
-        return res
+        return [cow_care
+                for cow in Cow.query.filter_by(user_id=user_id).all()
+                for cow_care in cow.cow_cares if bool(cow.cow_cares)
+                if parse_date(cow_care["date_traitement"]).year == year
+                ]
 
-    
-    def get_calf_care_on_year(self, year: int) -> list[Traitement]:
+    @staticmethod
+    def get_calf_care_on_year(user_id: int, year: int) -> list[Traitement]:
         """Récupère l'ensemble de l'historique de traitement des veaux sur une
         année spécifique.
 
@@ -508,7 +473,7 @@ class CowUtilsClient:
         pour correspondre à l'année fournie en argument.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur.
+            * user_id (int): Identifiant de l'utilisateur.
             * year (int): Année au cours de laquelle ont eu lieu les
            traitements.
 
@@ -520,7 +485,7 @@ class CowUtilsClient:
         res: list[Traitement] = [
             cow_care
             # iteration sur cows
-            for cow in Cow.query.filter_by(self=self).all()
+            for cow in Cow.query.filter_by(user_id=user_id).all()
             for cow_care in cow.cow_cares  # iteration sur cow_care
             if (
                 parse_date(cow_care["date_traitement"]
@@ -542,8 +507,8 @@ class CowUtilsClient:
 
     # reproduction functions ------------------------------------------------
 
-    
-    def add_insemination(self, cow_id: int, insemination: str) -> None:
+    @staticmethod
+    def add_insemination(user_id: int, cow_id: int, insemination: str) -> None:
         # TODO Gestion doublon add_reproduction
         """Ajoute une entrée à l'historique d'insémination de la vache spécifiée
 
@@ -553,7 +518,7 @@ class CowUtilsClient:
         ValueError.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * insemination (str): Date d'insémination
 
@@ -561,7 +526,7 @@ class CowUtilsClient:
             * ValueError si la vache spécifiée n'existe pas
         """
         cow: Cow | None
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction.append(
@@ -585,8 +550,8 @@ class CowUtilsClient:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
-    
-    def validated_ultrasound(self, cow_id: int, ultrasound: bool) -> None:
+    @staticmethod
+    def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool) -> None:
         """Valide ou invalide les résultats des ultrasons pour la dernière
         insémination d'une vache.
 
@@ -596,7 +561,7 @@ class CowUtilsClient:
         une ValueError est lancée.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * ultradound (bool): Résultats des ultrasons (True si confirmé,
             False si non confirmé)
@@ -607,7 +572,7 @@ class CowUtilsClient:
         """
         from web_app.fonction import last
         cow: Cow | None
-        if cow := Cow.query.get({"self": self, "cow_id": cow_id}):
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction | None = last(
@@ -619,7 +584,7 @@ class CowUtilsClient:
             if ultrasound:
 
                 cow.reproduction[-1] = CowUtils.set_reproduction(
-                    self, reproduction)
+                    user_id, reproduction)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
             else:
                 lg.info(f"insemination on {date} of {cow_id} invalidate")
@@ -629,9 +594,9 @@ class CowUtilsClient:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
-    
+    @staticmethod
     # TODO fonction Pure calculatoir peut etre sortir pour fonction.py ?
-    def set_reproduction(self, reproduction: Reproduction) -> Reproduction:
+    def set_reproduction(user_id: int, reproduction: Reproduction) -> Reproduction:
         """Calcule les dates de reproduction pour une vache en fonction de sa
         date d'insémination et des réglages utilisateur.
 
@@ -639,7 +604,7 @@ class CowUtilsClient:
         durées de tarissage, de préparation et la date de vêlage calculés.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * reproduction (Reproduction): Les données de reproduction à mettre
             à jour
 
@@ -648,7 +613,7 @@ class CowUtilsClient:
             dates calculées
         """
         from web_app.fonction import substract_date_to_str, sum_date_to_str
-        user: Users = UserUtils.get_user(self=self)
+        user: Users = UserUtils.get_user(user_id=user_id)
         calving_date: str = sum_date_to_str(reproduction["insemination"], 280)
         print("calving_date ok")
         reproduction["dry"] = substract_date_to_str(
@@ -660,26 +625,34 @@ class CowUtilsClient:
         reproduction["calving_date"] = calving_date
         return reproduction
 
-    
-    def get_reproduction(self, cow_id: int) -> Reproduction:
+    @staticmethod
+    def get_reproduction(user_id: int, cow_id: int) -> Reproduction:
         """Récupère la dernière reproduction de la vache spécifiée.
 
-        Renvoie l'entrée de reproduction la plus récente de la vache associée
-        à l'identifiant fourni, ou lance une ValueError si la vache n'existe
-        pas, n'est plus dans la ferme ou n'a aucune reproduction.
-        """
-        # récupère la vache depuis le cache client
-        cow = self.get_cow(cow_id)
+        Cette fonction renvoie l'entrée de reproduction la plus récente de la
+        vache spécifiée, ou lance une ValueError si aucune vache n'est associée
+        à l'identifiant fourni en argument.
 
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+
+        Renvoie:
+            * Reproduction: l'entrée de reproduction la plus récente pour la
+            vache concernée
+
+        Lance:
+            * ValueError si la vache spécifiée n'existe pas
+        """
+        cow: Cow | None
+        if not (cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id})):
+            raise ValueError(f"{cow_id} n'existe pas.")
         if not cow.in_farm:
             raise ValueError(f"cow : {cow_id} : est supprimer")
-
-        if not cow.reproduction:
-            raise ValueError(f"cow : {cow_id} : n'a pas de reproduction")
-
         return cow.reproduction[-1]
-    
-    def reload_all_reproduction(self) -> None:
+
+    @staticmethod
+    def reload_all_reproduction(user_id: int) -> None:
         """Recalcule les dates associées à la dernière reproduction des vaches.
 
         Cette fonction parcourt la liste des vaches et recalcule pour chacune
@@ -688,47 +661,53 @@ class CowUtilsClient:
         données.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
         """
-        from .fonction import last
+        from ..fonction import last
 
-        cows: list[Cow] = Cow.query.filter_by(self=self, in_farm=True).all()
+        cows: list[Cow] = Cow.query.filter_by(
+            user_id=user_id, in_farm=True).all()
         for cow in cows:
             if (last(cow.reproduction)
                 and cow.reproduction[-1].get("ultrasound")
                     and not cow.reproduction[-1].get("calving")):
 
                 cow.reproduction[-1] = CowUtils.set_reproduction(
-                    self,
+                    user_id,
                     cow.reproduction[-1])
 
         db.session.commit()
         lg.info("reproduction reload")
 
-    
-    def get_valid_reproduction(self) -> dict[int, Reproduction]:
+    @staticmethod
+    def get_valid_reproduction(user_id: int) -> dict[int, Reproduction]:
         """Récupère la dernière entrée de reproduction valide pour toutes les
         vaches dont les ultrasons ont été confirmés.
 
-        Cette fonction s'appuie sur le cache local `self.cow_list` et renvoie un
-        dictionnaire associant l'identifiant de chaque vache à leur reproduction
-        la plus récente où:
-        - les ultrasons sont confirmés, et
-        - le vêlage n'a pas encore été effectué.
-        """
-        from web_app.fonction import last
+        Cette fonction renvoie un dictionnaire associant l'identifiant de chaque
+        vache à leur reproduction la plus récente où les ultrasons ont été
+        confirmés.
 
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+
+        Renvoie:
+            * dict[int, Reproduction]: Un dictionnaire d'identifiant de vaches
+            contenant leur plus récente reproduction avec ultrasons confirmés
+        """
+        from ..fonction import last
+        cows: list[Cow] = Cow.query.filter_by(
+            user_id=user_id, in_farm=True).all()
         return {
             cow.cow_id: cow.reproduction[-1]
-            for cow in self.cow_list
-            if cow.in_farm
-            and last(cow.reproduction)
-            and cow.reproduction[-1].get("ultrasound")
-            and not cow.reproduction[-1].get("calving")
+            for cow in cows
+            if last(cow.reproduction) and
+            cow.reproduction[-1].get("ultrasound") and
+            not cow.reproduction[-1].get("calving")
         }
 
-    
-    def validated_calving(cow_id: int, self, abortion: bool,
+    @staticmethod
+    def validated_calving(cow_id: int, user_id: int, abortion: bool,
                           info: str | None = None) -> None:
         """Valide le vêlage pour une vache et enregistre si c'était un
         avortement.
@@ -740,7 +719,7 @@ class CowUtilsClient:
 
         Arguments:
             * cow_id (int): Identifiant de la vache
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * abortion (bool): True si le vêlage était un avortement, False
             sinon
             * info (str | None): Notes et commentaires
@@ -751,7 +730,7 @@ class CowUtilsClient:
         # TODO gestion pas d'insemination reproduction_ultrasound calving
         # TODO getstion de l'anotation
         cow: Cow | None
-        if cow := Cow.query.get({'cow_id': cow_id, 'self': self}):
+        if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
 
@@ -767,8 +746,8 @@ class CowUtilsClient:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
-    
-    def validated_dry(self, cow_id: int) -> None:
+    @staticmethod
+    def validated_dry(user_id: int, cow_id: int) -> None:
         """Valide le tarissage d'une vache.
 
         Cette fonction met à jour l'historique de reproduction pour la vache
@@ -777,14 +756,14 @@ class CowUtilsClient:
         marquée dans le journal et une ValueError est lancée.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
 
         Lance:
             * ValueError si aucune vache ne correspond à l'identifiant fourni
         """
         cow: Cow | None
-        if cow := Cow.query.get({'cow_id': cow_id, 'self': self}):
+        if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
 
@@ -803,8 +782,8 @@ class CowUtilsClient:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
-    
-    def validated_calving_preparation(self, cow_id: int) -> None:
+    @staticmethod
+    def validated_calving_preparation(user_id: int, cow_id: int) -> None:
         """Valide la date de préparation du vêlage pour une vache.
 
         Cette fonction met à jour la dernière entrée de l'historique de
@@ -814,14 +793,14 @@ class CowUtilsClient:
         une ValueError est lancée.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
 
         Lance:
             * ValueError si la vache spécifiée n'existe pas
         """
         cow: Cow | None
-        if cow := Cow.query.get({'cow_id': cow_id, 'self': self}):
+        if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction = cow.reproduction[-1]
@@ -835,9 +814,9 @@ class CowUtilsClient:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
-    
+    @staticmethod
     def update_cow_reproduction(
-        self,
+        user_id: int,
         cow_id: int,
         repro_index: int,
         new_repro: Reproduction,
@@ -849,14 +828,14 @@ class CowUtilsClient:
         (commit) le changement dans la base de données.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * repro_index (int): Indice de l'entrée dans l'historique
             * new_repro (Reproduction): Entrée de reproduction à insérer dans
             l'historique
         """
         cow: Cow | None
-        if cow := Cow.query.get({'cow_id': cow_id, 'self': self}):
+        if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             cow.reproduction[repro_index] = new_repro
@@ -866,8 +845,8 @@ class CowUtilsClient:
             lg.error(f"{cow_id} : not in database")
             raise ValueError(f"{cow_id} : doesn't exist in database")
 
-    
-    def delete_cow_reproduction(self, cow_id: int, repro_index: int) -> None:
+    @staticmethod
+    def delete_cow_reproduction(user_id: int, cow_id: int, repro_index: int) -> None:
         """Supprime une entrée de l'historique de reproduction d'une vache.
 
         Cette fonction supprime l'entrée présente à l'indice fourni de
@@ -876,7 +855,7 @@ class CowUtilsClient:
         une erreur est marquée dans le journal et une ValueError est lancée.
 
         Arguments:
-            * self (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * repro_index (int): Indice dans l'historique de l'entrée à
             supprimer
@@ -885,7 +864,7 @@ class CowUtilsClient:
             * ValueError si la vache spécifiée n'existe pas
         """
         cow: Cow | None
-        if cow := Cow.query.get({'cow_id': cow_id, 'self': self}):
+        if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             del cow.reproduction[repro_index]

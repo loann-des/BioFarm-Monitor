@@ -47,7 +47,13 @@ class UserUtilsClient:
         self.connected_user.id = self.id
 
     def set_connected_user(self, connected_user: "ConnectedUser") -> None:
+        """Met à jour l'utilisateur connecté associé à ce client utilitaire.
 
+        Cette fonction met à jour l'attribut `connected_user` avec l'utilisateur connecté fourni en argument.
+
+        Arguments:
+            * connected_user (ConnectedUser): L'utilisateur connecté à associer au client utilitaire
+        """
         self.connected_user = connected_user
         self.connected_user.id = self.id
 

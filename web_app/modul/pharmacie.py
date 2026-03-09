@@ -14,11 +14,11 @@ from flask import (
 from flask_login import login_required, current_user # type: ignore
 from io import BytesIO
 
-from ..connected_user import ConnectedUser
+from ..api.connected_user import ConnectedUser
 from web_app.fonction import (
     date_to_str,
 )
-from web_app.models import (
+from tmp.models import (
     CowUtils,
     PrescriptionUtils,
     Traitement,

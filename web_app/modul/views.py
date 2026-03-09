@@ -13,10 +13,10 @@ from flask import (
 from flask_login import login_required, current_user, AnonymousUserMixin  # type: ignore
 from io import BytesIO
 
-from ..connected_user import ConnectedUser
+from ..api.connected_user import ConnectedUser
 
 from ..fonction import *
-from ..models import CowUtils
+from ...tmp.models import CowUtils
 
 views = Blueprint('views', __name__)
 

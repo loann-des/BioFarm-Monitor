@@ -18,7 +18,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from typing import NotRequired, TypedDict, Any
 from werkzeug.security import generate_password_hash
 
-from . import db
+from ..web_app import db
 
 # TODO Metre en place les exeptions et leurs gestion
 # TODO  Metre en place les log
@@ -633,7 +633,7 @@ class CowUtils:
         prochain
         """
 
-        from .fonction import remaining_care_on_year, new_available_care
+        from ..web_app.fonction import remaining_care_on_year, new_available_care
         # Ajouter le traitement à la liste
         cow.cow_cares.append(cow_care)
 
@@ -972,7 +972,7 @@ class CowUtils:
         Arguments:
             * user_id (int): Identifiant de l'utilisateur
         """
-        from .fonction import last
+        from ..web_app.fonction import last
 
         cows: list[Cow] = Cow.query.filter_by(
             user_id=user_id, in_farm=True).all()
@@ -1004,7 +1004,7 @@ class CowUtils:
             * dict[int, Reproduction]: Un dictionnaire d'identifiant de vaches
             contenant leur plus récente reproduction avec ultrasons confirmés
         """
-        from .fonction import last
+        from ..web_app.fonction import last
         cows: list[Cow] = Cow.query.filter_by(
             user_id=user_id, in_farm=True).all()
         return {

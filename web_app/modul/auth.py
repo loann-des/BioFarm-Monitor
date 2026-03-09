@@ -10,8 +10,8 @@ from flask import (
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from ..models import Users, db
-from ..connected_user import ConnectedUser
+from ..models.user import Users
+from .. import db
 
 nb_user : int
 nb_connected_user : int
@@ -34,8 +34,7 @@ def login_post():
     if not user or not check_password_hash(user.password, password): # type: ignore
         return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
 
-    Connected_user = ConnectedUser(user_id=user.id)
-    login_user(Connected_user, remember=remember, force=True)
+    login_user(user, remember=remember, force=True)
     return redirect(url_for('views.index'))
 
 @auth.route('/signup')

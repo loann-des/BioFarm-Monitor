@@ -12,8 +12,19 @@ class PharmacieClientAttr(Enum):
     
 
 
-class PharmacieClient:
-
+class PharmacieClient:  #TODO e revoir a l'utilisation de mashmallow pour eviter d'avoir a faire cette classe
+    """ Représente une entrée de pharmacie pour une année spécifique,
+    avec les quantités de médicaments entrés, utilisés, sortis et restants en stock.
+    
+     :var year: int, Année de l'entrée de pharmacie
+     :var total_enter: dict[str, int], Quantité de médicaments ajoutés à la pharmacie durant l'année.
+     :var total_used: dict[str, int], Quantité de médicaments utilisés durant l'année.
+     :var total_used_calf: dict[str, int], Quantité de médicaments utilisés pour les veaux durant l'année.
+     :var total_out_dlc: dict[str, int], Quantité de médicaments retirés de la pharmacie durant l'année pour cause de DLC dépassée.
+     :var total_out: dict[str, int], Quantité de médicaments retirés de la pharmacie durant l'année pour cause de DLC et utilisation.
+     :var remaining_stock: dict[str, int], Quantité de médicaments restant en stock à la fin de l'année.
+    """
+    
     year: int
     """Année de l'entrée de pharmacie"""
 
@@ -83,10 +94,16 @@ class PharmacieClient:
             total_out=self.total_out,
             remaining_stock=self.remaining_stock
         )
-        # TODO ne plus utiliser cette fonction au passage a l'api et evoiyer le to_json directement a l'api
+        # TODO ne plus utiliser cette fonction au passage a l'api et gerer avec mashmallow
 
 
 class PharmacieUtilsClient:
+    """Gère les entrées de pharmacie côté client pour un utilisateur connecté.
+
+    Cette classe fournit des méthodes pour récupérer, créer, modifier et vérifier
+    les données de pharmacie d'un utilisateur au fil des années, en synchronisation
+    avec la base de données via PharmacieUtils.
+    """
     if TYPE_CHECKING:
         from connected_user import ConnectedUser
 
@@ -94,7 +111,8 @@ class PharmacieUtilsClient:
     """L'utilisateur connecté associé à ce client utils"""
 
     list_pharmacie: list[PharmacieClient]
-    """Liste de toutes les entrées de pharmacie de la base de données associées à l'utilisateur connecté, chacune correspondant à une année différente. """
+    """Liste de toutes les entrées de pharmacie de la base de données associées
+    à l'utilisateur connecté, chacune correspondant à une année différente. """
 
     def __init__(self, connected_user: "ConnectedUser") -> None:
         self.connected_user = connected_user
@@ -110,69 +128,86 @@ class PharmacieUtilsClient:
                                                remaining_stock=pharmacy.remaining_stock)
                                for pharmacy in pharmacies_list]
 
-    def get_pharmacie_year(self, year: int) -> PharmacieClient:
-        """Récupère l'entrée de pharmacie pour une année spécifique.
+    def find_pharmacie_year(self, year: int) -> PharmacieClient | None:
+        """Recherche une entrée de pharmacie correspondant à une année spécifique.
 
-        Cette fonction renvoie l'objet PharmacieClient pour l'année fournie en
-        argument si une telle entrée existe, ValueError sinon.
+        Cette fonction parcourt les entrées de pharmacie de l'utilisateur connecté et
+        renvoie celle qui correspond à l'année fournie, ou None si aucune entrée n'existe pour cette année.
 
         Arguments:
-            * year (int): Année des entrées de pharmacie à récupérer
+            * year (int): Année de l'entrée de pharmacie à rechercher.
 
         Renvoie:
-            * PharmacieClient: l'entrée de PharmacieClient pour l'année fournie en argument.
-
-        Lance:
-            * ValueError s'il n'existe pas d'entrée de pharmacie pour l'année
-            spécifiée.
+            * PharmacieClient | None: L'entrée de pharmacie correspondant à l'année spécifiée, ou None si aucune n'existe.
         """
         for pharmacie in self.list_pharmacie:
             if pharmacie.year == year:
                 return pharmacie
-        raise ValueError(f"{year} doesn't exist.")
+        return None
 
-    def updateOrDefault_pharmacie_year(self, year: int,
-                                       default: PharmacieClient) -> PharmacieClient:
-        """Met à jour l'année de pharmacie correspondant à une année spécifiée
-        si elle existe, sinon la créée avec les valeurs par défaut.
+    def get_pharmacie_year(self, year: int) -> PharmacieClient:
+        """Récupère l'entrée de pharmacie correspondant à une année spécifique.
 
-        Cette fonction met à jour tous les attributs de l'entrée de pharmacie
-        correspondant à l'année fournie en argument, ou créée une nouvelle
-        entrée remplie avec les valeurs par défaut fournies en argument.
+        Cette fonction parcourt les entrées de pharmacie de l'utilisateur connecté et
+        renvoie celle qui correspond à l'année fournie, ou lève une erreur si aucune 
+        entrée n'existe pour cette année.
 
         Arguments:
-            * user_id (int): Identifiant de l'utilisateur
-            * year (int): Année de l'entrée à modifier
-            * default (Pharmacie): Valeurs par défaut de l'entrée
+            * year (int): Année de l'entrée de pharmacie à récupérer.
 
         Renvoie:
-            * PharmacieClient: L'entrée modifiée ou créée pour l'année spécifiée
+            * PharmacieClient: L'entrée de pharmacie correspondant à l'année spécifiée.
+
+        Lève:
+            * ValueError: Si aucune entrée de pharmacie n'existe pour l'année spécifiée.
         """
-        try:
-            pharmacie = self.get_pharmacie_year(year)
-        except ValueError:
-            pharmacie = None
+        res = self.find_pharmacie_year(year)
+        if res is None:
+            raise ValueError(f"{year} doesn't exist.")
+        return res
 
-        if pharmacie:
-            for attr in default.__dict__:
-                if not attr.startswith("_") and hasattr(pharmacie, attr):
-                    setattr(pharmacie, attr, getattr(default, attr))
-        else:
-            self.list_pharmacie.append(default)
-            pharmacie = default
+    def updateOrDefault_pharmacie_year(self,default: PharmacieClient) -> PharmacieClient:
+        """Met à jour ou crée une entrée de pharmacie pour une année donnée.
 
-        PharmacieUtils.updateOrDefault_pharmacie_year(
+        Cette fonction recherche une entrée de pharmacie correspondant à l'année
+        fournie et met à jour ses attributs avec ceux de l'objet par défaut, ou crée une 
+        nouvelle entrée si aucune n'existe, puis synchronise les données avec la base de données.
+
+        Arguments:
+            * year (int): Année de l'entrée de pharmacie à mettre à jour ou créer.
+            * default (PharmacieClient): Objet contenant les données de pharmacie à appliquer pour l'année spécifiée.
+
+        Renvoie:
+            * PharmacieClient: L'entrée de pharmacie mise à jour ou nouvellement créée.
+        """
+       
+        pharmacie = self.find_pharmacie_year(default.year)
+
+        #TODO remplaser au passage a l'api
+        
+        status = PharmacieUtils.updateOrDefault_pharmacie_year( 
             user_id=self.connected_user.id,
-            year=pharmacie.year,
-            # TODO gestion formating pharmacie client -> pharmacie # type: ignore
-            default=pharmacie.to_pharmacie(self.connected_user.id)
+            year=default.year, #TODO modifier dans models pour retiré année en argument et se baser uniquement sur le year de l'objet pharmacie client par defaut pour eviter les incohérences
+            # TODO gestion formating pharmacie client -> pharmacie avec mashmallow # type: ignore
+            default=default.to_pharmacie(self.connected_user.id)
         )
-        return pharmacie
+        
+        if status:
+            if pharmacie:
+                for attr in default.__dict__:
+                    if not attr.startswith("_") and hasattr(pharmacie, attr):
+                        setattr(pharmacie, attr, getattr(default, attr))
+            else:
+                self.list_pharmacie.append(default)
+                pharmacie = default
+
+        return pharmacie or default # TODO a revoir
 
     def get_all_pharmacie(self) -> list[PharmacieClient]:
         """Récupère toutes les entrées de pharmacie associées à l'utilisateur connecté.
 
-        Cette fonction renvoie une liste de toutes les entrées de pharmacie de la base de données associées à l'utilisateur connecté, chacune correspondant à une année différente.
+        Cette fonction renvoie une liste de toutes les entrées de pharmacie de la base de
+        données associées à l'utilisateur connecté, chacune correspondant à une année différente.
 
         Renvoie:
             * list[PharmacieClient]: Liste de toutes les entrées de pharmacie de l'utilisateur connecté.
@@ -189,27 +224,19 @@ class PharmacieUtilsClient:
         total_out_dlc: dict[str, int],
         total_out: dict[str, int],
     ) -> None:
-        """Créée et enregistre une nouvelle entrée de pharmacie pour une année
-        spécifique, en utilisant les informations fournies en argument.
+        """Définit ou remplace les données de pharmacie pour une année spécifique.
 
-        Cette fonction construit un nouvel objet Pharmacie contenant les données
-        fournies et enregistre (commit) les changements dans la base de données.
+        Cette fonction crée un objet PharmacieClient à partir des données fournies pour l'année donnée,
+        puis l'enregistre ou le met à jour dans la liste des pharmacies de l'utilisateur et dans la base de données.
 
         Arguments:
-            * year (int): Année de l'entrée de pharmacie
-            * total_enter (Medicament_Quantite): Dictionnaire associant les noms et
-            quantités de traitements ajoutés à la pharmacie au cours de l'année
-            * total_used (Medicament_Quantite): Dictionnaire associant les noms et
-            quantités de traitements utilisés au cours de l'année
-            * total_used_calf (Medicament_Quantite): Dictionnaire associant les noms et
-            quantités de traitements utilisés pour les vaches au cours de l'année
-            * total_out_dlc (Medicament_Quantite): Dictionnaire associant les noms et
-            quantités de traitements expirés dans la pharmacie au cours de
-            l'année
-            * total_out (Medicament_Quantite): Dictionnaire associant les noms et
-            quantités de traitements retirés de la pharmacie au cours de l'année
-            * remaining_stock (Medicament_Quantite): Dictionnaire associant les noms
-            et quantités de traitements restant à la fin de l'année
+            * year (int): Année de l'entrée de pharmacie à définir ou mettre à jour.
+            * remaining_stock (dict[str, int]): Dictionnaire des stocks de médicaments restants en fin d'année.
+            * total_enter (dict[str, int]): Dictionnaire des quantités de médicaments entrés dans la pharmacie durant l'année.
+            * total_used (dict[str, int]): Dictionnaire des quantités de médicaments utilisées durant l'année.
+            * total_used_calf (dict[str, int]): Dictionnaire des quantités de médicaments utilisés pour les veaux durant l'année.
+            * total_out_dlc (dict[str, int]): Dictionnaire des quantités de médicaments retirés pour cause de DLC dépassée durant l'année.
+            * total_out (dict[str, int]): Dictionnaire des quantités totales de médicaments retirés de la pharmacie durant l'année.
         """
 
         pharmacie_client = PharmacieClient(
@@ -222,19 +249,7 @@ class PharmacieUtilsClient:
             remaining_stock=remaining_stock
         )
         self.updateOrDefault_pharmacie_year(
-            year=year, default=pharmacie_client)
-
-        # TODO ne plus utiliser cette fonction au passage a l'api et evoiyer le to_json directement a l'api
-        PharmacieUtils.set_pharmacie_year(
-            user_id=self.connected_user.id,
-            year=year,
-            total_enter=total_enter,
-            total_used=total_used,
-            total_used_calf=total_used_calf,
-            total_out_dlc=total_out_dlc,
-            total_out=total_out,
-            remaining_stock=remaining_stock
-        )
+            default=pharmacie_client)
 
     def upload_pharmacie_year(self, year: int, remaining_stock: dict[str, int]) -> None:
         """Créée et enregistre une nouvelle entrée de pharmacie, pour l'année
@@ -296,21 +311,20 @@ class PharmacieUtilsClient:
             * attr (str): Attribut de l'entrée de pharmacie à modifier, parmi
             "total_enter", "total_used", "total_used_calf", "total_out_dlc"
         """
-        pharmacie = self.get_pharmacie_year(year)
+        pharmacie : PharmacieClient = self.get_pharmacie_year(year)
 
         setattr(pharmacie, attr.value, dict(Counter(getattr(pharmacie, attr.value)) + Counter(stock)))
         
-        if attr == PharmacieClientAttr.total_used or attr == PharmacieClientAttr.total_used_calf or attr == PharmacieClientAttr.total_out_dlc:
-            setattr(pharmacie, "total_out", dict(Counter(getattr(pharmacie, "total_out")) + Counter(stock))) # on set le total out
+        if attr in [PharmacieClientAttr.total_used, PharmacieClientAttr.total_used_calf, PharmacieClientAttr.total_out_dlc]:
+            pharmacie.total_out = dict(Counter(pharmacie.total_out) + Counter(stock)) # on met a jour le total out si c'est du used ou du out dlc
             if attr == PharmacieClientAttr.total_used_calf:
-                setattr(pharmacie, "total_used", dict(Counter(getattr(pharmacie, "total_used")) + Counter(stock))) # on set le total used egalement si c'est du used calf
-            setattr(pharmacie, "remaining_stock", dict(Counter(getattr(pharmacie, "remaining_stock")) - Counter(stock))) # on retire du stock restant si c'est du used ou du out dlc
+                pharmacie.total_used = dict(Counter(pharmacie.total_used) + Counter(stock)) # on met a jour le total used si c'est du used calf
+            pharmacie.remaining_stock = dict(Counter(pharmacie.remaining_stock) - Counter(stock)) # on retire du stock restant si c'est du used ou du out dlc
         if attr == PharmacieClientAttr.total_enter:
-            setattr(pharmacie, "remaining_stock", dict(Counter(getattr(pharmacie, "remaining_stock")) + Counter(stock))) # on ajoute au stock restant si c'est du total enter
+            pharmacie.remaining_stock = dict(Counter(pharmacie.remaining_stock) + Counter(stock)) # on ajoute au stock restant si c'est du total enter
             
         PharmacieUtilsClient.updateOrDefault_pharmacie_year(
             self,
-            year=year,
             default=pharmacie
         )
         
