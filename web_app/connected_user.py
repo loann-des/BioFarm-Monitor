@@ -27,6 +27,7 @@ class ConnectedUser(UserMixin):
     email: str
     password: str
     setting: Setting
+    medic_list : dict
     id: int
 
     def __init__(self, user: Users):
@@ -34,6 +35,7 @@ class ConnectedUser(UserMixin):
         self.password = user.password
         self.setting = user.setting
         self.id = user.id
+        self.medic_list = user.medic_list
 
     def get_pharma_list(self) -> list[str]:
         """Returns a list of all medication names available in the pharmacy.

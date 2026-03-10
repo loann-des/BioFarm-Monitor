@@ -3,15 +3,16 @@ import logging as lg
 
 from datetime import datetime
 from flask import Blueprint, jsonify, redirect, request, url_for
-from flask_login import login_required, current_user  # type: ignore
+from flask_login import login_required, current_user # type: ignore
 
-from tmp.models import CowUtils
-from ..models.user import Users
+from web_app.connected_user import ConnectedUser
+from web_app.models.cow import CowUtils  # type: ignore
+
 
 
 repro = Blueprint('repro', __name__)
 
-current_user : Users
+current_user : ConnectedUser
 
 # Reproduction form
 @repro.before_request

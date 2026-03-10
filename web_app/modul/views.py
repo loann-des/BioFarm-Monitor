@@ -10,13 +10,15 @@ from flask import (
     request,
     url_for,
 )
-from flask_login import login_required, current_user, AnonymousUserMixin  # type: ignore
+from flask_login import login_required, current_user # type: ignore
 from io import BytesIO
 
-from ..api.connected_user import ConnectedUser
+from web_app.models.pharmacie import PharmacieUtils
 
-from ..fonction import *
-from ...tmp.models import CowUtils
+
+from ..connected_user import ConnectedUser
+from ..models.cow import CowUtils
+from ..models.user import UserUtils
 
 views = Blueprint('views', __name__)
 
@@ -30,6 +32,13 @@ current_user: ConnectedUser
 
 @views.before_request
 def check_authentication():
+    """Vérifie que l'utilisateur courant est authentifié avant de traiter la requête. Redirige les utilisateurs anonymes vers la route de déconnexion pour appliquer les règles d'accès.
+
+    Cette fonction est enregistrée comme hook `before_request` sur le blueprint et s'exécute avant chaque vue. Elle s'appuie sur `current_user` pour déterminer si la requête peut continuer ou doit être redirigée.
+
+    Returns:
+        Une réponse de redirection vers la route de déconnexion si l'utilisateur est anonyme, sinon None pour laisser le traitement normal de la requête se poursuivre.
+    """
     if current_user.is_anonymous:
         return redirect(url_for('auth.logout'))
 
@@ -37,8 +46,8 @@ def check_authentication():
 @login_required
 @views.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html", dry_time=current_user.user_utils_client.setting["dry_time"],
-                           calving_preparation_time=current_user.user_utils_client.setting["calving_preparation_time"])
+    return render_template("index.html", dry_time=current_user.setting["dry_time"],
+                           calving_preparation_time=current_user.setting["calving_preparation_time"])
 
 
 @login_required
@@ -50,13 +59,12 @@ def reproduction():
 @login_required
 @views.route("/pharmacie", methods=["GET"])
 def pharmacie():
-    return render_template("pharmacie.html", pharma_list=current_user.user_utils_client.medic_list)
+    return render_template("pharmacie.html", pharma_list=current_user.medic_list)
 
 
 @login_required
 @views.route("/cow_liste", methods=["GET"])
 def cow_liste():
-    # TODO retire le user passer en refference, passer le retour des fonctions appeler en par le jinja
     return render_template("cow_liste.html", cows=CowUtils.get_all_cows(current_user.id))
 
 
@@ -68,12 +76,12 @@ def user_setting():
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
 
-        current_user.user_utils_client.set_user_setting(
-            dry_time=int(dry_time), calving_preparation=int(calving_preparation_time)
-        )
+        UserUtils.set_user_setting(user_id=user_id,
+                                   dry_time=int(dry_time), calving_preparation=int(calving_preparation_time)
+                                   )
 
         CowUtils.reload_all_reproduction(
-            user_id=current_user.id)  # type: ignore
+            user_id=user_id)
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -104,7 +112,7 @@ def upload_cows():
         for cow_id in cow_ids:
             try:
                 CowUtils.add_cow(user_id=user_id, cow_id=int(
-                    cow_id), init_as_cow=True)  # type: ignore
+                    cow_id), init_as_cow=True)
                 added += 1
             except ValueError:
                 skipped += 1
@@ -133,12 +141,11 @@ def upload_calfs():
         for calf_id in calf_ids:
             try:
                 CowUtils.add_calf(user_id=user_id, calf_id=int(
-                    calf_id))  # type: ignore
+                    calf_id))
                 added += 1
             except ValueError:
                 skipped += 1
 
-        # TODO message a madofier
         return jsonify({"success": True, "message": f"{added} veaux(s) ajoutée(s), {skipped} déjà existante(s)."})
     except Exception as e:
         return jsonify({"success": False, "message": f"Erreur de traitement : {e}"}), 500
@@ -173,13 +180,13 @@ def init_stock():
         for medic, qt_medic, unit in zip(medics, qt_medics, units):
             try:
                 remaining_stock[medic] = int(qt_medic)
-                current_user.user_utils_client.add_medic_in_pharma_list(
-                    medic=medic, mesur=unit)
+                UserUtils.add_medic_in_pharma_list(user_id=user_id,
+                                                   medic=medic, mesur=unit)
                 added += 1
             except ValueError:
                 skipped += 1
-        current_user.pharmacie_utils_client.upload_pharmacie_year(
-            year=year, remaining_stock=remaining_stock)
+        PharmacieUtils.upload_pharmacie_year(user_id=user_id,
+                                             year=year, remaining_stock=remaining_stock)
 
         return jsonify({"success": True, "message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
     except Exception as e:

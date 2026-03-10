@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Any
-from type_dict import Note, Reproduction, Traitement, Traitement_signe
+from .type_dict import Note, Reproduction, Traitement, Traitement_signe
 
 from web_app.models.user import UserUtils, Users
 

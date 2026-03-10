@@ -14,15 +14,16 @@ from flask import (
 from flask_login import login_required, current_user # type: ignore
 from io import BytesIO
 
-from ..api.connected_user import ConnectedUser
+from web_app.models.cow import CowUtils
+from web_app.models.prescription import PrescriptionUtils
+from web_app.models.type_dict import Traitement
+from web_app.models.user import UserUtils
+
+from ..connected_user import ConnectedUser
 from web_app.fonction import (
     date_to_str,
 )
-from tmp.models import (
-    CowUtils,
-    PrescriptionUtils,
-    Traitement,
-)
+
 
 
 pharma = Blueprint('pharma', __name__)
@@ -57,7 +58,7 @@ def update_care():
 
     try:
         # Récupération des données du formulaire
-        cow_id = request.form["id"]
+        cow_id = int(request.form["id"])
         care : Traitement = Traitement(
             date_traitement=request.form["care_date"],
             medicaments=extract_cares(request.form),
@@ -66,9 +67,9 @@ def update_care():
 
         lg.info(f"update care{cow_id}...")
 
-        remain_care = CowUtils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care) # type: ignore
+        remain_care = CowUtils.add_cow_care(user_id=current_user.id, cow_id=cow_id, cow_care=care)
 
-        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {date_to_str(remain_care[1])} pour {cow_id}." # type: ignore
+        success_message = f"il reste : {remain_care[0]} traitement autoriser en bio jusque'au {date_to_str(remain_care[1])} pour {cow_id}."# type: ignore TODO faire typage
         return jsonify({"success": True, "message": success_message})
 
     except Exception as e:
@@ -86,7 +87,7 @@ def add_medic_in_pharma_list():
         mesur = request.form["medic_unit"]
         lg.info(f"Ajout de {medic} a l'armoire a pharmacie...")
 
-        current_user.user_utils_client.add_medic_in_pharma_list(medic=medic, mesur=mesur)
+        UserUtils.add_medic_in_pharma_list(user_id=current_user.id, medic=medic, mesur=mesur)
 
                 # Retourne un JSON avec l'URL de redirection
         return jsonify({
@@ -136,7 +137,7 @@ def add_prescription():
                 "Veuillez renseigner au moins un médicament avec une quantité valide."
             )
 
-        PrescriptionUtils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares) # type: ignore
+        PrescriptionUtils.add_prescription(user_id=current_user.id, date=date_obj, care_items=cares)
 
         return jsonify({"success": True, "message": "Ordonnance ajoutée avec succès."})
 
@@ -229,10 +230,10 @@ def download():
 @pharma.route("/download_remaining_care", methods=["GET", "POST"])
 def download_remaining_care():
     try:
-        excel_io = remaining_care_to_excel(user_id=current_user.id) # type: ignore
+        excel_io = current_user.remaining_care_to_excel()
 
         return send_file(
-            excel_io, # type: ignore
+            excel_io,# type: ignore TODO faire typage
             download_name="traitement.xlsx",
             as_attachment=True,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

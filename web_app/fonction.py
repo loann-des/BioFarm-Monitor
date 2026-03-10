@@ -1,20 +1,12 @@
-import csv
-import io
 import logging as lg
 import os
-import openpyxl
 
-from collections import Counter
 from datetime import date, datetime, timedelta
-from io import BytesIO
-from openpyxl.styles import Font, PatternFill
 from typing import TypeVar
 
-from .models.cow import Cow, CowUtils
-from .models.prescription import Prescription, PrescriptionUtils
-from .models.pharmacie import Pharmacie, PharmacieUtils
-from .models.user import UserUtils
-from .models.type_dict import Traitement, Traitement_signe
+from .models.cow import Cow
+
+from .models.type_dict import Traitement
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))

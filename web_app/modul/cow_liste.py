@@ -10,15 +10,18 @@ from flask import (
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from web_app.fonction import my_strftime, parse_bool, parse_date
+from web_app.models.type_dict import Reproduction, Traitement
+from web_app.modul import views
+
 
 from ..models.cow import CowUtils
 from ..models.user import Users
-from .. import db
 import logging as lg
-from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
+from flask_login import login_required, current_user # type: ignore
 from datetime import datetime
 
-# from ..connected_user import ConnectedUser
+from ..connected_user import ConnectedUser
 
 
 
@@ -28,7 +31,7 @@ from datetime import datetime
 
 cow_liste = Blueprint('cow_liste', __name__)
 
-current_user : Users
+current_user : ConnectedUser
 
 @cow_liste.before_request
 def check_authentication():
@@ -111,8 +114,8 @@ def update_cow_details(cow_id):
 def update_cow_care(cow_id, care_index):
 
     # Récupération des données du formulaire
-    date_str = request.form.get("care_date")
-    new_date = datetime.strptime(date_str, "%Y-%m-%d").date() # type: ignore
+    date_str = str(request.form.get("care_date"))
+    new_date = my_strftime(date_str)
     new_info = request.form.get("care_info", "")
 
     # Récupération des médicaments
@@ -122,9 +125,9 @@ def update_cow_care(cow_id, care_index):
         if qty := request.form.get(f"medic_{i}_nb"):
             meds[med] = int(qty)
         i += 1
-
+    new_care : Traitement = Traitement(date_traitement=new_date, medicaments=meds, annotation=new_info)
     CowUtils.update_cow_care(
-        user_id=current_user.id, cow_id=cow_id, care_index=care_index, new_care=(new_date, meds, new_info)
+        user_id=current_user.id, cow_id=cow_id, care_index=care_index, new_care=new_care
     )
 
     flash("Soin modifié avec succès", "success")
@@ -147,35 +150,40 @@ def update_cow_reproduction(cow_id, repro_index):
 
     try:
         # Récupérer les données du formulaire
-        insemination = request.form.get("insemination")
-        ultrasound = request.form.get("ultrasound")
-        dry = request.form.get("dry")
-        calving_preparation = request.form.get("calving_preparation")
-        calving_date = request.form.get("calving_date")
-        calving = request.form.get("calving")
-        abortion = request.form.get("abortion")
-        info = request.form.get("info")
+        insemination = str(request.form.get("insemination"))
+        ultrasound = bool(request.form.get("ultrasound"))
+        dry = str(request.form.get("dry"))
+        dry_status = bool(request.form.get("dry_status"))# TODO ajouter au form
+        calving_preparation = str(request.form.get("calving_preparation"))
+        calving_preparation_status = bool(request.form.get("calving_preparation_status")) # TODO ajouter au form
+        calving_date = str(request.form.get("calving_date"))
+        calving = bool(request.form.get("calving"))
+        abortion = bool(request.form.get("abortion"))
+        info = str(request.form.get("info"))
 
         # Convertir les chaînes en dates et booléens
-        new_repro = {
-            "insemination": parse_date(insemination),
-            "ultrasound": parse_bool(ultrasound),
-            "dry": parse_date(dry),
-            "calving_preparation": parse_date(calving_preparation),
-            "calving_date": parse_date(calving_date),
-            "calving": parse_bool(calving),
-            "abortion": parse_bool(abortion),
-        }
+        new_repro : Reproduction = Reproduction(
+            insemination=my_strftime(insemination),
+            ultrasound=ultrasound,
+            dry=my_strftime(dry),
+            dry_status=dry_status,
+            calving_preparation=my_strftime(calving_preparation),
+            calving_preparation_status=calving_preparation_status,
+            calving_date=my_strftime(calving_date),
+            calving=calving,
+            abortion=abortion,
+            reproduction_details=info
+        )
 
         # Mettre à jour la reproduction et l'info complémentaire
-        CowUtils.update_cow_reproduction(
-            cow_id=cow_id, repro_index=repro_index, new_repro=(new_repro, info)
+        CowUtils.update_cow_reproduction( user_id=current_user.id,
+            cow_id=cow_id, repro_index=repro_index, new_repro=new_repro
         )
 
     except (ValueError, KeyError) as e:
         flash(f"Erreur lors de la mise à jour: {e}", "error")
     except Exception as e:
-        views.logger.exception("Unexpected error during cow reproduction update")
+        # views.logger.exception("Unexpected error during cow reproduction update")
         raise
 
     return redirect(url_for("cow_details", cow_id=cow_id))
@@ -184,7 +192,7 @@ def update_cow_reproduction(cow_id, repro_index):
 @cow_liste.route('/delete_cow_reproduction/<int:cow_id>/<int:repro_index>', methods=['POST'])
 def delete_cow_reproduction(cow_id, repro_index):
     try:
-        CowUtils.delete_cow_reproduction(cow_id=cow_id, repro_index=repro_index)
+        CowUtils.delete_cow_reproduction(user_id=current_user.id, cow_id=cow_id, repro_index=repro_index)
         flash("Reproduction supprimée.")
     except IndexError:
         flash("Reproduction introuvable.")

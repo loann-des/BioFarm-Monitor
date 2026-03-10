@@ -6,12 +6,13 @@ from sqlalchemy import (
     Integer,
     String,
     JSON,
-    )
+)
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import TypedDict, Any
 
 from .. import db
+
 
 class Setting(TypedDict):
     """Stocke des réglages utilisateur, en l'occurrence les durées de
@@ -24,7 +25,8 @@ class Setting(TypedDict):
     dry_time: int  # Temps de tarrisement (en jour)
     calving_preparation_time: int  # Temps de prepa vellage (en jour)
 
-class Users(db.Model, UserMixin):
+
+class Users(db.Model):
     """Représente un utilisateur dans la base de données. Inclut les durées de
     tarissement et de préparation du vêlage.
 
@@ -36,6 +38,7 @@ class Users(db.Model, UserMixin):
     id: Mapped[int] = mapped_column(
         Integer, primary_key=True)  # numero utilisateur
     email: Mapped[str] = mapped_column(
+        # adresse mail de l'utilisateur
         String(100), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(200), nullable=False)
     setting: Mapped[Setting] = mapped_column(
@@ -167,6 +170,17 @@ class UserUtils:
             à leurs quantités
         """
         user: Users = Users.query.get(user_id)  # type: ignore
-        return user.medic_list  # type: ignore
+        return user.medic_list
 
+    @staticmethod
+    def get_user_by_email(email: str) -> Users:
+        """Récupère l'utilisateur associé à l'adresse e-mail fournie en argument.
+
+        Arguments:
+            * email (str): Adresse e-mail de l'utilisateur
+        Renvoie:
+            * Users: L'utilisateur associé à l'adresse e-mail fournie en argument
+        """
+        user: Users = Users.query.filter_by(email=email).first() # type: ignore
+        return user
 # END USERS FONCTION
