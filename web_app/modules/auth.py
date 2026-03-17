@@ -10,8 +10,12 @@ from flask import (
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from ..models import Users, db
+from ..models.user import UserUtils, Users
 from ..connected_user import ConnectedUser
+from .. import db
+
+nb_user : int
+nb_connected_user : int
 
 auth = Blueprint('auth', __name__)
 
@@ -22,17 +26,17 @@ def login():
 
 @auth.route('/login', methods=['POST'])
 def login_post():
-    email = request.form.get('email')
-    password = request.form.get('password')
+    email = str(request.form.get('email'))
+    password = str(request.form.get('password'))
     remember = bool(request.form.get('remember'))
 
-    user : Users = Users.query.filter_by(email=email).first() # type: ignore
+    user : Users = UserUtils.get_user_by_email(email=email)
 
     if not user or not check_password_hash(user.password, password): # type: ignore
         return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
 
-    Connected_user = ConnectedUser(user_id=user.id)
-    login_user(Connected_user, remember=remember, force=True)
+    if not login_user(ConnectedUser(user=user), remember=remember, force=True):
+        return jsonify({"success": False, "message": "Erreur lors de la connexion."})
     return redirect(url_for('views.index'))
 
 @auth.route('/signup')
@@ -45,7 +49,7 @@ def signup_post():
     name = request.form.get('name')
     password = request.form.get('password')
 
-    if user := Users.query.filter_by(email=email).first():
+    if Users.query.filter_by(email=email).first():
         flash('Email address already exists')
         return redirect(url_for('auth.signup'))
 

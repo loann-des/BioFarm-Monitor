@@ -23,7 +23,7 @@ from web_app.fonction import (
     substract_date_to_str,
     sum_date_to_str
 )
-from web_app.models import CowUtils, init_db
+from tmp.models import CowUtils, init_db
 
 def random_date():
     y = randint(1900, 2100)

@@ -1,25 +1,13 @@
-import csv
-import io
 import logging as lg
 import os
-import openpyxl
 
-from collections import Counter
 from datetime import date, datetime, timedelta
-from io import BytesIO
-from openpyxl.styles import Font, PatternFill
 from typing import TypeVar
 
-from .models import (
-    Cow,
-    Prescription,
-    Pharmacie,
-    CowUtils,
-    PrescriptionUtils,
-    PharmacieUtils,
-    Traitement,
-    UserUtils,
-)
+from .models.cow import Cow
+
+from .models.type_dict import Traitement
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 URI = os.path.join(basedir, "txt")
@@ -341,7 +329,7 @@ def new_available_care(cow: Cow) -> date | None:
 #     """
 
 #     # Récupère les données
-#     care_raw : list[tuple[Traitement,int]] = CowUtils.get_all_care(user_id=user_id) or []
+#     care_raw : list[Traitement_signe] = CowUtils.get_all_care(user_id=user_id) or []
 #     prescription_raw : list[tuple[date, dict[str, int], bool]]= PrescriptionUtils.get_all_prescriptions_cares(user_id=user_id) or []
 
 #     care_data = [
@@ -573,22 +561,22 @@ def new_available_care(cow: Cow) -> date | None:
 #     return dict(sorted(calving_dates.items(), key=lambda item: item[1])) # type: ignore
 
 
-# def rename(pdf: FileStorage, img: FileStorage, article_id: int) -> tuple[str, str]:
-#     # Extensions
-#     pdf_ext = os.path.splitext(pdf.filename)[1] or ".pdf"
-#     img_ext = os.path.splitext(img.filename)[1] or ".jpg"
+# # def rename(pdf: FileStorage, img: FileStorage, article_id: int) -> tuple[str, str]:
+# #     # Extensions
+# #     pdf_ext = os.path.splitext(pdf.filename)[1] or ".pdf"
+# #     img_ext = os.path.splitext(img.filename)[1] or ".jpg"
 
-#     # Noms automatiques
-#     pdf_filename = f"blog-{article_id}{pdf_ext}"
-#     img_filename = f"blog-{article_id}{img_ext}"
+# #     # Noms automatiques
+# #     pdf_filename = f"blog-{article_id}{pdf_ext}"
+# #     img_filename = f"blog-{article_id}{img_ext}"
 
-#     # Chemins complets
-#     pdf_path = os.path.join('web_Page/static/pdf', pdf_filename)
-#     img_path = os.path.join('web_Page/static/images/blog', img_filename)
+# #     # Chemins complets
+# #     pdf_path = os.path.join('web_Page/static/pdf', pdf_filename)
+# #     img_path = os.path.join('web_Page/static/images/blog', img_filename)
 
-#     # Sauvegarde
-#     pdf.save(pdf_path)
-#     img.save(img_path)
+# #     # Sauvegarde
+# #     pdf.save(pdf_path)
+# #     img.save(img_path)
 
-#     # Retourner les chemins relatifs depuis "static/"
-#     return f"pdf/{pdf_filename}", f"images/blog/{img_filename}"
+# #     # Retourner les chemins relatifs depuis "static/"
+# #     return f"pdf/{pdf_filename}", f"images/blog/{img_filename}"

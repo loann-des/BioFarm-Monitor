@@ -1,7 +1,7 @@
 from datetime import datetime
 from icalendar import Calendar, Event
 
-from .models import Cow
+from .models.cow import Cow
 
 def create_drying_event(date_obj: datetime, cows: list[Cow]) -> Event:
     """Créée un événement iCalendar pour le tarissement des vaches.
