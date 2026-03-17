@@ -15,7 +15,6 @@ from web_app.fonction import (
     format_bool_fr,
     last,
     my_strftime,
-    nb_cares_years,
     nb_cares_years_of_cow,
     parse_bool,
     parse_date,
@@ -23,16 +22,14 @@ from web_app.fonction import (
     substract_date_to_str,
     sum_date_to_str
 )
-from tmp.models import CowUtils, init_db
-
 def random_date():
     y = randint(1900, 2100)
     m = randint(1, 12)
     d = 0
 
-    if m in [1, 3, 5, 7, 8, 10, 12]:
+    if m in {1, 3, 5, 7, 8, 10, 12}:
         d = randint(1, 31)
-    elif m in [4, 6, 9, 11]:
+    elif m in {4, 6, 9, 11}:
         d = randint(1, 30)
     else:
         d = randint(1, 28)

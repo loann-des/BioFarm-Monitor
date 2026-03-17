@@ -5,7 +5,7 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 
 
-from web_app.fonction import date_to_str, new_available_care, parse_date, remaining_care_on_year
+from web_app.fonction import date_to_str, day_delta, new_available_care, parse_date, remaining_care_on_year
 from .models.type_dict import (
     Pharma_list_event,
     Prescription_export_format,
@@ -36,6 +36,26 @@ class ConnectedUser(UserMixin):
         self.setting = user.setting
         self.id = user.id
         self.medic_list = user.medic_list
+
+    def nb_cares_years(self, cow_id: int) -> int:
+        """Compte le nombre de traitements administrés à une vache au cours de
+        l'année passée.
+
+        Cette fonction récupère toutes les entrées de l'historique des traitements
+        de la vache associée à l'identifiant fourni en argument et renvoie le nombre
+        de ces entrées datant des 365 derniers jours.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+
+        Renvoie:
+            * int: le nombre de traitements administrés dans les 365 derniers jours
+        """
+        cares: list[Traitement] = CowUtils.get_care_by_id(user_id=self.id, cow_id=cow_id)  # type: ignore
+        return sum(
+            day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
+        )  # sum boolean if True 1 else 0
 
     def get_pharma_list(self) -> list[str]:
         """Returns a list of all medication names available in the pharmacy.

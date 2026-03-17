@@ -14,10 +14,12 @@ from flask import (
 from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
 from io import BytesIO
 
-from ..connected_user import ConnectedUser
+from web_app.models.pharmacie import PharmacieUtils
 
-from ..fonction import *
-from ..models import CowUtils, UserUtils, Users
+from web_app.connected_user import ConnectedUser
+
+from web_app.fonction import *
+from web_app.models.cow import CowUtils, UserUtils
 
 views = Blueprint('views', __name__)
 
@@ -67,16 +69,15 @@ def settings():
 @views.route("/user_setting", methods=["POST"])
 def user_setting():
     try:
-        # current_user : Users = current_user
         user_id = current_user.id
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
 
         UserUtils.set_user_setting(
-            user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time) # type: ignore
+            user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time)
         )
 
-        CowUtils.reload_all_reproduction(user_id=user_id) # type: ignore
+        CowUtils.reload_all_reproduction(user_id=user_id)
 
         return jsonify({"success": True, "message": "setting mis a jours."})
 
@@ -104,7 +105,7 @@ def upload_cows():
         added, skipped = 0, 0
         for cow_id in cow_ids:
             try:
-                CowUtils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True) # type: ignore
+                CowUtils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True)
                 added += 1
             except ValueError:
                 skipped += 1
@@ -132,7 +133,7 @@ def upload_calfs():
         added, skipped = 0, 0
         for calf_id in calf_ids:
             try:
-                CowUtils.add_calf(user_id=user_id, calf_id=int(calf_id)) # type: ignore
+                CowUtils.add_calf(user_id=user_id, calf_id=int(calf_id))
                 added += 1
             except ValueError:
                 skipped += 1
@@ -173,11 +174,11 @@ def init_stock():
         for medic,qt_medic,unit in zip(medics,qt_medics,units):
             try:
                 remaining_stock[medic] = int(qt_medic)
-                UserUtils.add_medic_in_pharma_list(user_id=user_id, medic=medic, mesur=unit) # type: ignore
+                UserUtils.add_medic_in_pharma_list(user_id=user_id, medic=medic, mesur=unit)
                 added += 1
             except ValueError:
                 skipped += 1
-        PharmacieUtils.upload_pharmacie_year(user_id=user_id, year=year, remaining_stock=remaining_stock) # type: ignore
+        PharmacieUtils.upload_pharmacie_year(user_id=user_id, year=year, remaining_stock=remaining_stock)
 
         return jsonify({"success": True,"message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s)."})
     except Exception as e:

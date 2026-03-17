@@ -9,11 +9,11 @@ from flask import (
 )
 
 from datetime import datetime
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user # type: ignore
 
-from ..connected_user import ConnectedUser
-from ..fonction import parse_date
-from ..models import CowUtils
+from web_app.connected_user import ConnectedUser
+from web_app.fonction import parse_date
+from web_app.models.cow import CowUtils
 
 herd = Blueprint("herd", __name__)
 
@@ -29,7 +29,7 @@ def check_authentication():
 def list():
     cows = CowUtils.get_all_cows(current_user.id)
 
-    return [cow.to_json() for cow in cows]
+    return [cow.to_json() for cow in cows] #TODO masmalow
 
 @login_required
 @herd.route("/herd/list/filter", methods=["GET"])
@@ -39,7 +39,7 @@ def list_filter():
     cows = filter(lambda cow: idsearch in str(cow.cow_id),
             CowUtils.get_all_cows(current_user.id))
 
-    return [cow.to_json() for cow in cows]
+    return [cow.to_json() for cow in cows] #TODO masmalow
 
 @login_required
 @herd.route("/herd/acquire", methods=["POST"])
@@ -55,7 +55,7 @@ def acquire():
 
         birth_date = parse_date(request.form["birth_date"])
 
-        CowUtils.update_cow(user_id=user_id, cow_id=cow_id, born_date = birth_date)
+        CowUtils.update_cow(user_id=user_id, cow_id=cow_id, born_date = birth_date)#TODO verif champs
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}

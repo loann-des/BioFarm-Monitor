@@ -5,10 +5,10 @@ from flask import (
     url_for
 )
 
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user # type: ignore
 
 from ..connected_user import ConnectedUser
-from ..models import CowUtils
+from web_app.models.cow import CowUtils
 
 cowbp = Blueprint("cow", __name__)
 

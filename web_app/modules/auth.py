@@ -10,6 +10,8 @@ from flask import (
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from web_app.models.type_dict import Setting
+
 from ..models.user import UserUtils, Users
 from ..connected_user import ConnectedUser
 from .. import db
@@ -32,7 +34,7 @@ def login_post():
 
     user : Users = UserUtils.get_user_by_email(email=email)
 
-    if not user or not check_password_hash(user.password, password): # type: ignore
+    if not user or not check_password_hash(user.password, password):
         return jsonify({"success": False, "message": f"Erreur : {"incorect password" if user else "mail inconnue"}"})
 
     if not login_user(ConnectedUser(user=user), remember=remember, force=True):
@@ -45,15 +47,15 @@ def signup():
 
 @auth.route('/signup', methods=['POST'])
 def signup_post():
-    email = request.form.get('email')
-    name = request.form.get('name')
-    password = request.form.get('password')
+    email = str(request.form.get('email'))
+    name = request.form.get('name') #TODO ajout du nom
+    password = str(request.form.get('password'))
 
     if Users.query.filter_by(email=email).first():
         flash('Email address already exists')
         return redirect(url_for('auth.signup'))
 
-    new_user = Users(email=email, name=name, password=generate_password_hash(password)) # type: ignore
+    new_user = Users(email=email, password=generate_password_hash(password), setting= Setting(dry_time=0,calving_preparation_time=0))
     db.session.add(new_user)
     db.session.commit()
 
