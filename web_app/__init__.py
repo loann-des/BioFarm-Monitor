@@ -2,7 +2,7 @@ from datetime import timedelta
 from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 # Initialize SQLAlchemy instance (outside create_app for import access)
@@ -59,7 +59,14 @@ def create_app():
 
     return app
 
+# Tell the app it is behind a reverse proxy (better for production)
+def create_proxy_app():
+    app = create_app()
 
+    app.wsgi_app = ProxyFix(
+            app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)
+
+    return app
 
 app = create_app()
 
@@ -67,4 +74,3 @@ app = create_app()
 def init_db():
     from .models import init_db
     init_db()
-
