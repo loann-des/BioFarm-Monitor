@@ -1,6 +1,6 @@
 # Standard
 import logging as lg
-
+from marshmallow import Schema, fields
 from datetime import date
 from sqlalchemy import (
     Boolean,
@@ -18,6 +18,17 @@ from .type_dict import Note, Reproduction, Traitement, Traitement_signe
 from web_app.models.user import UserUtils, Users
 
 from .. import db
+
+class CowSchema(Schema):
+    user_id = fields.Int()
+    cow_id = fields.Int()
+    cow_cares = fields.List(fields.Dict())
+    info = fields.List(fields.Dict())
+    in_farm = fields.Boolean()
+    born_date = fields.Date()
+    reproduction = fields.List(fields.Dict())
+    is_calf = fields.Boolean()
+    init_as_cow = fields.Boolean()
 
 class Cow(db.Model):
     """Représente une vache dans la base de données, incluant ses traitements,
@@ -92,6 +103,11 @@ class Cow(db.Model):
         self.reproduction = reproduction
         self.is_calf = is_calf
         self.init_as_cow = init_as_cow
+
+    def to_json(self):
+        schema = CowSchema()
+
+        return schema.dump(self)
 
 
 class CowUtils:
