@@ -83,6 +83,8 @@ async function updateHerd() {
       const cowIdContainer = entry.children[0].children[0];
       const cowBirthDateContainer = entry.children[1];
 
+      cowIdContainer.setAttribute("href", `/cow/${cow.cow_id}`)
+
       cowIdContainer.textContent = cow.cow_id;
       cowIdContainer.innerHTML = cow.cow_id;
 
@@ -146,6 +148,8 @@ async function updateHerdFiltered(e) {
 
     const cowIdContainer = entry.children[0].children[0];
     const cowBirthDateContainer = entry.children[1];
+
+    cowIdContainer.setAttribute("href", `/cow/${cow.cow_id}`);
 
     cowIdContainer.textContent = cow.cow_id;
     cowIdContainer.innerHTML = cow.cow_id;

@@ -160,6 +160,10 @@ table tbody tr td {
   text-align: center;
 }
 
+table tbody tr td a {
+  color: black;
+}
+
 section.collapsible h2 {
   user-select: none;
   cursor: pointer;
