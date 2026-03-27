@@ -1,7 +1,6 @@
 # Standard
 import logging as lg
 
-from flask_login import UserMixin
 from sqlalchemy import (
     Integer,
     String,

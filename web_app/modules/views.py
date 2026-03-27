@@ -16,10 +16,11 @@ from io import BytesIO
 
 from web_app.models.pharmacie import PharmacieUtils
 
-from web_app.connected_user import ConnectedUser
+from web_app.connnected_user_web.connected_user import ConnectedUser
 
 from web_app.fonction import *
-from web_app.models.cow import CowUtils, UserUtils
+from web_app.models.cow import CowUtils
+from web_app.models.user import UserUtils
 
 views = Blueprint('views', __name__)
 
@@ -73,12 +74,10 @@ def user_setting():
         dry_time = request.form["dry_time"]
         calving_preparation_time = request.form["calving_preparation_time"]
 
-        UserUtils.set_user_setting(
-            user_id=user_id, dry_time=int(dry_time), calving_preparation=int(calving_preparation_time)
+        current_user.set_user_setting(
+            dry_time=int(dry_time), calving_preparation=int(calving_preparation_time)
         )
-
-        CowUtils.reload_all_reproduction(user_id=user_id)
-
+        
         return jsonify({"success": True, "message": "setting mis a jours."})
 
     except Exception as e:

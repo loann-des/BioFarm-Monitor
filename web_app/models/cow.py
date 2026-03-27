@@ -8,20 +8,23 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     PrimaryKeyConstraint,
-    JSON
-    )
+    JSON,
+    String
+
+)
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Any
+
 from .type_dict import Note, Reproduction, Traitement, Traitement_signe
 
-from web_app.models.user import UserUtils, Users
-
 from .. import db
+
 
 class CowSchema(Schema):
     user_id = fields.Int()
     cow_id = fields.Int()
+    name = fields.String()
     cow_cares = fields.List(fields.Dict())
     info = fields.List(fields.Dict())
     in_farm = fields.Boolean()
@@ -29,6 +32,7 @@ class CowSchema(Schema):
     reproduction = fields.List(fields.Dict())
     is_calf = fields.Boolean()
     init_as_cow = fields.Boolean()
+
 
 class Cow(db.Model):
     """Représente une vache dans la base de données, incluant ses traitements,
@@ -39,6 +43,10 @@ class Cow(db.Model):
                                          nullable=False)
     cow_id: Mapped[int] = mapped_column(
         Integer, nullable=False)  # numero Vache
+
+    name: Mapped[str | None
+                 ] = mapped_column(
+        String, nullable=True)  # nom Vache
 
     cow_cares: Mapped[list[Traitement]] = mapped_column(
         MutableList.as_mutable(JSON),
@@ -79,6 +87,7 @@ class Cow(db.Model):
         self,
         user_id: int,
         cow_id: int,
+        name: str | None = None,
         cow_cares: list[Traitement] | None = None,
         info: list[Note] | None = None,
         in_farm: bool = True,
@@ -96,6 +105,7 @@ class Cow(db.Model):
 
         self.user_id = user_id
         self.cow_id = cow_id
+        self.name = name
         self.cow_cares = cow_cares
         self.info = info
         self.in_farm = in_farm
@@ -108,6 +118,39 @@ class Cow(db.Model):
         schema = CowSchema()
 
         return schema.dump(self)
+    
+    def is_calf_care(self, traitement: Traitement) -> bool:
+        """Détermine si un traitement doit être considéré comme un soin de génisse.
+
+        Un traitement est considéré comme un soin de génisse si la vache est marquée
+        comme génisse, ou si elle n'est pas initialisée comme vache adulte et que
+        le traitement a eu lieu avant sa première insémination.
+
+        Arguments:
+            * traitement (Traitement): Traitement à analyser.
+
+        Renvoie:
+            * bool: True si le traitement est considéré comme un soin de génisse,
+            False sinon.
+        """
+        from web_app.fonction import parse_date
+        return self.is_calf or (
+                            not self.init_as_cow 
+                            and self.as_reproduction 
+                            and parse_date(traitement["date_traitement"]) <= parse_date(self.reproduction[0]["insemination"])
+                        )        
+        
+    def as_reproduction(self) -> bool:
+        """Indique si la vache possède un historique de reproduction.
+
+        La fonction retourne True si au moins une reproduction est enregistrée
+        pour cette vache, et False sinon.
+
+        Renvoie:
+            * bool: True si la liste des reproductions n'est pas vide, False
+            sinon.
+        """
+        return bool(self.reproduction)     
 
 
 class CowUtils:
@@ -284,6 +327,18 @@ class CowUtils:
                 f"(user :{user_id}, cow: {calf_id}) : already in database")
             raise ValueError(
                 f"(user :{user_id}, cow: {calf_id}) : already in database")
+
+    @staticmethod
+    def set_cow_name(user_id: int, cow_id: int, cow_name: str):
+        if cow := CowUtils.get_cow(user_id=user_id, cow_id=cow_id):
+            cow.name = cow_name
+            db.session.commit()
+            lg.info(
+                f"(user :{user_id}, cow: {cow_id}) : updated with name: {cow_name} in database")
+        else:
+            lg.error(f"(user :{user_id}, cow: {cow_id}) : not in database")
+            raise ValueError(
+                f"(user :{user_id}, cow: {cow_id}) : doesn't exist in database")
 
     # END general cow functions ------------------------------------------------
 
@@ -567,7 +622,9 @@ class CowUtils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool) -> None:
+    def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool, dry_time: int,  calving_preparation_time: int) -> None:
+         # TODO modifier doc et appel de la fonction
+
         """Valide ou invalide les résultats des ultrasons pour la dernière
         insémination d'une vache.
 
@@ -600,7 +657,7 @@ class CowUtils:
             if ultrasound:
 
                 cow.reproduction[-1] = CowUtils.set_reproduction(
-                    user_id, reproduction)
+                    user_id, reproduction, dry_time, calving_preparation_time)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
             else:
                 lg.info(f"insemination on {date} of {cow_id} invalidate")
@@ -611,8 +668,8 @@ class CowUtils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    # TODO fonction Pure calculatoir peut etre sortir pour fonction.py ?
-    def set_reproduction(user_id: int, reproduction: Reproduction) -> Reproduction:
+    def set_reproduction(user_id: int, reproduction: Reproduction, dry_time: int,  calving_preparation_time: int) -> Reproduction:
+        # TODO modifier doc et appel de la fonction
         """Calcule les dates de reproduction pour une vache en fonction de sa
         date d'insémination et des réglages utilisateur.
 
@@ -629,15 +686,13 @@ class CowUtils:
             dates calculées
         """
         from web_app.fonction import substract_date_to_str, sum_date_to_str
-        user: Users = UserUtils.get_user(user_id=user_id)
         calving_date: str = sum_date_to_str(reproduction["insemination"], 280)
         print("calving_date ok")
         reproduction["dry"] = substract_date_to_str(
-            calving_date, int(user.setting["dry_time"]))  # type: ignore
+            calving_date, dry_time)
         print("dry ok")
         reproduction["calving_preparation"] = substract_date_to_str(
-            # type: ignore
-            calving_date, int(user.setting["calving_preparation_time"]))
+            calving_date, calving_preparation_time)
         reproduction["calving_date"] = calving_date
         return reproduction
 
@@ -668,7 +723,8 @@ class CowUtils:
         return cow.reproduction[-1]
 
     @staticmethod
-    def reload_all_reproduction(user_id: int) -> None:
+    def reload_all_reproduction(user_id: int, dry_time: int, calving_preparation_time: int) -> None:
+        # TODO modifier doc et appell de fonction
         """Recalcule les dates associées à la dernière reproduction des vaches.
 
         Cette fonction parcourt la liste des vaches et recalcule pour chacune
@@ -690,7 +746,7 @@ class CowUtils:
 
                 cow.reproduction[-1] = CowUtils.set_reproduction(
                     user_id,
-                    cow.reproduction[-1])
+                    cow.reproduction[-1], dry_time, calving_preparation_time)
 
         db.session.commit()
         lg.info("reproduction reload")

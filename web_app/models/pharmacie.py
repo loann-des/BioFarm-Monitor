@@ -1,4 +1,8 @@
 # Standard
+from collections import Counter
+from datetime import datetime
+from enum import Enum
+
 from sqlalchemy import (
     ForeignKey,
     Integer,
@@ -10,6 +14,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 from typing import Any
 
 from .. import db
+
+class PharmacieAttr(Enum):
+    total_enter = "total_enter"
+    total_used = "total_used"
+    total_used_calf = "total_used_calf"
+    total_out_dlc = "total_out_dlc"
+    remaining_stock = "remaining_stock"
+
 
 class Pharmacie(db.Model):
     """Représente le bilan de la pharmacie pour une année. Inclut les
@@ -132,23 +144,25 @@ class PharmacieUtils:
         raise ValueError(f"{year} doesn't exist.")
 
     @staticmethod
-    def updateOrDefault_pharmacie_year(user_id: int, year: int,
+    def updateOrDefault_pharmacie_year(user_id: int,
                                        default: Pharmacie) -> Pharmacie:
-        """Met à jour l'année de pharmacie correspondant à une année spécifiée
-        si elle existe, sinon la créée avec les valeurs par défaut.
+        """Met à jour ou crée une entrée de pharmacie pour une année donnée.
 
-        Cette fonction met à jour tous les attributs de l'entrée de pharmacie
-        correspondant à l'année fournie en argument, ou créée une nouvelle
-        entrée remplie avec les valeurs par défaut fournies en argument.
+        Cette fonction cherche une entrée de pharmacie pour l'utilisateur et
+        l'année de l'objet fourni, met à jour tous ses attributs connus avec
+        ceux de l'objet `default` si elle existe, ou ajoute une nouvelle entrée
+        sinon, puis enregistre les changements en base.
 
         Arguments:
-            * user_id (int): Identifiant de l'utilisateur
-            * year (int): Année de l'entrée à modifier
-            * default (Pharmacie): Valeurs par défaut de l'entrée
+            * user_id (int): Identifiant de l'utilisateur concerné
+            * default (Pharmacie): Objet de référence contenant les valeurs à
+            appliquer ou à insérer
 
         Renvoie:
-            * Pharmacie: L'entrée modifiée ou créée pour l'année spécifiée
+            * Pharmacie: L'entrée de pharmacie mise à jour ou nouvellement
+            créée.
         """
+        year = default.year
         pharmacie_db = Pharmacie.query.get({"user_id": user_id, "year": year})
 
         if pharmacie_db:
@@ -259,3 +273,47 @@ class PharmacieUtils:
         db.session.add(pharmacie)
         db.session.commit()
 
+    @staticmethod
+    def modify_pharmacie_year(user_id: int, year: int, attr: PharmacieAttr, care_delta: dict[str, int]) -> None:
+        """Modifie une entrée de pharmacie pour une année spécifique, en
+        mettant à jour un attribut spécifique avec les données fournies.
+
+        Cette fonction met à jour l'attribut de l'entrée de pharmacie
+        correspondant à l'année fournie en argument, avec les données fournies
+        en argument. Et met à jour les attributs "total_out" et "remaining_stock" en conséquence.
+        commit les changements dans la base de données.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * year (int): Année de l'entrée de pharmacie à modifier
+            * attr (str): Attribut de l'entrée de pharmacie à modifier, parmi
+            "total_enter", "total_used", "total_used_calf", "total_out_dlc"
+        """
+        pharmacie : Pharmacie = PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year)
+        remaining_stock_old = pharmacie.remaining_stock
+        
+        setattr(pharmacie, attr.value, dict(Counter(getattr(pharmacie, attr.value)) + Counter(care_delta)))
+        
+        if attr in [PharmacieAttr.total_used, PharmacieAttr.total_used_calf, PharmacieAttr.total_out_dlc]:
+            pharmacie.total_out = dict(Counter(pharmacie.total_out) + Counter(care_delta)) # on met a jour le total out si c'est du used ou du out dlc
+            if attr == PharmacieAttr.total_used_calf:
+                pharmacie.total_used = dict(Counter(pharmacie.total_used) + Counter(care_delta)) # on met a jour le total used si c'est du used calf
+            pharmacie.remaining_stock = dict(Counter(pharmacie.remaining_stock) - Counter(care_delta)) # on retire du stock restant si c'est du used ou du out dlc
+        if attr == PharmacieAttr.total_enter:
+            pharmacie.remaining_stock = dict(Counter(pharmacie.remaining_stock) + Counter(care_delta)) # on ajoute au stock restant si c'est du total enter
+        
+        db.session.commit()
+        if year < datetime.now().year :
+            #propagation de la modification sur remaining stock des années suivante
+            stock_delta = dict(Counter(pharmacie.remaining_stock) - Counter(remaining_stock_old))
+            PharmacieUtils.modify_pharmacie_year(user_id=user_id, year=year+1, attr= PharmacieAttr.remaining_stock, care_delta=stock_delta)
+        
+    @staticmethod
+    def validat_quantity(user_id: int, stock_delta: dict[str, int], year_to_verify: int) -> bool:
+        for year in range(year_to_verify,datetime.now().year):
+            pharmatcie: Pharmacie = PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year)
+            new_remaining_stock : dict[str, int] =  dict(Counter(pharmatcie.remaining_stock) + Counter(stock_delta) )
+            if any(x < 0 for x in new_remaining_stock.values()) :
+                return False
+        return True
+            

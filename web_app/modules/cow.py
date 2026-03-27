@@ -7,7 +7,7 @@ from flask import (
 
 from flask_login import login_required, current_user # type: ignore
 
-from ..connected_user import ConnectedUser
+from ..connnected_user_web.connected_user import ConnectedUser
 from web_app.models.cow import CowUtils
 
 cowbp = Blueprint("cow", __name__)

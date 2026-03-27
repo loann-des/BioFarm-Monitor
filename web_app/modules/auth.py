@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from web_app.models.type_dict import Setting
 
 from ..models.user import UserUtils, Users
-from ..connected_user import ConnectedUser
+from ..connnected_user_web.connected_user import ConnectedUser
 from .. import db
 
 nb_user : int

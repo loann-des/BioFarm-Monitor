@@ -11,7 +11,7 @@ from flask import (
 from datetime import datetime
 from flask_login import login_required, current_user # type: ignore
 
-from web_app.connected_user import ConnectedUser
+from web_app.connnected_user_web.connected_user import ConnectedUser
 from web_app.fonction import parse_date
 from web_app.models.cow import CowUtils
 
@@ -55,7 +55,7 @@ def acquire():
 
         birth_date = parse_date(request.form["birth_date"])
 
-        CowUtils.update_cow(user_id=user_id, cow_id=cow_id, born_date = birth_date)#TODO verif champs
+        CowUtils.update_cow(user_id=user_id, cow_id=cow_id, kwargs={'born_date' : birth_date})
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}

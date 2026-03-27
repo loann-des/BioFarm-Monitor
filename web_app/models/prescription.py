@@ -84,7 +84,7 @@ class PrescriptionUtils:
             * care_items (dict[str, int]): Éléments de la prescription,
             typiquement nom du traitement et dose
         """
-        prescription = Prescription(user_id=user_id, date=date, care=care_items,  # type: ignore
+        prescription = Prescription(user_id=user_id, date=date, care=care_items,
                                     dlc_left=False)
         db.session.add(prescription)
         db.session.commit()
@@ -104,7 +104,7 @@ class PrescriptionUtils:
             typiquement nom du traitement et dose
         """
         # TODO Pas plus de sortie= que de qt en stock
-        prescription = Prescription(user_id=user_id, date=date, care=care_items,  # type: ignore
+        prescription = Prescription(user_id=user_id, date=date, care=care_items,
                                     dlc_left=True)
         db.session.add(prescription)
         db.session.commit()

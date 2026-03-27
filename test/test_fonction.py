@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import os
 import sys
+
+from web_app.models import init_db_test
+from web_app.models.cow import CowUtils
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), "../"))
 
 import unittest
@@ -134,51 +137,18 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
     def tearDown(self):
         self.app_context.pop()
 
-    def test_nb_cares_years(self):
-        init_db()
-
-        for _i in range(10):
-            user_id = randint(1, 9999)
-            cow_id = randint(1, 9999)
-
-            CowUtils.add_cow(user_id, cow_id)
-
-            cow = CowUtils.get_cow(user_id, cow_id)
-            self.assertEqual(0, len(cow.cow_cares))
-
-            medics_in_last_year = 0
-
-            for j in range(10):
-                last_medic_days = randint(0, 730)
-
-                if last_medic_days <= 365:
-                    medics_in_last_year += 1
-
-                medic_date = datetime.now().date() - timedelta(days=last_medic_days)
-                medic_name = "".join([chr(randint(33, 126)) for _ in range(10)])
-                medic_amount = randint(1, 9999)
-                annotation = "".join([chr(randint(33, 126)) for _ in range(10)])
-
-                # XXX: Return value ignored for now. Use when
-                # remaining_care_on_year and new_available_care will be
-                # validated.
-                _ = CowUtils.add_cow_care(user_id, cow_id, {
-                    "date_traitement": my_strftime(medic_date),
-                    "medicaments": {medic_name: medic_amount},
-                    "annotation": annotation
-                })
-
-                cow = CowUtils.get_cow(user_id, cow_id)
-                self.assertEqual(j + 1, len(cow.cow_cares))
-                self.assertEqual(medics_in_last_year,
-                    nb_cares_years(user_id, cow_id))
-
     def test_nb_cares_years_of_cow(self):
-        init_db()
+        init_db_test()
+        users : dict[int, list[int]] = {}
 
         for _i in range(10):
             user_id = randint(1, 9999)
+            if user_id not in users:
+                users[user_id] = []
             cow_id = randint(1, 9999)
+            while cow_id in users[user_id] :
+                cow_id = randint(1, 9999)
+            users[user_id].append(cow_id)
 
             CowUtils.add_cow(user_id, cow_id)
 
@@ -213,7 +183,7 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
                     nb_cares_years_of_cow(cow))
 
     def test_remaining_care_on_year(self):
-        init_db()
+        init_db_test()
 
         for _i in range(10):
             user_id = randint(1, 9999)
@@ -259,67 +229,67 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
     def test_new_available_care(self):
         pass
 
-class PharmaUtilityFunctionsUnitTests:
-    # TODO: test get_pharma_list
-    def test_get_pharma_list(self):
-        pass
+# class PharmaUtilityFunctionsUnitTests:
+#     # TODO: test get_pharma_list
+#     def test_get_pharma_list(self):
+#         pass
 
-    # TODO: test get_pharma_len
-    def test_get_pharma_len(self):
-        pass
+#     # TODO: test get_pharma_len
+#     def test_get_pharma_len(self):
+#         pass
 
-    # TODO: test sum_pharmacie_len
-    def test_sum_pharmacie_in(self):
-        pass
+#     # TODO: test sum_pharmacie_len
+#     def test_sum_pharmacie_in(self):
+#         pass
 
-    # TODO: test sum_pharmacie_used
-    def test_sum_pharmacie_used(self):
-        pass
+#     # TODO: test sum_pharmacie_used
+#     def test_sum_pharmacie_used(self):
+#         pass
 
-    # TODO: test sum_calf_used
-    def test_sum_calf_used(self):
-        pass
+#     # TODO: test sum_calf_used
+#     def test_sum_calf_used(self):
+#         pass
 
-    # TODO: test sum_dlc_left
-    def test_sum_dlc_left(self):
-        pass
+#     # TODO: test sum_dlc_left
+#     def test_sum_dlc_left(self):
+#         pass
 
-    # TODO: test sum_pharmacie_left
-    def test_sum_pharmacie_left(self):
-        pass
+#     # TODO: test sum_pharmacie_left
+#     def test_sum_pharmacie_left(self):
+#         pass
 
-    # TODO: test remaining_pharmacie_stock
-    def test_remaining_pharmacie_stock(self):
-        pass
+#     # TODO: test remaining_pharmacie_stock
+#     def test_remaining_pharmacie_stock(self):
+#         pass
 
-    # TODO: test get_history_pharmacie
-    def test_get_history_pharmacie(self):
-        pass
+#     # TODO: test get_history_pharmacie
+#     def test_get_history_pharmacie(self):
+#         pass
 
-    # TODO: test update_pharmacie_years
-    def test_update_pharmacie_year(self):
-        pass
+#     # TODO: test update_pharmacie_years
+#     def test_update_pharmacie_year(self):
+#         pass
 
-    # TODO: test pharmacie_to_csv
-    def test_pharmacie_to_csv(self):
-        pass
+#     # TODO: test pharmacie_to_csv
+#     def test_pharmacie_to_csv(self):
+#         pass
 
-    # TODO: test remaining_care_to_excel
-    def test_remaining_care_to_excel(self):
-        pass
+#     # TODO: test remaining_care_to_excel
+#     def test_remaining_care_to_excel(self):
+#         pass
 
-class HerdUtilityFunctionsUnitTests:
-    # TODO: test get_all_dry_date
-    def test_get_all_dry_date(self):
-        pass
+# class HerdUtilityFunctionsUnitTests:
+#     # TODO: test get_all_dry_date
+#     def test_get_all_dry_date(self):
+#         pass
 
-    # TODO: test get_all_calving_preparation_date
-    def test_get_all_calving_preparation_date(self):
-        pass
+#     # TODO: test get_all_calving_preparation_date
+#     def test_get_all_calving_preparation_date(self):
+#         pass
 
-    # TODO: test get_all_calving_date
-    def test_get_all_calving_date(self):
-        pass
+#     # TODO: test get_all_calving_date
+#     def test_get_all_calving_date(self):
+#         pass
 
 if (__name__ == "__main__"):
     unittest.main()

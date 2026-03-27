@@ -1,12 +1,15 @@
 import csv
+from enum import Enum
 import io
 from flask_login import UserMixin
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 
 
+from web_app.connnected_user_web.connected_user_dependences_web.CowUtils_user import CowUtilsUser
+from web_app.connnected_user_web.connected_user_dependences_web.PrescriptionUtils_user import PrescriptionUtilsUser
 from web_app.fonction import date_to_str, day_delta, new_available_care, parse_date, remaining_care_on_year
-from .models.type_dict import (
+from ..models.type_dict import (
     Pharma_list_event,
     Prescription_export_format,
     Setting,
@@ -14,10 +17,10 @@ from .models.type_dict import (
     Traitement_signe
 )
 
-from .models.user import Users, UserUtils
-from .models.cow import CowUtils, Cow
-from .models.prescription import PrescriptionUtils, Prescription
-from .models.pharmacie import PharmacieUtils, Pharmacie
+from ..models.user import Users, UserUtils
+from ..models.cow import CowUtils, Cow
+from ..models.prescription import PrescriptionUtils, Prescription
+from ..models.pharmacie import PharmacieUtils, Pharmacie
 from collections import Counter
 from datetime import date, datetime
 import logging as lg
@@ -29,6 +32,11 @@ class ConnectedUser(UserMixin):
     setting: Setting
     medic_list : dict
     id: int
+    
+    cow_utils : "CowUtilsUser"
+    
+    prescription_utils : "PrescriptionUtilsUser"
+        
 
     def __init__(self, user: Users):
         self.email = user.email
@@ -36,7 +44,44 @@ class ConnectedUser(UserMixin):
         self.setting = user.setting
         self.id = user.id
         self.medic_list = user.medic_list
+        self.cow_ustils = CowUtilsUser(self)
+        self.prescription_utils = PrescriptionUtilsUser(self)
+        
+    def set_user_setting(self, dry_time: int, calving_preparation: int) -> None:
+        """Met à jour les paramètres d'élevage de l'utilisateur connecté.
 
+        Cette fonction enregistre les nouvelles durées de tarissement et de
+        préparation au vêlage pour l'utilisateur, met à jour les paramètres en
+        mémoire, puis recalcule l'ensemble des données de reproduction des
+        vaches associées.
+
+        Arguments:
+            * dry_time (int): Durée de tarissement en jours
+            * calving_preparation (int): Durée de préparation au vêlage en jours
+        """
+        UserUtils.set_user_setting(
+            user_id=self.id, dry_time=dry_time, calving_preparation=calving_preparation
+        )
+        self.setting["dry_time"] = dry_time
+        self.setting["calving_preparation_time"] = calving_preparation
+        
+        CowUtils.reload_all_reproduction(user_id=self.id, dry_time=dry_time, calving_preparation_time=calving_preparation)
+
+
+    def add_medic_in_pharma_list(self, medic: str, mesur: str) -> None:
+        """Ajoute un médicament à la liste de pharmacie de l'utilisateur connecté.
+
+        Cette fonction délègue à `UserUtils` l'enregistrement d'un nouveau
+        médicament et de son unité de mesure dans la configuration de
+        l'utilisateur.
+
+        Arguments:
+            * medic (str): Nom du médicament à ajouter
+            * mesur (str): Unité de mesure associée au médicament
+        """
+        UserUtils.add_medic_in_pharma_list(
+            self.id, medic=medic, mesur=mesur)
+    
     def nb_cares_years(self, cow_id: int) -> int:
         """Compte le nombre de traitements administrés à une vache au cours de
         l'année passée.
@@ -52,10 +97,10 @@ class ConnectedUser(UserMixin):
         Renvoie:
             * int: le nombre de traitements administrés dans les 365 derniers jours
         """
-        cares: list[Traitement] = CowUtils.get_care_by_id(user_id=self.id, cow_id=cow_id)  # type: ignore
+        cares: list[Traitement] | None = CowUtils.get_care_by_id(user_id=self.id, cow_id=cow_id)
         return sum(
             day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
-        )  # sum boolean if True 1 else 0
+        ) if cares else 0 # sum boolean if True 1 else 0
 
     def get_pharma_list(self) -> list[str]:
         """Returns a list of all medication names available in the pharmacy.
@@ -252,7 +297,7 @@ class ConnectedUser(UserMixin):
             total_out=total_out,
             remaining_stock=remaining_stock,
         )
-        return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=self.id, year=year, default=pharmacie)
+        return PharmacieUtils.updateOrDefault_pharmacie_year(user_id=self.id, default=pharmacie)
 
     def pharmacie_to_csv(self, year: int) -> str:
         """Generates a CSV report of pharmacy medication statistics for a given year.
