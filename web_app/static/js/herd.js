@@ -82,12 +82,16 @@ async function updateHerd() {
         const entry = herdTableTemplate.content.children[0].cloneNode(true);
 
         const cowIdContainer = entry.children[0].children[0];
-        const cowBirthDateContainer = entry.children[1];
+        const cowNameContainer = entry.children[1];
+        const cowBirthDateContainer = entry.children[2];
 
         cowIdContainer.setAttribute("href", `/cow/${cow.cow_id}`)
 
         cowIdContainer.textContent = cow.cow_id;
         cowIdContainer.innerHTML = cow.cow_id;
+
+        cowNameContainer.textContent = cow.name;
+        cowNameContainer.innerHTML = cow.name;
 
         if (cow.born_date == null) {
           cowBirthDateContainer.textContent = "Unknown";
@@ -150,12 +154,16 @@ async function updateHerdFiltered(e) {
       const entry = herdTableTemplate.content.children[0].cloneNode(true);
 
       const cowIdContainer = entry.children[0].children[0];
-      const cowBirthDateContainer = entry.children[1];
+      const cowNameContainer = entry.children[1];
+      const cowBirthDateContainer = entry.children[2];
 
       cowIdContainer.setAttribute("href", `/cow/${cow.cow_id}`);
 
       cowIdContainer.textContent = cow.cow_id;
       cowIdContainer.innerHTML = cow.cow_id;
+
+      cowNameContainer.textContent = cow.name;
+      cowNameContainer.innerHTML = cow.name;
 
       if (cow.born_date == null) {
         cowBirthDateContainer.textContent = "Unknown";

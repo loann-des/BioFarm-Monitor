@@ -20,6 +20,7 @@
       <thead>
         <tr>
           <th>Identifiant</th>
+          <th>Nom</th>
           <th>Date de naissance</th>
           <th>
             <button id="add-cow-button">+</button>
@@ -46,6 +47,9 @@
       <label for="id">Numéro de la vache&nbsp;:</label>
       <input name="id" type="number" required>
 
+      <label for="name">Nom de la vache</label>
+      <input name="name" type="text" autocomplete="off">
+
       <label for="birth_date">Date de naissance&nbsp;:</label>
       <input name="birth_date" type="date" required>
 
@@ -56,6 +60,7 @@
   <template id="herd-table-template">
     <tr>
       <td><a>Cow ID</a></td>
+      <td>Cow name</td>
       <td>Date de naissance</td>
       <td></td>
     </tr>

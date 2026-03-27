@@ -48,14 +48,16 @@ def acquire():
         user_id = current_user.id
         # Récupération des données du formulaire
         cow_id = int(request.form["id"])
+        cow_name = str(request.form["name"])
+        birth_date = parse_date(request.form["birth_date"])
+
+        if cow_name is None or len(cow_name) == 0:
+            cow_name = "N/A"
 
         lg.info(f"Adding new cow {cow_id}...")
 
-        CowUtils.add_cow(user_id=user_id, cow_id=cow_id, init_as_cow=True)
+        current_user.cow_ustils.add_cow(cow_id, cow_name, birth_date, False)
 
-        birth_date = parse_date(request.form["birth_date"])
-
-        CowUtils.update_cow(user_id=user_id, cow_id=cow_id, born_date=birth_date)
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}
         )
