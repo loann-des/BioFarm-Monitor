@@ -16,7 +16,7 @@
 
     <div id="action-buttons-wrapper">
       <button id="change-button">Modifier</button>
-      <button id="delete-button">Supprimer</button>
+      <button id="delete-button" cow="{{ cow.cow_id }}">Supprimer</button>
     </div>
   </section>
 
@@ -36,3 +36,7 @@
     </div>
   </section>
 {% endblock %}
+
+{% block js %}
+  <script src="{{ url_for('static', filename='js/cow.js') }}"></script>
+{% endblock js %}
