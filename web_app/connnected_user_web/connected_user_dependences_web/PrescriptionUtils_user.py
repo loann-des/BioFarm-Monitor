@@ -12,7 +12,7 @@ from web_app.models.type_dict import Prescription_export_format
 
 class PrescriptionUtilsUser:
     if TYPE_CHECKING:
-        from connected_user import ConnectedUser
+        from web_app.connnected_user_web.connected_user import ConnectedUser
 
     connected_user: "ConnectedUser"
     user_id : int

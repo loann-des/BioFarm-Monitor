@@ -1,12 +1,11 @@
 from collections import Counter
 import logging as lg
 
-from typing import TYPE_CHECKING, Any, TypedDict
+from typing import TYPE_CHECKING, Any
 
 
 from datetime import date
 
-from web_app.connnected_user_web.connected_user import ConnectedUser
 from web_app.fonction import parse_date
 from web_app.models.cow import Cow, CowUtils
 from web_app.models.pharmacie import PharmacieAttr, PharmacieUtils
@@ -16,7 +15,7 @@ from web_app.models.type_dict import Note, Reproduction, Traitement, Traitement_
 class CowUtilsUser:
 
     if TYPE_CHECKING:
-        from connected_user import ConnectedUser
+        from web_app.connnected_user_web.connected_user import ConnectedUser
 
     user: "ConnectedUser"
     """connected_user est une référence à l'utilisateur connecté"""
