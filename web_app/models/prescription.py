@@ -103,7 +103,6 @@ class PrescriptionUtils:
             * care_items (dict[str, int]): Éléments de la prescription,
             typiquement nom du traitement et dose
         """
-        # TODO Pas plus de sortie= que de qt en stock
         prescription = Prescription(user_id=user_id, date=date, care=care_items,
                                     dlc_left=True)
         db.session.add(prescription)
@@ -169,7 +168,7 @@ class PrescriptionUtils:
             spécifiée
         """
         return Prescription.query.filter_by(user_id=user_id, dlc_left=False).filter(
-            (extract("year", Prescription.date) == year)  # type: ignore
+            (extract("year", Prescription.date) == year)
         ).all()
 
     @staticmethod
@@ -191,6 +190,6 @@ class PrescriptionUtils:
             a expiré au cours de l'année spécifiée
         """
         return Prescription.query.filter_by(user_id=user_id, dlc_left=True).filter(
-            (extract("year", Prescription.date) == year)  # type: ignore
+            (extract("year", Prescription.date) == year)
         ).all()
 

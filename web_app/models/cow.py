@@ -56,17 +56,17 @@ class Cow(db.Model):
     medicaments: dict[str, int], annotation: str)."""
 
     info: Mapped[list[Note]] = mapped_column(MutableList.as_mutable(JSON),
-                                             default=list, nullable=False)  # TODO modif doc sur Type
-    """Notes générales. Forme une liste de tuples (date, contenu)."""
+                                             default=list, nullable=False)
+    """Notes générales. Forme une liste de Note{date_note: str, information: str}"""
 
     in_farm: Mapped[bool] = mapped_column(Boolean)
-    """True si la vache se trouve dans la ferme, False si elle en est sortie."""  # TODO modif doc sur Type
+    """True si la vache se trouve dans la ferme, False si elle en est sortie."""
 
     born_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     """Date de naissance de la vache."""
 
     reproduction: Mapped[list[Reproduction]] = mapped_column(MutableList.as_mutable(JSON),
-                                                             default=list, nullable=False)  # TODO modif doc sur Type
+                                                             default=list, nullable=False)
     """Liste des reproductions de la vache."""
 
     is_calf: Mapped[bool] = mapped_column(Boolean, default=False,
@@ -118,7 +118,7 @@ class Cow(db.Model):
         schema = CowSchema()
 
         return schema.dump(self)
-    
+
     def is_calf_care(self, traitement: Traitement) -> bool:
         """Détermine si un traitement doit être considéré comme un soin de génisse.
 
@@ -135,11 +135,11 @@ class Cow(db.Model):
         """
         from web_app.fonction import parse_date
         return self.is_calf or (
-                            not self.init_as_cow 
-                            and self.as_reproduction 
-                            and parse_date(traitement["date_traitement"]) <= parse_date(self.reproduction[0]["insemination"])
-                        )        
-        
+            not self.init_as_cow
+            and self.as_reproduction
+            and parse_date(traitement["date_traitement"]) <= parse_date(self.reproduction[0]["insemination"])
+        )
+
     def as_reproduction(self) -> bool:
         """Indique si la vache possède un historique de reproduction.
 
@@ -150,7 +150,7 @@ class Cow(db.Model):
             * bool: True si la liste des reproductions n'est pas vide, False
             sinon.
         """
-        return bool(self.reproduction)     
+        return bool(self.reproduction)
 
 
 class CowUtils:
@@ -184,32 +184,39 @@ class CowUtils:
 
     @staticmethod
     def get_all_cows(user_id: int) -> list[Cow]:
-        # TODO A été modifier
-        """Renvoie l'ensemble des vaches d'un utilisateur.
+        """Récupère l'ensemble des vaches associées à un utilisateur donné.
 
-        Cette fonction interroge la base de données et renvoie une liste de
-        toutes les vaches associées à un utilisateur.
+        Cette fonction interroge la base de données pour retourner la liste
+        complète des vaches appartenant à l'utilisateur identifié.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur dont on souhaite
+            récupérer les vaches
 
         Renvoie:
-            * list[Cow]: Une liste contenant l'ensemble des vaches d'un
-            utilisateur
+            * list[Cow]: Liste des objets `Cow` associés à l'utilisateur.
         """
         return Cow.query.filter_by(user_id=user_id).all()
 
     @staticmethod
     def add_cow(user_id: int, cow_id: int, born_date: date | None = None,
                 init_as_cow: bool = True) -> None:
-        """Ajoute une nouvelle vache à la base de données si elle n'existe pas
-        déjà.
+        """Ajoute une nouvelle vache pour un utilisateur donné si elle n'existe pas déjà.
 
-        Si aucune vache avec l'identifiant correspondant n'existe, alors elle
-        est ajoutée à la base de données. Sinon une erreur est marquée dans le
-        journal.
+        Cette fonction vérifie l'absence d'une vache avec le même identifiant
+        pour l'utilisateur, crée et enregistre une nouvelle entrée si
+        nécessaire, ou lève une erreur si la vache est déjà présente.
 
         Arguments:
-            * user_id (int): Identifiant de l'utilisateur
-            * cow_id (int): Identifiant de la vache à ajouter
-            * born_date (date|None): Date de naissance
+            * user_id (int): Identifiant de l'utilisateur propriétaire de la vache
+            * cow_id (int): Identifiant unique de la vache
+            * born_date (date | None): Date de naissance de la vache si connue
+            * init_as_cow (bool): Indique si l'animal doit être initialisé
+            directement comme vache adulte
+
+        Lance:
+            * ValueError: Si une vache avec le même identifiant existe déjà
+            pour cet utilisateur.
         """
         if not Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             new_cow = Cow(
@@ -330,6 +337,21 @@ class CowUtils:
 
     @staticmethod
     def set_cow_name(user_id: int, cow_id: int, cow_name: str):
+        """Met à jour le nom d'une vache dans la base de données.
+
+        Cette fonction récupère la vache associée aux identifiants fournis,
+        modifie son nom et enregistre la modification, ou lève une erreur si
+        aucune vache ne correspond.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur propriétaire de la vache
+            * cow_id (int): Identifiant de la vache à renommer
+            * cow_name (str): Nouveau nom à attribuer à la vache
+
+        Lance:
+            * ValueError: Si aucune vache ne correspond aux identifiants
+            fournis dans la base de données.
+        """
         if cow := CowUtils.get_cow(user_id=user_id, cow_id=cow_id):
             cow.name = cow_name
             db.session.commit()
@@ -365,8 +387,6 @@ class CowUtils:
             la date du prochain, ou None si aucune vache associée à cow_id n'a
             été trouvée
         """
-        # TODO Pas plus de traitements que de qt en stock
-        # Récupérer la vache depuis la BDD
         cow: Cow | None
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             return CowUtils.add_care(cow, cow_care)
@@ -465,41 +485,50 @@ class CowUtils:
 
     @staticmethod
     def get_all_care(user_id: int) -> list[Traitement_signe]:
-        """Retrieves all non-empty care records for all cows, sorted by date in descending order.
+        """Récupère l'ensemble des traitements pour toutes les vaches d'un utilisateur.
 
-        This function collects all care records with non-empty treatment dictionaries from every cow and returns them as a list sorted by date, most recent first.
+        Cette fonction parcourt toutes les vaches de l'utilisateur, extrait
+        leurs traitements non vides, les associe à l'identifiant de chaque
+        vache, puis renvoie la liste triée par date de traitement décroissante.
 
-        Returns:
-            list[tuple[date, dict[str, int], int]]: A list of tuples containing the care date, care dictionary, and cow ID.
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur dont on souhaite
+            récupérer l'historique de traitements
+
+        Renvoie:
+            * list[Traitement_signe]: Liste des traitements signés par l'identifiant
+            de la vache, triés par date de traitement décroissante.
         """
         cows: list[Cow] = Cow.query.filter_by(user_id=user_id).all()
         all_cares: list[Traitement_signe] = [
             Traitement_signe(cow_id=cow.cow_id, traitement=care_dict)
             for cow in cows
             for care_dict in cow.cow_cares
-            if bool(cow.cow_cares) and bool(care_dict)
+            if bool(cow.cow_cares) and bool(care_dict) #TODO verifier utilité de la propriété
         ]
         # tri par date décroissante
-        # TODO verif sort
         all_cares.sort(key=lambda x: x["traitement"]
                        ["date_traitement"], reverse=True)
         return all_cares
 
     @staticmethod
     def get_care_by_id(user_id: int, cow_id: int,) -> list[Traitement] | None:
-        """Renvoie la liste des traitements d'une vache
+        """Récupère l'historique des traitements pour une vache donnée.
 
-        Renvoie la liste des traitements de la vache associée à l'identifiant
-        fourni si elle existe. Sinon, marque une erreur dans le journal et
-        renvoie None.
+        Cette fonction recherche la vache associée aux identifiants fournis et
+        renvoie la liste de ses traitements, ou lève une erreur si aucune vache
+        ne correspond en base.
 
         Arguments:
-            * user_id (int): Identifiant de l'utilisateur
-            * cow_id (int): Identifiant de la vache
+            * user_id (int): Identifiant de l'utilisateur propriétaire de la vache
+            * cow_id (int): Identifiant de la vache dont on souhaite obtenir les soins
 
         Renvoie:
-            * list[Traitement] | : La liste des traitements de la vache
-            spécifiéé si elle existe, None sinon
+            * list[Traitement] | None: La liste des traitements de la vache si
+            elle existe.
+
+        Lance:
+            * ValueError: Si aucune vache ne correspond aux identifiants fournis.
         """
         # Récupérer la vache depuis la BDD
         cow: Cow | None
@@ -561,15 +590,7 @@ class CowUtils:
             if (
                 parse_date(cow_care["date_traitement"]
                            ).year == year  # verif de l'année
-                and (
-                    cow.is_calf            # si c'est un veau
-                    or (
-                        not cow.init_as_cow  # sinon : non initialiser comme vache
-                        and cow.reproduction   # et si il y'a eu reproduction
-                        # et si traitement avant reproduction
-                        and parse_date(cow_care["date_traitement"]) <= parse_date(cow.reproduction[0]["insemination"])
-                    )
-                )
+                and cow.is_calf_care(cow_care)
             )
         ]
         return res
@@ -623,25 +644,23 @@ class CowUtils:
 
     @staticmethod
     def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool, dry_time: int,  calving_preparation_time: int) -> None:
-         # TODO modifier doc et appel de la fonction
+        """Valide ou invalide le résultat de l'échographie pour une vache.
 
-        """Valide ou invalide les résultats des ultrasons pour la dernière
-        insémination d'une vache.
-
-        Cette fonction met à jour les résultats des ultrasons dans l'historique
-        de reproduction de la vache associée à l'identifiant fourni, ainsi que
-        les dates de reproduction associées.Si la vache spécifiée n'existe pas,
-        une ValueError est lancée.
+        Cette fonction met à jour la dernière entrée de reproduction de la vache
+        avec le résultat de l'échographie, recalcule les dates de tarissement
+        et de préparation au vêlage en cas de résultat positif, puis enregistre
+        les modifications en base.
 
         Arguments:
-            * user_id (int): Identifiant de l'utilisateur
-            * cow_id (int): Identifiant de la vache
-            * ultradound (bool): Résultats des ultrasons (True si confirmé,
-            False si non confirmé)
+            * user_id (int): Identifiant de l'utilisateur propriétaire de la vache
+            * cow_id (int): Identifiant de la vache concernée
+            * ultrasound (bool): Résultat de l'échographie, True si confirmée
+            * dry_time (int): Durée de tarissement à appliquer en jours
+            * calving_preparation_time (int): Durée de préparation au vêlage en jours
 
         Lance:
-            * ValueError si aucune vache dans la base n'est associée à
-            l'identifiant fourni
+            * ValueError: Si la vache n'existe pas, n'est plus en ferme, ou
+            n'a pas d'insémination enregistrée.
         """
         from web_app.fonction import last
         cow: Cow | None
@@ -657,7 +676,7 @@ class CowUtils:
             if ultrasound:
 
                 cow.reproduction[-1] = CowUtils.set_reproduction(
-                    user_id, reproduction, dry_time, calving_preparation_time)
+                    reproduction, dry_time, calving_preparation_time)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
             else:
                 lg.info(f"insemination on {date} of {cow_id} invalidate")
@@ -668,8 +687,7 @@ class CowUtils:
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def set_reproduction(user_id: int, reproduction: Reproduction, dry_time: int,  calving_preparation_time: int) -> Reproduction:
-        # TODO modifier doc et appel de la fonction
+    def set_reproduction(reproduction: Reproduction, dry_time: int,  calving_preparation_time: int) -> Reproduction:
         """Calcule les dates de reproduction pour une vache en fonction de sa
         date d'insémination et des réglages utilisateur.
 
@@ -724,16 +742,18 @@ class CowUtils:
 
     @staticmethod
     def reload_all_reproduction(user_id: int, dry_time: int, calving_preparation_time: int) -> None:
-        # TODO modifier doc et appell de fonction
-        """Recalcule les dates associées à la dernière reproduction des vaches.
+        """Recalcule les dates de reproduction pour toutes les vaches en gestation d'un utilisateur.
 
-        Cette fonction parcourt la liste des vaches et recalcule pour chacune
-        les dates clefs liées à la reproduction la plus récente dans son
-        historique et enregistre (commit) les changements dans la base de
-        données.
+        Cette fonction parcourt toutes les vaches encore présentes dans la ferme
+        dont la dernière reproduction est confirmée par échographie mais sans
+        vêlage enregistré, puis met à jour leurs dates de tarissement,
+        préparation au vêlage et vêlage selon les nouveaux paramètres fournis.
 
         Arguments:
-            * user_id (int): Identifiant de l'utilisateur
+            * user_id (int): Identifiant de l'utilisateur concerné
+            * dry_time (int): Nouvelle durée de tarissement en jours
+            * calving_preparation_time (int): Nouvelle durée de préparation au
+            vêlage en jours
         """
         from ..fonction import last
 
@@ -745,7 +765,6 @@ class CowUtils:
                     and not cow.reproduction[-1].get("calving")):
 
                 cow.reproduction[-1] = CowUtils.set_reproduction(
-                    user_id,
                     cow.reproduction[-1], dry_time, calving_preparation_time)
 
         db.session.commit()
@@ -800,7 +819,6 @@ class CowUtils:
             * ValueError si la vache n'existe pas
         """
         # TODO gestion pas d'insemination reproduction_ultrasound calving
-        # TODO getstion de l'anotation
         cow: Cow | None
         if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
@@ -809,6 +827,7 @@ class CowUtils:
             reproduction: Reproduction = cow.reproduction[-1]
             reproduction["calving"] = True
             reproduction["abortion"] = abortion
+            reproduction["reproduction_details"] = info
             cow.reproduction[-1] = reproduction
 
             lg.info(f"calving of of {cow_id} confirm")

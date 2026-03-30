@@ -99,7 +99,6 @@ class CowUtilsUser:
             est détectée dans les paramètres.
         """
         if "cow_cares" in kwargs:
-            # TODO Gere les maintin de stock des medicament si modification de traitement ?
             raise NotImplementedError(
                 "La modification de cow_cares doit être gérée via les fonctions d'ajout, de suppression et de modification de traitement dédiées pour assurer la cohérence du stock de médicaments.")
 
