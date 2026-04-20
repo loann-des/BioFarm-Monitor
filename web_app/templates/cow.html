@@ -4,6 +4,8 @@
 
 {% block head %}
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cow.css') }}">
+
+  <meta name="cow-info" content="{{ cow.to_json() }}">
 {% endblock head %}
 
 {% block content %}
@@ -36,6 +38,27 @@
       <span>Aucun élément</span>
     </div>
   </section>
+
+  <div id="overlay"></div>
+
+  <div class="popup">
+    <div class="popup-header">
+      <h3>Modifier la vache {{ cow.cow_id }}</h3>
+      <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('cow.change') }}" method="POST">
+      <label for="name">Nom de la vache</label>
+      <input name="name" type="text" autocomplete="off">
+
+      <label for="birthdate">Date de naissance</label>
+      <input name="birthdate" type="date">
+
+      <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
+
+      <button type="submit">Modifier</button>
+    </form>
+  </div>
 {% endblock %}
 
 {% block js %}

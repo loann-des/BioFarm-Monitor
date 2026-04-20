@@ -9,7 +9,9 @@ from flask import (
     url_for
 )
 
-from flask_login import login_required, current_user # type: ignore
+from flask_login import login_required, current_user
+
+from web_app.fonction import parse_date # type: ignore
 
 from ..connnected_user_web.connected_user import ConnectedUser
 from web_app.models.cow import CowUtils
@@ -49,4 +51,30 @@ def remove_cow():
         return jsonify({
             "success": False,
             "message": f"Erreur lors de la sortie de la vache {cow_id}"
+        })
+
+@login_required
+@cowbp.route("/cow/change", methods=["POST"])
+def change():
+    try:
+        cow_id = int(request.form["cow_id"])
+
+        if request.form["name"]:
+            CowUtils.update_cow(current_user.id, cow_id,
+                name=request.form["name"])
+
+        if request.form["birthdate"]:
+            CowUtils.update_cow(current_user.id, cow_id,
+                born_date = parse_date(request.form["birthdate"]))
+
+        return jsonify({
+            "success": True,
+            "message": f"Vache {cow_id} modifiée"
+        })
+    except Exception as e:
+        lg.error(f"Erreur lors de la modification de la vache: {e}")
+
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de la modification de la vache: {e}"
         })
