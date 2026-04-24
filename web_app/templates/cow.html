@@ -49,10 +49,10 @@
 
     <form action="{{ url_for('cow.change') }}" method="POST">
       <label for="name">Nom de la vache</label>
-      <input name="name" type="text" autocomplete="off">
+      <input name="name" type="text" autocomplete="off" placeholder={{ cow.name }}>
 
       <label for="birthdate">Date de naissance</label>
-      <input name="birthdate" type="date">
+      <input name="birthdate" type="text" placeholder={{ cow.born_date }} onfocus="this.type='date'">
 
       <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
 
