@@ -4,50 +4,67 @@ window.addEventListener("load", () => {
   );
 
   const changeButton = document.querySelector("button#change-button");
+  const inseminationButton = document.querySelector("button#insemination-button");
   const removeButton = document.querySelector("button#delete-button");
   const overlay = document.querySelector("div#overlay");
-  const popup = document.querySelector("div.popup");
-  const popupCloseButton = document.querySelector("div.popup div.popup-header button");
+
+  const changePopup = document.querySelector("div.popup#change-cow-div");
+  const changePopupCloseButton = document.querySelector("div.popup#change-cow-div div.popup-header button");
 
   changeButton.addEventListener("click", async () => {
     overlay.style.display = "block";
-    popup.style.display = "block";
+    changePopup.style.display = "block";
   });
 
-  popupCloseButton.addEventListener("click", async () => {
+  changePopupCloseButton.addEventListener("click", async () => {
     overlay.style.display = "none";
-    popup.style.display = "none";
+    changePopup.style.display = "none";
   });
 
-  const popupForm = document.querySelector("div.popup form");
+  const popupForms = document.querySelectorAll("div.popup form");
 
-  popupForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  for (const popupForm of popupForms) {
+    popupForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-    const action = e.target.getAttribute("action");
-    const method = e.target.getAttribute("method");
-    const data = new FormData(e.target);
+      const action = e.target.getAttribute("action");
+      const method = e.target.getAttribute("method");
+      const data = new FormData(e.target);
 
-    try {
-      const response = await fetch(action, {
-        method: method,
-        body: data
-      });
+      try {
+        const response = await fetch(action, {
+          method: method,
+          body: data
+        });
 
-      const contentType = response.headers.get("Content-Type");
+        const contentType = response.headers.get("Content-Type");
 
-      if (!contentType.includes("application/json")) {
-        console.error(`Unexpected response: expected application/json, got ${contentType}`);
-        // TODO: Proper error display on the user's side
-        return;
+        if (!contentType.includes("application/json")) {
+          console.error(`Unexpected response: expected application/json, got ${contentType}`);
+          // TODO: Proper error display on the user's side
+          return;
+        }
+
+        console.log(response);
+      } catch (error) {
+        console.error(`AJAX request failed due to ${error}`);
       }
 
-      console.log(response);
-    } catch (error) {
-      console.error(`AJAX request failed due to ${error}`);
-    }
+      location.reload()
+    });
+  }
 
-    location.reload()
+  const inseminationPopup = document.querySelector("div.popup#insemination-popup");
+  const inseminationClose = document.querySelector("div.popup#insemination-popup div.popup-header button");
+
+  inseminationButton.addEventListener("click", () => {
+    overlay.style.display = "block";
+    inseminationPopup.style.display = "block";
+  });
+
+  inseminationClose.addEventListener("click", () => {
+    overlay.style.display = "none";
+    inseminationPopup.style.display = "none";
   });
 
   removeButton.addEventListener("click", async () => {

@@ -19,6 +19,7 @@
 
     <div id="action-buttons-wrapper">
       <button id="change-button">Modifier</button>
+      <button id="insemination-button">Ajouter une insémination</button>
       <button id="delete-button" cow="{{ cow.cow_id }}">Supprimer</button>
     </div>
   </section>
@@ -41,7 +42,7 @@
 
   <div id="overlay"></div>
 
-  <div class="popup">
+  <div class="popup" id="change-cow-div">
     <div class="popup-header">
       <h3>Modifier la vache {{ cow.cow_id }}</h3>
       <button>&times;</button>
@@ -57,6 +58,22 @@
       <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
 
       <button type="submit">Modifier</button>
+    </form>
+  </div>
+
+  <div class="popup" id="insemination-popup">
+    <div class="popup-header">
+      <h3>Ajouter une insémination à {{ cow.name }}</h3>
+      <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('cow.add_insemination') }}" method="POST">
+      <label for="date">Date d'insémination</label>
+      <input name="date" type="date">
+
+      <input name="cow_id" type="hidden" value="{{ cow.cow_id }}">
+
+      <button type="submit">Ajouter</button>
     </form>
   </div>
 {% endblock %}
