@@ -1,8 +1,4 @@
 window.addEventListener("load", () => {
-  console.log(
-    document.querySelector("meta[name=cow-info]").getAttribute("content")
-  );
-
   const changeButton = document.querySelector("button#change-button");
   const inseminationButton = document.querySelector("button#insemination-button");
   const removeButton = document.querySelector("button#delete-button");

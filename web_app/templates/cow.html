@@ -4,12 +4,10 @@
 
 {% block head %}
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cow.css') }}">
-
-  <meta name="cow-info" content="{{ cow.to_json() }}">
 {% endblock head %}
 
 {% block content %}
-  <h1>Vache numéro {{ cow.cow_id }} </h1>
+  <h1 data-cow="{{ cow.cow_id }}">Vache numéro {{ cow.cow_id }} </h1>
 
   <section>
     <ul>
