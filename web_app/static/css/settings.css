@@ -1,0 +1,101 @@
+@import url("theme-wheat.css");
+
+form input {
+  display: block;
+  box-sizing: border-box;
+  width: 50%;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 0;
+  border: 1px solid var(--theme-accent-color);
+
+  outline: none;
+}
+
+section form {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+section form label,
+section form input,
+section form button {
+  display: block;
+
+  box-sizing: border-box;
+  width: 100%;
+}
+
+section form label {
+  font-size: 0.75em;
+}
+
+section form input {
+  padding: 5px;
+  margin-bottom: 15px;
+  border: 2px solid var(--theme-accent-color);
+  border-radius: 5px;
+}
+
+section form button {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--theme-accent-color);
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+}
+
+section form button:hover {
+  background-color: #cc0000;
+}
+
+form div.message-div {
+  display: none;
+}
+
+form div.error-div {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  background-color: #ffcccc;
+  border: 1px solid #cc0000;
+}
+
+form div.error-div span {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 5px;
+  padding: 0;
+
+  text-align: center;
+  font-family: "Liberation Sans", sans-serif;
+  font-size: 0.9em;
+  color: #cc0000;
+}
+
+form div.success-div {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  background-color: #ccffcc;
+  border: 1px solid #00cc00;
+}
+
+form div.success-div span {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 5px;
+  padding: 0;
+
+  text-align: center;
+  font-family: "Liberation Sans", sans-serif;
+  font-size: 0.9em;
+  color: #00cc00;
+}

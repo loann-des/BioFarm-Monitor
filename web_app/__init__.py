@@ -48,6 +48,9 @@ def create_app():
 
     from .modules.cow import cowbp as cow_blueprint
     app.register_blueprint(cow_blueprint)
+    
+    from .modules.settings import settings as settings_blueprint
+    app.register_blueprint(settings_blueprint)
 
     # Jinja2 global functions
     from .fonction import format_bool_fr, date_to_str
