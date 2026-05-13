@@ -1,3 +1,93 @@
 {% extends 'base.html' %}
 
-{% block title %}Troupeau | BioFarm Monitor{% endblock title %}
+{% block title %}Paramètres | BioFarm Monitor{% endblock title %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/settings.css') }}">
+{% endblock head %}
+
+{% block content %}
+  <h1>Paramètres</h1>
+<!-- Tarissement | Préparation au vêlage -->
+  <section class="user_settings">
+
+    <h2 >Tarissement | Préparation au vêlage</h2>
+
+    <form action="{{ url_for('settings.user_settings') }}" method="POST">
+      <label for="dry_time">Durée du tarissement&nbsp;:</label>
+      <input name="dry_time" type="number" required placeholder={{ dry_time }}>
+
+      <label for="calving_preparation_time">Durée de préparation au vêlage&nbsp;:</label>
+      <input name="calving_preparation_time" type="number" required placeholder={{ calving_preparation }}>
+
+      <div id="message-div-user_settings" class="message-div">
+          <span>test</span>
+      </div>
+
+      <button type="submit">Régler</button>
+    </form>
+
+    </section>
+<!-- init cow -->
+    <section class="init_cow">
+
+    <h2 >Initialisation des vaches</h2>
+
+    <form action="{{ url_for('settings.upload_cows') }}" method="POST">
+      <label for="file" class="form-label">Fichier</label>
+      <input type="file" name="file" accept=".xls,.xlsx" class="form-control" required>
+
+      <div id="message-div-upload_cow" class="message-div">
+          <span>test</span>
+      </div>
+
+      <button type="submit">Régler</button>
+    </form>
+
+
+  </section>
+<!-- init cow -->
+    <section class="init_cow">
+
+    <h2 >Initialisation des vaches</h2>
+
+    <form action="{{ url_for('settings.upload_cows') }}" method="POST">
+      <label for="file" class="form-label">Fichier</label>
+      <input type="file" name="file" accept=".xls,.xlsx" class="form-control" required>
+
+      <div id="message-div-upload_cow" class="message-div">
+          <span>test</span>
+      </div>
+
+      <button type="submit">Régler</button>
+    </form>
+
+
+  </section>
+    <section class="user_settings">
+
+    <div class="user_settings-header">
+    <h2 >Tarissement | Préparation au vêlage</h2>
+    </div>
+
+    <form action="{{ url_for('settings.user_settings') }}" method="POST">
+      <label for="dry_time">Durée du tarissement&nbsp;:</label>
+      <input name="dry_time" type="number" required placeholder={{ dry_time }}>
+
+      <label for="calving_preparation_time">Durée de préparation au vêlage&nbsp;:</label>
+      <input name="calving_preparation_time" type="number" required placeholder={{ calving_preparation }}>
+
+      <div id="message-div-user_settings" class="message-div">
+          <span>test</span>
+      </div>
+
+      <button type="submit">Régler</button>
+    </form>
+
+
+  </section>
+{% endblock %}
+
+{% block js %}
+  <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock js %}
