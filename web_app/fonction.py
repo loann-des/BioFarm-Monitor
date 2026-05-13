@@ -139,17 +139,21 @@ def remaining_care_on_year(cow: Cow) -> int:
     return 3 - nb_care_year
 
 def new_available_care(cow: Cow) -> date | None:
-    """Determines the next date a cow becomes eligible for a new care treatment.
+    """Calcule la prochaine date à partir de laquelle un nouveau traitement sera autorisé pour une vache.
 
-    This function calculates when a cow can receive its next care treatment based on its care history and the annual treatment limit.
+    Cette fonction analyse l'historique des traitements sur l'année roulante
+    pour déterminer, en fonction du quota annuel, à quelle date un prochain
+    soin pourra être réalisé ou indique qu'aucune contrainte n'existe si aucun
+    soin n'a encore été effectué.
 
-    Args:
-        cow (Cow): The cow object whose next available care date is to be determined.
+    Arguments:
+        * cow (Cow): La vache pour laquelle calculer la prochaine date de soin
+        disponible.
 
-    Returns:
-        Optional[date]: The date when the cow is eligible for a new care treatment, or None if no care has been given.
+    Renvoie:
+        * date | None: La date à partir de laquelle un nouveau soin sera
+        disponible, ou None s'il n'y a pas encore de traitements enregistrés.
     """
-
     nb_care_year = nb_cares_years_of_cow(cow=cow)
 
     if nb_care_year > 0 and len(cow.cow_cares) >= nb_care_year:

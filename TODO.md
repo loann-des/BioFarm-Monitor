@@ -8,7 +8,7 @@
 
 - [ ] gestion des insemination multiple indeterminer
 
-- [ ] Protection sur consitence des donnée : ex medic utiliser > date dans le futur...
+- [ ] Protection sur consitence des donnée : ex date dans le futur...
 
 - [ ] Version API
 - [ ] utiliser mashmallow pour conversion obj py en json pour les com de l'api

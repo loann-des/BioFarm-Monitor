@@ -9,8 +9,7 @@ from sqlalchemy import (
     Integer,
     PrimaryKeyConstraint,
     JSON,
-    String
-
+    String    
 )
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
@@ -136,11 +135,11 @@ class Cow(db.Model):
         from web_app.fonction import parse_date
         return self.is_calf or (
             not self.init_as_cow
-            and self.as_reproduction
+            and self.has_reproduction
             and parse_date(traitement["date_traitement"]) <= parse_date(self.reproduction[0]["insemination"])
         )
 
-    def as_reproduction(self) -> bool:
+    def has_reproduction(self) -> bool:
         """Indique si la vache possède un historique de reproduction.
 
         La fonction retourne True si au moins une reproduction est enregistrée

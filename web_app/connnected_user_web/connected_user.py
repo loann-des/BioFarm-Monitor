@@ -22,9 +22,9 @@ from ..models.cow import CowUtils, Cow
 from ..models.prescription import PrescriptionUtils, Prescription
 from ..models.pharmacie import PharmacieUtils, Pharmacie
 from collections import Counter
-from datetime import date, datetime
+from datetime import date
 import logging as lg
-
+#  TODO retire les usage de CowUtils et PrescriptionUtils dans les fonctions de ConnectedUser et délégue à CowUtilsUser et PrescriptionUtilsUser
 
 class ConnectedUser(UserMixin):
     email: str
@@ -64,9 +64,7 @@ class ConnectedUser(UserMixin):
         )
         self.setting["dry_time"] = dry_time
         self.setting["calving_preparation_time"] = calving_preparation
-        
-        CowUtils.reload_all_reproduction(user_id=self.id, dry_time=dry_time, calving_preparation_time=calving_preparation)
-
+        self.cow_ustils.reload_all_reproduction()
 
     def add_medic_in_pharma_list(self, medic: str, mesur: str) -> None:
         """Ajoute un médicament à la liste de pharmacie de l'utilisateur connecté.

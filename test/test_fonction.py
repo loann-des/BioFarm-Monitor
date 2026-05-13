@@ -4,6 +4,8 @@ import sys
 
 from web_app.models import init_db_test
 from web_app.models.cow import CowUtils
+from web_app.models.type_dict import Traitement
+from web_app.models.user import UserUtils
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), "../"))
 
 import unittest
@@ -39,6 +41,8 @@ def random_date():
 
     return date(y, m, d)
 
+def init_user(user_id: int):
+    UserUtils.add_user(email=f'user{user_id}@mail.com',password=str(hash(user_id)))
 class DataFunctionsUnitTests(unittest.TestCase):
     def test_first(self):
         for i in range(100):
@@ -140,11 +144,11 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
     def test_nb_cares_years_of_cow(self):
         init_db_test()
         users : dict[int, list[int]] = {}
-
         for _i in range(10):
             user_id = randint(1, 9999)
             if user_id not in users:
                 users[user_id] = []
+                init_user(user_id)
             cow_id = randint(1, 9999)
             while cow_id in users[user_id] :
                 cow_id = randint(1, 9999)
@@ -168,14 +172,11 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
                 medic_amount = randint(1, 9999)
                 annotation = "".join([chr(randint(33, 126)) for _ in range(10)])
 
-                # XXX: Return value ignored for now. Use when
-                # remaining_care_on_year and new_available_care will be
-                # validated.
-                _ = CowUtils.add_cow_care(user_id, cow_id, {
-                    "date_traitement": my_strftime(medic_date),
-                    "medicaments": {medic_name: medic_amount},
-                    "annotation": annotation
-                })
+                CowUtils.add_cow_care(user_id, cow_id, Traitement(
+                    date_traitement= my_strftime(medic_date),
+                    medicaments= {medic_name: medic_amount},
+                    annotation= annotation
+                ))
 
                 cow = CowUtils.get_cow(user_id, cow_id)
                 self.assertEqual(j + 1, len(cow.cow_cares))
@@ -184,9 +185,16 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
 
     def test_remaining_care_on_year(self):
         init_db_test()
-
+        users : dict[int, list[int]] = {}
         for _i in range(10):
             user_id = randint(1, 9999)
+            if user_id not in users:
+                users[user_id] = []
+                init_user(user_id)
+            cow_id = randint(1, 9999)
+            while cow_id in users[user_id] :
+                cow_id = randint(1, 9999)
+            users[user_id].append(cow_id)
             cow_id = randint(1, 9999)
 
             CowUtils.add_cow(user_id, cow_id)
@@ -212,14 +220,11 @@ class CaresUtilityFunctionsUnitTests(unittest.TestCase):
                 medic_amount = randint(1, 9999)
                 annotation = "".join([chr(randint(33, 126)) for _ in range(10)])
 
-                # XXX: Return value ignored for now. Use when
-                # remaining_care_on_year and new_available_care will be
-                # validated.
-                _ = CowUtils.add_cow_care(user_id, cow_id, {
-                    "date_traitement": my_strftime(medic_date),
-                    "medicaments": {medic_name: medic_amount},
-                    "annotation": annotation
-                })
+                CowUtils.add_cow_care(user_id, cow_id, Traitement(
+                    date_traitement= my_strftime(medic_date),
+                    medicaments= {medic_name: medic_amount},
+                    annotation= annotation
+                ))
 
                 cow = CowUtils.get_cow(user_id, cow_id)
                 self.assertEqual(j + 1, len(cow.cow_cares))
