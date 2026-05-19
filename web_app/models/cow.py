@@ -21,9 +21,16 @@ from .. import db
 
 
 class CowSchema(Schema):
+    """Schéma de sérialisation pour les objets Cow.
+
+    Ce schéma définit les champs exposés lors de la conversion des instances de
+    vache en structures de données sérialisables (par exemple JSON).
+    """
     user_id = fields.Int()
     cow_id = fields.Int()
+    mother_id = fields.Int()
     name = fields.String()
+    sexe = fields.Boolean()
     cow_cares = fields.List(fields.Dict())
     info = fields.List(fields.Dict())
     in_farm = fields.Boolean()
@@ -36,16 +43,42 @@ class CowSchema(Schema):
 class Cow(db.Model):
     """Représente une vache dans la base de données, incluant ses traitements,
     des notes générales, son statut, sa date de naissance et son historique de
-    reproduction."""
+    reproduction.
+    
+    :var user_id: int, Identifiant de l'utilisateur propriétaire de la vache
+    :var cow_id: int, Identifiant de la vache
+    :var mother_id: int | None, Identifiant de la mère de la vache, null si inconnu
+    :var name: str | None, Nom de la vache
+    :var sexe: bool | None, Représente le sexe de la vache, True si femelle, False sinon
+    :var cow_cares: list[Traitement], Liste des traitements administrés à la vache
+    :var info: list[Note], Liste de notes générales sur la vache
+    :var in_farm: bool, Indique si la vache se trouve actuellement dans la ferme
+    :var born_date: date | None, Date de naissance de la vache
+    :var reproduction: list[Reproduction], Historique de reproduction de la vache
+    :var is_calf: bool, Indique si la vache est une génisse
+    :var init_as_cow: bool, Indique si la vache a été initialisée directement comme vache adulte
+    """
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
                                          nullable=False)
+    """Identifiant de l'utilisateur propriétaire de la vache, clé étrangère vers la table des utilisateurs."""
+    
     cow_id: Mapped[int] = mapped_column(
-        Integer, nullable=False)  # numero Vache
+        Integer, nullable=False)
+    """identifiant de la vache, unique pour chaque utilisateur"""
+    
+    mother_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    """identifiant de la mère de la vache, null si inconnu"""
 
     name: Mapped[str | None
                  ] = mapped_column(
-        String, nullable=True)  # nom Vache
+        String, nullable=True)
+    """nom de la vache, null si inconnu"""
+    
+    sexe: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=True) # True si femmelle
+    """represente le sexe, True si femmelle, false si male et None sinon"""
+    
 
     cow_cares: Mapped[list[Traitement]] = mapped_column(
         MutableList.as_mutable(JSON),
@@ -81,6 +114,7 @@ class Cow(db.Model):
             user_id,
             cow_id),
         {})
+    """restriction d'unicité sur la combinaison de user_id et cow_id, garantissant que chaque vache est unique pour chaque utilisateur."""
 
     def __init__(
         self,
@@ -114,6 +148,17 @@ class Cow(db.Model):
         self.init_as_cow = init_as_cow
 
     def to_json(self):
+        """Convertit l'instance de vache en représentation JSON sérialisée.
+
+        Cette méthode utilise le schéma `CowSchema` pour produire un dictionnaire
+        prêt à être transmis via une API ou stocké.
+
+        Arguments:
+            * None
+
+        Renvoie:
+            * dict: La représentation sérialisée de l'instance de vache.
+        """
         schema = CowSchema()
 
         return schema.dump(self)
@@ -136,7 +181,7 @@ class Cow(db.Model):
         return self.is_calf or (
             not self.init_as_cow
             and self.has_reproduction
-            and parse_date(traitement["date_traitement"]) <= parse_date(self.reproduction[0]["insemination"])
+            and all(parse_date(traitement["date_traitement"]) <= parse_date(date) for date in self.reproduction[0]["insemination"])
         )
 
     def has_reproduction(self) -> bool:
@@ -150,6 +195,22 @@ class Cow(db.Model):
             sinon.
         """
         return bool(self.reproduction)
+    
+    def has_reproduction_in_progress(self) -> bool:
+        """Indique si la vache a une reproduction en cours.
+
+        La fonction retourne True si la vache a une insémination enregistrée
+        sans date de vêlage ou d'avortement associée, et False sinon.
+
+        Renvoie:
+            * bool: True si une reproduction est en cours, False sinon.
+        """
+        return self.has_reproduction and any(
+            bool(repro["insemination"])
+            and not repro.get("calving", False)
+            and not repro.get("abortion", False)
+            for repro in self.reproduction
+        )
 
 
 class CowUtils:
@@ -406,7 +467,7 @@ class CowUtils:
 
         Arguments:
             * cow (Cow): L'objet Cow à mettre à jour
-            * cow_cares (Tuplee[date, dict, str]): Les informations de
+            * cow_care (Traitement): Les informations de
             traitement à ajouter
 
         Renvoie:
@@ -424,7 +485,6 @@ class CowUtils:
         lg.info(f"Care add to (user :{cow.user_id}, cow: {cow.cow_id}).")
 
         # traitement restant dans l'année glissante et date de nouveaux traitement diponible
-        # type: ignore
         return remaining_care_on_year(cow=cow), new_available_care(cow=cow)
 
     @staticmethod
@@ -600,7 +660,6 @@ class CowUtils:
 
     @staticmethod
     def add_insemination(user_id: int, cow_id: int, insemination: str) -> None:
-        # TODO Gestion doublon add_reproduction
         """Ajoute une entrée à l'historique d'insémination de la vache spécifiée
 
         Cette fonction ajoute une nouvelle insémination à l'historique de
@@ -620,29 +679,62 @@ class CowUtils:
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
-            cow.reproduction.append(
-                {
-                    "insemination": insemination,
-                    "ultrasound": None,
-                    "dry":  None,
-                    "dry_status":  False,  # status du tarrisement
-                    "calving_preparation":  None,
-                    "calving_preparation_status": False,  # status de prepa vellage
-                    "calving_date":  None,
-                    "calving":  False,  # status du vellage
-                    "abortion": False,
-                    "reproduction_details": None  # détails sur la reproduction
-                }
-            )
-            cow.is_calf = False
-            db.session.commit()
+            if cow.has_reproduction_in_progress():
+                CowUtils.add_second_isemination_on_current_reproduction(user_id, cow_id, insemination)
+            else :
+                cow.reproduction.append(
+                    {
+                        "insemination": [insemination],
+                        "ultrasound": None,
+                        "dry":  None,
+                        "dry_status":  False,  # status du tarrisement
+                        "calving_preparation":  None,
+                        "calving_preparation_status": False,  # status de prepa vellage
+                        "calving_date":  None,
+                        "calving":  False,  # status du vellage
+                        "abortion": False,
+                        "reproduction_details": None  # détails sur la reproduction
+                    }
+                )
+                cow.is_calf = False
+                db.session.commit()
             lg.info(f"insemination on {insemination} add to {cow_id}")
         else:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
 
     @staticmethod
-    def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool, dry_time: int,  calving_preparation_time: int) -> None:
+    def add_second_isemination_on_current_reproduction(user_id: int, cow_id: int, insemination: str) -> None:
+        """Ajoute une seconde insémination à la dernière reproduction de la vache spécifiée
+
+        Cette fonction ajoute une seconde insémination à la dernière reproduction de la vache associée à l'identifiant fourni comme argument
+        si elle existe et que la dernière reproduction n'a pas encore été confirmée par échographie. Sinon, marque une erreur dans le journal et lance une ValueError.
+
+        Arguments:
+            * user_id (int): Identifiant de l'utilisateur
+            * cow_id (int): Identifiant de la vache
+            * insemination (str): Date de la seconde insémination
+            
+        Lance:
+            * ValueError si la vache spécifiée n'existe pas ou si la dernière reproduction a déjà été confirmée par échographie
+        """
+        cow: Cow | None
+        if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
+            if not cow.in_farm:
+                raise ValueError(f"cow : {cow_id} : est supprimer")
+            if not cow.has_reproduction or cow.reproduction[-1]["ultrasound"] is not None:
+                raise ValueError(
+                    f"cow : {cow_id} : n'as pas d'insémination en cours ou la dernière insémination a déjà été confirmée par échographie, impossible d'ajouter une seconde insémination")
+            reproduction = cow.reproduction[-1]
+            reproduction["insemination"] = reproduction["insemination"] + [insemination]
+            cow.reproduction[-1] = reproduction
+            db.session.commit()
+            lg.info(f"second insemination on {insemination} add to {cow_id}")
+        else:
+            lg.error(f"Cow with {cow_id} not found.")
+            raise ValueError(f"{cow_id} n'existe pas.")
+    @staticmethod
+    def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool, dry_time: int,  calving_preparation_time: int, date: str) -> None:
         """Valide ou invalide le résultat de l'échographie pour une vache.
 
         Cette fonction met à jour la dernière entrée de reproduction de la vache
@@ -667,13 +759,14 @@ class CowUtils:
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             reproduction: Reproduction | None = last(
-                cow.reproduction)  # type: ignore
+                cow.reproduction)
             if not reproduction:
                 raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
-
+                # a la validation de l'echographie on garde que la bonne date d'insémination
+                cow.reproduction[-1]["insemination"] = [item for item in cow.reproduction[-1]["insemination"] if item == date]
                 cow.reproduction[-1] = CowUtils.set_reproduction(
                     reproduction, dry_time, calving_preparation_time)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
@@ -703,11 +796,9 @@ class CowUtils:
             dates calculées
         """
         from web_app.fonction import substract_date_to_str, sum_date_to_str
-        calving_date: str = sum_date_to_str(reproduction["insemination"], 280)
-        print("calving_date ok")
+        calving_date: str = sum_date_to_str(reproduction["insemination"][0], 280)
         reproduction["dry"] = substract_date_to_str(
             calving_date, dry_time)
-        print("dry ok")
         reproduction["calving_preparation"] = substract_date_to_str(
             calving_date, calving_preparation_time)
         reproduction["calving_date"] = calving_date
@@ -928,8 +1019,20 @@ class CowUtils:
         if cow := Cow.query.get({'cow_id': cow_id, 'user_id': user_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
-            cow.reproduction[repro_index] = new_repro
+            reproduction = cow.reproduction[repro_index]
+            reproduction["insemination"] = new_repro["insemination"]
+            reproduction["ultrasound"] = new_repro["ultrasound"]
+            reproduction["dry"] = new_repro["dry"]
+            reproduction["dry_status"] = new_repro["dry_status"]
+            reproduction["calving_preparation"] = new_repro["calving_preparation"]
+            reproduction["calving_preparation_status"] = new_repro["calving_preparation_status"]
+            reproduction["calving_date"] = new_repro["calving_date"]
+            reproduction["calving"] = new_repro["calving"]
+            reproduction["abortion"] = new_repro["abortion"]
+            reproduction["reproduction_details"] = new_repro["reproduction_details"]
+            cow.reproduction[repro_index] = reproduction
             db.session.commit()
+            print(cow.reproduction[repro_index])
             lg.info(f"{cow_id} : reproduction updated in database")
         else:
             lg.error(f"{cow_id} : not in database")

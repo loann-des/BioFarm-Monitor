@@ -51,51 +51,5 @@ section form button {
 }
 
 section form button:hover {
-  background-color: #cc0000;
-}
-
-form div.message-div {
-  display: none;
-}
-
-form div.error-div {
-  display: block;
-  width: 100%;
-  margin-bottom: 5px;
-  background-color: #ffcccc;
-  border: 1px solid #cc0000;
-}
-
-form div.error-div span {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  margin: 5px;
-  padding: 0;
-
-  text-align: center;
-  font-family: "Liberation Sans", sans-serif;
-  font-size: 0.9em;
-  color: #cc0000;
-}
-
-form div.success-div {
-  display: block;
-  width: 100%;
-  margin-bottom: 5px;
-  background-color: #ccffcc;
-  border: 1px solid #00cc00;
-}
-
-form div.success-div span {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  margin: 5px;
-  padding: 0;
-
-  text-align: center;
-  font-family: "Liberation Sans", sans-serif;
-  font-size: 0.9em;
-  color: #00cc00;
+  background-color: var(--theme-accent-color-hover);
 }

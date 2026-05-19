@@ -119,8 +119,10 @@ table thead {
   background-color: var(--theme-accent-color);
 }
 
-table thead tr th {
+table thead tr th, table thead tr td {
   padding: 5px;
+  text-align: center;
+  font-weight: bold;
 }
 
 table thead tr th:last-child {
@@ -183,4 +185,50 @@ section.collapsible[aria-expanded="false"] div {
 
 section.collapsible[aria-expanded="true"] div {
   display: block;
+}
+
+div.message-div {
+  display: none;
+}
+
+div.error-div {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  background-color: var(--theme-error-color);
+  border: 1px solid var(--theme-error-border-color);
+}
+
+div.error-div span {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 5px;
+  padding: 0;
+
+  text-align: center;
+  font-family: "Liberation Sans", sans-serif;
+  font-size: 0.9em;
+  color: var(--theme-error-text-color);
+}
+
+div.success-div {
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  background-color: var(--theme-success-color);
+  border: 1px solid var(--theme-success-border-color);
+}
+
+div.success-div span {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 5px;
+  padding: 0;
+
+  text-align: center;
+  font-family: "Liberation Sans", sans-serif;
+  font-size: 0.9em;
+  color: var(--theme-success-text-color);
 }

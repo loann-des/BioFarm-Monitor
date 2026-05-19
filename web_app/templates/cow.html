@@ -3,79 +3,280 @@
 {% block title %}Cow {{ cow.cow_id }} | BioFarm Monitor{% endblock title %}
 
 {% block head %}
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cow.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/cow.css') }}">
 {% endblock head %}
 
 {% block content %}
-  <h1 data-cow="{{ cow.cow_id }}">Vache numéro {{ cow.cow_id }} </h1>
+<h1 data-cow-id="{{ cow.cow_id }}">Vache numéro {{ cow.cow_id }} </h1>
 
-  <section>
-    <ul>
-      <li>Nom&nbsp;: {{ cow.name }}</li>
-      <li>Date de naissance&nbsp;: {{ date_to_str(cow.born_date) }}</li>
-    </ul>
+<section>
+  <ul>
+    <li>Nom&nbsp;: {{ cow.name if cow.name else "Inconnu" }}</li>
+    <li>Date de naissance&nbsp;: {{ date_to_str(cow.born_date) if cow.born_date else "Inconnue" }}</li>
+    <li>Veau&nbsp;: {{format_bool_fr(cow.is_calf) }}</li>
+    <li>sexe&nbsp;: {{format_bool_sexe(cow.sexe) }}</li>
+    <li>mère&nbsp;: {{ cow.mother_id if cow.mother_id else "Inconnue" }}</li>
+    <li>
+      <!-- TODO traitments restants -->
+    </li>
+  </ul>
+
+  <div id="action-buttons-wrapper">
+    <button id="change-button">Modifier</button>
+    <button id="insemination-button">Ajouter une insémination</button>
+    <button id="treatment-button">Ajouter un traitement</button>
+    <button id="delete-button" cow="{{ cow.cow_id }}">Supprimer</button>
+  </div>
+
+  <div id="message-div" class="message-div">
+    <span>test</span>
+  </div>
+</section>
+
+<section class="collapsible" aria-expanded="false">
+  <h2>&nbsp;Historique de reproduction</h2>
+
+  <div class="collapsible-content">
+
+    <div id="reproduction-list">
+    </div>
+
+  </div>
+</section>
+
+<section class="collapsible" aria-expanded="false">
+  <h2>&nbsp;Historique médical</h2>
+
+  <div class="collapsible-content">
+    <div id="care-list">
+    </div>
+  </div>
+</section>
+
+<div id="overlay"></div>
+
+<div class="popup" id="change-cow-div">
+  <div class="popup-header">
+    <h3>Modifier la vache {{ cow.cow_id }}</h3>
+    <button>&times;</button>
+  </div>
+
+  <form action="{{ url_for('cow.change') }}" method="POST">
+    <label for="name">Nom de la vache</label>
+    <input name="name" type="text" autocomplete="off" placeholder="{{ cow.name }}">
+
+    <label for="birthdate">Date de naissance</label>
+    <input name="birthdate" type="text" placeholder="{{ cow.born_date }}" onfocus="this.type='date'">
+
+    <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
+
+    <button type="submit">Modifier</button>
+  </form>
+</div>
+
+<div class="popup" id="insemination-popup">
+  <div class="popup-header">
+    <h3>Ajouter une insémination à {{ cow.cow_id }}</h3>
+    <button>&times;</button>
+  </div>
+
+  <form action="{{ url_for('cow.add_insemination') }}" method="POST">
+    <label for="date">Date d'insémination</label>
+    <input name="date" type="date" required>
+
+    <input name="cow_id" type="hidden" value="{{ cow.cow_id }}">
+
+    <button type="submit">Ajouter</button>
+  </form>
+</div>
+
+<div class="popup" id="treatment-popup">
+  <div class="popup-header">
+    <h3>Ajouter un traitement à {{ cow.cow_id }}</h3>
+    <button>&times;</button>
+  </div>
+
+  <form action="{{ url_for('cow.add_care') }}" method="POST">
+    <label for="date">Date du traitement</label>
+    <input name="date" type="date" required>
+
+
+    <label for="medication">Médicament</label>
+    <div id="medication-extend">
+      <div class="medication-bloc">
+        <select name="medication" required>
+          {% for medication,unit in current_user.medic_list.items() %}
+          <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+          {% endfor %}
+        </select>
+        <input name="dose" type="number" placeholder="Dose administrée" required>
+      </div>
+    </div>
+
+    <label for="note">Note</label>
+    <textarea name="note" placeholder="Informations supplémentaires sur le traitement..."></textarea>
+
+    <input name="cow_id" type="hidden" value="{{ cow.cow_id }}">
+    <div class="btn-more-less">
+      <button type="button" id="extend-medication">+</button>
+      <button type="button" id="remove-medication">-</button>
+    </div>
+    <button type="submit">Ajouter</button>
+  </form>
+</div>
+
+<div class="popup" id="change-reproduction-popup">
+  <div class="popup-header">
+    <h3 class="popup-title"></h3>
+    <button>&times;</button>
+  </div>
+
+  <form action="{{ url_for('cow.modify_reproduction') }}" method="POST">
+
+    <div id="insemination-container" class="insemination-item"></div>
+
+    <label for="ultrasound">Échographie</label>
+    <select class="value echo" name="ultrasound" type="text" required>
+      <option value="1">Pleine</option>
+      <option value="">Vide</option>
+      <option value="None">En attente</option>
+    </select>
+
+    <label for="dry">Tarissement</label>
+    <select class="value dry" name="dry" id="dry">
+      <option value="1">oui</option>
+      <option value="">Non tarie</option>
+    </select>
+
+    <label for="prep">En Prépa vêlage</label>
+    <select class="value prep" name="prep" id="prep">
+      <option value="1">Oui</option>
+      <option value="">Non</option>
+    </select>
+
+    <label for="calving">Vêlage</label>
+    <select class="value calving" name="calving" id="calving">
+      <option value="1">Oui</option>
+      <option value="">Non</option>
+    </select>
+
+    <label for="abortion">Avortement</label>
+    <select class="value abortion" name="abortion" id="abortion">
+      <option value="1">Oui</option>
+      <option value="">Non</option>
+    </select>
+
+    <label for="reproduction-details">Détails de la reproduction</label>
+    <textarea class="details-content" name="reproduction_details"
+      placeholder="Informations supplémentaires sur la reproduction..."></textarea>
+
+    <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
+    <input class="index" type="hidden" name="index" value="">
+
+    <button type="submit">Modifier</button>
+  </form>
+
+  <template id="insemination-date-template">
+    <label></label>
+    <input class="value insemination" name="insemination" type="date">
+  </template>
+</div>
+
+<template id="medication-template">
+
+  <div class="medication-bloc">
+    <select name="medication" required>
+      {% for medication,unit in current_user.medic_list.items() %}
+      <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+      {% endfor %}
+    </select>
+    <input name="dose" type="number" placeholder="Dose administrée" required>
+  </div>
+
+</template>
+
+<template id="reproduction-template">
+
+  <article class="reproduction-card">
+
+    <div class="reproduction-header">
+      <h3 class="title"></h3>
+      <span class="status pending">En cours</span>
+    </div>
+
+    <div class="reproduction-grid">
+
+      <div class="item">
+        <span class="label">Échographie</span>
+        <span class="value echo"></span>
+      </div>
+
+      <div class="item">
+        <span class="label">Tarissement</span>
+        <span class="value dry"></span>
+      </div>
+
+      <div class="item">
+        <span class="label">Prépa vêlage</span>
+        <span class="value prep"></span>
+      </div>
+
+      <div class="item">
+        <span class="label">Vêlage</span>
+        <span class="value calving"></span>
+      </div>
+
+      <div class="item">
+        <span class="label">Avortement</span>
+        <span class="value abortion"></span>
+      </div>
+
+      <input type="hidden" class="insemination-index" value="">
+
+
+    </div>
+
+    <div class="details">
+      <strong>Notes :</strong>
+      <p class="details-content"></p>
+    </div>
 
     <div id="action-buttons-wrapper">
-      <button id="change-button">Modifier</button>
-      <button id="insemination-button">Ajouter une insémination</button>
-      <button id="delete-button" cow="{{ cow.cow_id }}">Supprimer</button>
+      <button id="reproduction-change-button" cow="{{ cow.cow_id }}" index="">Modifier</button>
+      <button id="reproduction-delete-button" cow="{{ cow.cow_id }}" index="">Supprimer</button>
     </div>
-  </section>
+  </article>
 
-  <section class="collapsible" aria-expanded="false">
-    <h2>&nbsp;Historique de reproduction</h2>
+</template>
 
-    <div class="collapsible-content">
-      <span>Aucun élément</span>
-    </div>
-  </section>
+<template id="care-template">
+  <article class="care-card">
 
-  <section class="collapsible" aria-expanded="false">
-    <h2>&nbsp;Historique médical</h2>
-
-    <div class="collapsible-content">
-      <span>Aucun élément</span>
-    </div>
-  </section>
-
-  <div id="overlay"></div>
-
-  <div class="popup" id="change-cow-div">
-    <div class="popup-header">
-      <h3>Modifier la vache {{ cow.cow_id }}</h3>
-      <button>&times;</button>
+    <div class="care-header">
+      <h3 class="title"></h3>
     </div>
 
-    <form action="{{ url_for('cow.change') }}" method="POST">
-      <label for="name">Nom de la vache</label>
-      <input name="name" type="text" autocomplete="off" placeholder={{ cow.name }}>
+    <div class="medication-list"></div>
 
-      <label for="birthdate">Date de naissance</label>
-      <input name="birthdate" type="text" placeholder={{ cow.born_date }} onfocus="this.type='date'">
-
-      <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
-
-      <button type="submit">Modifier</button>
-    </form>
-  </div>
-
-  <div class="popup" id="insemination-popup">
-    <div class="popup-header">
-      <h3>Ajouter une insémination à {{ cow.name }}</h3>
-      <button>&times;</button>
+    <div class="details">
+      <strong>Notes :</strong>
+      <p class="details-content"></p>
     </div>
 
-    <form action="{{ url_for('cow.add_insemination') }}" method="POST">
-      <label for="date">Date d'insémination</label>
-      <input name="date" type="date">
+    <template class="medication-template">
+      <div class="item">
+        <span class="label medication"></span>
+        <span class="value dose"></span>
+      </div>
+    </template>
 
-      <input name="cow_id" type="hidden" value="{{ cow.cow_id }}">
+  </article>
+</template>
 
-      <button type="submit">Ajouter</button>
-    </form>
-  </div>
+
+
 {% endblock %}
 
 {% block js %}
-  <script src="{{ url_for('static', filename='js/cow.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cow.js') }}"></script>
 {% endblock js %}

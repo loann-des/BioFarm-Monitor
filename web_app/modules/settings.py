@@ -40,13 +40,17 @@ def user_settings():
         )
 
         return jsonify(
-            {"success": True, "message": "setting mis a jours.", "id": "user_settings"}
+            {"success": True,
+             "message": "setting mis a jours.",
+             "id": "user_settings"}
         )
 
     except Exception as e:
         lg.error(f"Erreur pendant l’upload : {e}")
         return jsonify(
-            {"success": False, "message": f"Erreur : {str(e)}", "id": "user_settings"}
+            {"success": False,
+             "message": f"Erreur : {str(e)}",
+             "id": "user_settings"}
         )
 
 
@@ -70,7 +74,8 @@ def upload_cows():
         added, skipped = 0, 0
         for cow_id in cow_ids:
             try:
-                CowUtils.add_cow(user_id=user_id, cow_id=int(cow_id), init_as_cow=True)
+                CowUtils.add_cow(user_id=user_id, cow_id=int(
+                    cow_id), init_as_cow=True)
                 added += 1
             except ValueError:
                 skipped += 1
@@ -78,18 +83,22 @@ def upload_cows():
         return jsonify(
             {
                 "success": True,
-                "message": f"{added} vache(s) ajoutée(s), {skipped} déjà existante(s).",
+                "message": f"{added} vache(s) ajoutée(s), {skipped} erreurs.",
+                "id": "upload_cows",
             }
         )
     except Exception as e:
         return (
-            jsonify({"success": False, "message": f"Erreur de traitement : {e}"}),
+            jsonify(
+                {"success": False,
+                 "message": f"Erreur de traitement : {e}",
+                 "id": "upload_cows"},),
             500,
         )
 
 
 @login_required
-@settings.route("/upload_calf/", methods=["POST"])
+@settings.route("/upload_calfs/", methods=["POST"])
 def upload_calfs():
     file = request.files.get("file")
     if not file:
@@ -116,11 +125,14 @@ def upload_calfs():
             {
                 "success": True,
                 "message": f"{added} veaux(s) ajoutée(s), {skipped} déjà existante(s).",
+                "id": "upload_calfs",
             }
         )
     except Exception as e:
         return (
-            jsonify({"success": False, "message": f"Erreur de traitement : {e}"}),
+            jsonify({"success": False,
+                     "message": f"Erreur de traitement : {e}",
+                     "id": "upload_calfs"}),
             500,
         )
 
@@ -134,7 +146,7 @@ def init_stock():
 
     try:
         user_id = current_user.id
-        year = datetime.now().year - 1
+        year = datetime.now().year
         remaining_stock: dict[str, int] = {}
 
         # Lire le fichier Excel directement en mémoire
@@ -142,13 +154,10 @@ def init_stock():
 
         # Lire uniquement la première colonne medics : nom du medicament
         medics = df.iloc[0:, 0].dropna().unique()
-        print(medics)
         # Lire uniquement la deuxième colonne qt_medics : quantite du medicament
         qt_medics = df.iloc[0:, 1].dropna().unique()
-        print(qt_medics)
         # Lire uniquement la troisième colonne units : unitée du medicament
         units = df.iloc[0:, 2].to_list()
-        print(units)
 
         added, skipped = 0, 0
         for medic, qt_medic, unit in zip(medics, qt_medics, units):
@@ -168,10 +177,14 @@ def init_stock():
             {
                 "success": True,
                 "message": f"{added} médicament(s) ajouté(s), {skipped} déjà existant(s).",
+                "id": "init_stock",
             }
         )
     except Exception as e:
         return (
-            jsonify({"success": False, "message": f"Erreur de traitement : {e}"}),
+            jsonify(
+                {"success": False,
+                 "message": f"Erreur de traitement : {e}",
+                 "id": "init_stock"},),
             500,
         )

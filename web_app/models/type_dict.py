@@ -4,10 +4,12 @@ class Traitement(TypedDict):
     """
     Represente un traitement administré à une vache.
 
+    :var id: int, Identifiant du traitement
     :var date_traitement: str, Date du traitement au format 'YYYY-MM-DD'
     :var medicaments: dict[str, int], Dictionnaire des médicaments et dosages administrés
     :var annotation: str, Annotation ou remarque sur le traitement
     """
+    id : int
     date_traitement: str  # date au format 'YYYY-MM-DD'
     medicaments: dict[str, int]  # [medicament,dosage]
     annotation: str
@@ -52,7 +54,7 @@ class Reproduction(TypedDict):
     :var reproduction_details: str | None, Détails sur la reproduction
     """
 
-    insemination: str
+    insemination: list[str]
     """Date d'insémination au format 'YYYY-MM-DD'."""
 
     ultrasound: bool | None

@@ -53,12 +53,13 @@ def create_app():
     app.register_blueprint(settings_blueprint)
 
     # Jinja2 global functions
-    from .fonction import format_bool_fr, date_to_str
+    from .fonction import format_bool_fr, date_to_str, format_bool_sexe
     from .models.cow import CowUtils
     app.jinja_env.globals.update(enumerate=enumerate)
     app.jinja_env.globals.update(get_all_cows=CowUtils.get_all_cows)
     app.jinja_env.globals.update(date_to_str=date_to_str)
     app.jinja_env.globals.update(format_bool_fr=format_bool_fr)
+    app.jinja_env.globals.update(format_bool_sexe=format_bool_sexe)
 
     return app
 

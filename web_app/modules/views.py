@@ -11,7 +11,7 @@ from flask import (
     request,
     url_for,
 )
-from flask_login import login_required, current_user, AnonymousUserMixin # type: ignore
+from flask_login import login_required, current_user, AnonymousUserMixin  # type: ignore
 from io import BytesIO
 
 from web_app.models.pharmacie import PharmacieUtils
@@ -29,15 +29,17 @@ views = Blueprint('views', __name__)
 # TODO gestion de la reintroduction d'une vache
 
 
-current_user : ConnectedUser
+current_user: ConnectedUser
+
 
 @views.before_request
 def check_authentication():
     if current_user.is_anonymous:
         return redirect(url_for('auth.logout'))
 
+
 @login_required
-@views.route("/", methods=["GET","POST"])
+@views.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
 
@@ -63,8 +65,10 @@ def pharmacie():
 @login_required
 @views.route("/settings", methods=["GET"])
 def settings():
-    message_dry_time : str = str(current_user.setting["dry_time"] or 'Durée_de_tarissement_en_jours') 
-    message_calving_preparation = str(current_user.setting["calving_preparation_time"] or 'Durée_de_préparation_en_jours')
+    message_dry_time: str = str(current_user.setting["dry_time"]
+                                or 'Durée de tarissement en jours')
+    message_calving_preparation = str(current_user.setting["calving_preparation_time"]
+                                      or 'Durée de préparation en jours')
     return render_template("settings.html",
                            dry_time=message_dry_time,
                            calving_preparation=message_calving_preparation)

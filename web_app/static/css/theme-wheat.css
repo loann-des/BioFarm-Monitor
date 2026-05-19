@@ -2,4 +2,14 @@
   --app-background-color: #efefef;
   --theme-background-color: #f5f5dc;
   --theme-accent-color: #deb887;
+  --theme-accent-color-hover: #c9a06c;
+  --theme-green-hover: #006600;
+  --theme-red-hover: #cc0000;
+  --theme-error-color: #ffcccc;
+  --theme-error-border-color: #cc0000;
+  --theme-error-text-color: #cc0000;
+  --theme-success-color: #ccffcc;
+  --theme-success-border-color: #00cc00;
+  --theme-success-text-color: #00cc00;
+
 }

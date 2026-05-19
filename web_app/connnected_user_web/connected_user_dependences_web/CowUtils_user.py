@@ -42,7 +42,7 @@ class CowUtilsUser:
         Renvoie:
             * Cow | None: L'objet `Cow` correspondant si trouvé, sinon None
         """
-        CowUtils.get_care_by_id(user_id=self.user_id, cow_id=cow_id)
+        return CowUtils.get_cow(user_id=self.user_id, cow_id=cow_id)
 
     def get_all_cows(self) -> list[Cow]:
         """Récupère l'ensemble des vaches associées à l'utilisateur courant.
@@ -333,7 +333,7 @@ class CowUtilsUser:
         CowUtils.add_insemination(
             user_id=self.user_id, cow_id=cow_id, insemination=insemination)
 
-    def validated_ultrasound(self, cow_id: int, ultrasound: bool) -> None:
+    def validated_ultrasound(self, cow_id: int, ultrasound: bool, date: str) -> None:
         """Valide ou invalide le résultat de l'échographie pour une vache.
 
         Cette fonction délègue à `CowUtils` la mise à jour de l'état
@@ -345,8 +345,9 @@ class CowUtilsUser:
             * cow_id (int): Identifiant de la vache concernée par l'échographie
             * ultrasound (bool): Indique si l'échographie est confirmée (True)
             ou non (False)
+            * date (str): Date de l'échographie au format chaîne
         """
-        CowUtils.validated_ultrasound(user_id=self.user_id, cow_id=cow_id, ultrasound=ultrasound,
+        CowUtils.validated_ultrasound(user_id=self.user_id, cow_id=cow_id, ultrasound=ultrasound, date=date,
                                       dry_time=self.user.setting["dry_time"], calving_preparation_time=self.user.setting["calving_preparation_time"])
 
     def get_reproduction(self, cow_id: int) -> Reproduction:

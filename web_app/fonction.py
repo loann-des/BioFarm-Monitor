@@ -6,7 +6,7 @@ from typing import TypeVar
 
 from .models.cow import Cow
 
-from .models.type_dict import Traitement
+from .models.type_dict import Reproduction, Setting, Traitement
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -40,7 +40,7 @@ def parse_date(date_obj: date | str) -> date:
             else datetime.strptime(date_obj, "%Y-%m-%d").date()
             )
 
-def date_to_str(date_obj : date | str) -> str:
+def date_to_str(date_obj : date | str | None) -> str:
     """Convertit  une date ou une chaîne de caractère représentant une date
     au format "AAAA-MM-JJ" en une chaîne de caractère au format "JJ Mois AAA"
     (avec Mois le nom du mois dans la langue du système).
@@ -48,7 +48,7 @@ def date_to_str(date_obj : date | str) -> str:
     return (date_obj
             if isinstance(date_obj, date)
             else datetime.strptime(date_obj, "%Y-%m-%d").date()
-            ).strftime('%d %B %Y')
+            ).strftime('%d %B %Y') if date_obj else "Unknown"
 
 def sum_date_to_str(date_obj: date | str, delta_day: int) -> str:
     """Ajoute le nombre de jours passé en argument à la date passée en
@@ -73,6 +73,12 @@ def format_bool_fr(value: bool, true_str: str="Oui",
     """Renvoie la transcription des booléens en termes français "Oui" et "Non".
     """
     return true_str if value else false_str
+
+def format_bool_sexe(value: bool | None)-> str:
+    """Renvoie la transcription des booléens en termes de sexe "Femelle" et "Mâle"."""
+    if value is None:
+        return "Unknown"
+    return "Femelle" if value else "Mâle"
 
 def parse_bool(value: str | None) -> bool | None:
     """Convertit une chaîne de caractères en booléen"""
@@ -168,3 +174,36 @@ def new_available_care(cow: Cow) -> date | None:
     else:
         # Pas de soins, donc pas de date dispo
         return None
+
+def reload_reproduction_with(old: Reproduction, new: Reproduction, settings: Setting) -> Reproduction:
+    """Recharge les données de reproduction d'une vache en tenant compte de
+    l'historique des inséminations.
+
+    Cette fonction analyse les données de reproduction d'une vache représentée
+    par l'objet Cow fourni en argument, en particulier les dates d'insémination,
+    pour mettre à jour les champs de reproduction tels que l'échographie, le
+    tarissement, la préparation au vêlage, le vêlage et l'avortement en fonction
+    des règles de gestion définies.
+
+    Arguments:
+        * cow (Cow): L'objet Cow représentant la vache dont les données de
+        reproduction doivent être rechargées.
+        * old (Reproduction): Les anciennes données de reproduction de la vache
+        avant modification.
+        * new (Reproduction): Les nouvelles données de reproduction de la vache
+        après modification.
+        * settings (Setting): Les réglages utilisateur, notamment les durées
+        de tarissement et de préparation au vêlage.
+
+    Renvoie:
+        * Reproduction: Un nouvel objet Reproduction avec les données de reproduction mises à jour
+        en fonction des inséminations enregistrées.
+    """
+    if len(new["insemination"]) > 1 and new["ultrasound"]:
+        raise ValueError("Validation sur double insémination impossible.")
+    if old["insemination"] != new["insemination"] and new["ultrasound"]:
+        print(old["insemination"], " -> ",new["insemination"])
+        new["calving_date"] = sum_date_to_str(new["insemination"][0], 280)
+        new["dry"] = substract_date_to_str(new["calving_date"], settings["dry_time"])
+        new["calving_preparation"] = substract_date_to_str(new["calving_date"], settings["calving_preparation_time"])
+    return new

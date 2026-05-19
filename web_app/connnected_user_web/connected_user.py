@@ -44,7 +44,7 @@ class ConnectedUser(UserMixin):
         self.setting = user.setting
         self.id = user.id
         self.medic_list = user.medic_list
-        self.cow_ustils = CowUtilsUser(self)
+        self.cow_utils = CowUtilsUser(self)
         self.prescription_utils = PrescriptionUtilsUser(self)
         
     def set_user_setting(self, dry_time: int, calving_preparation: int) -> None:
@@ -64,7 +64,7 @@ class ConnectedUser(UserMixin):
         )
         self.setting["dry_time"] = dry_time
         self.setting["calving_preparation_time"] = calving_preparation
-        self.cow_ustils.reload_all_reproduction()
+        self.cow_utils.reload_all_reproduction()
 
     def add_medic_in_pharma_list(self, medic: str, mesur: str) -> None:
         """Ajoute un médicament à la liste de pharmacie de l'utilisateur connecté.

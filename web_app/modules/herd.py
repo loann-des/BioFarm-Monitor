@@ -27,9 +27,9 @@ def check_authentication():
 @login_required
 @herd.route("/herd/list")
 def list():
-    cows = CowUtils.get_all_cows(current_user.id)
+    cows = current_user.cow_utils.get_all_cows()
 
-    return [cow.to_json() for cow in cows] #TODO masmalow
+    return [cow.to_json() for cow in cows]
 
 @login_required
 @herd.route("/herd/list/filter", methods=["GET"])
@@ -37,26 +37,25 @@ def list_filter():
     idsearch = str(request.args.get("id_filter"))
 
     cows = filter(lambda cow: idsearch in str(cow.cow_id),
-            CowUtils.get_all_cows(current_user.id))
+            current_user.cow_utils.get_all_cows())
 
-    return [cow.to_json() for cow in cows] #TODO masmalow
+    return [cow.to_json() for cow in cows]
 
 @login_required
 @herd.route("/herd/acquire", methods=["POST"])
 def acquire():
     try:
-        user_id = current_user.id
         # Récupération des données du formulaire
         cow_id = int(request.form["id"])
         cow_name = str(request.form["name"])
         birth_date = parse_date(request.form["birth_date"])
 
-        if cow_name is None or len(cow_name) == 0:
+        if cow_name is None or not cow_name:
             cow_name = "N/A"
 
         lg.info(f"Adding new cow {cow_id}...")
 
-        current_user.cow_ustils.add_cow(cow_id, cow_name, birth_date, False)
+        current_user.cow_utils.add_cow(cow_id, cow_name, birth_date, False)
 
         return jsonify(
             {"success": True, "message": f"{cow_id} a été ajoutée avec succès !"}
