@@ -2,6 +2,7 @@
 import logging as lg
 from marshmallow import Schema, fields
 from datetime import date
+from copy import deepcopy
 from sqlalchemy import (
     Boolean,
     Date,
@@ -9,10 +10,11 @@ from sqlalchemy import (
     Integer,
     PrimaryKeyConstraint,
     JSON,
-    String    
+    String
 )
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm.attributes import flag_modified
 from typing import Any
 
 from .type_dict import Note, Reproduction, Traitement, Traitement_signe
@@ -44,7 +46,7 @@ class Cow(db.Model):
     """Représente une vache dans la base de données, incluant ses traitements,
     des notes générales, son statut, sa date de naissance et son historique de
     reproduction.
-    
+
     :var user_id: int, Identifiant de l'utilisateur propriétaire de la vache
     :var cow_id: int, Identifiant de la vache
     :var mother_id: int | None, Identifiant de la mère de la vache, null si inconnu
@@ -62,11 +64,11 @@ class Cow(db.Model):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"),
                                          nullable=False)
     """Identifiant de l'utilisateur propriétaire de la vache, clé étrangère vers la table des utilisateurs."""
-    
+
     cow_id: Mapped[int] = mapped_column(
         Integer, nullable=False)
     """identifiant de la vache, unique pour chaque utilisateur"""
-    
+
     mother_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     """identifiant de la mère de la vache, null si inconnu"""
 
@@ -74,11 +76,10 @@ class Cow(db.Model):
                  ] = mapped_column(
         String, nullable=True)
     """nom de la vache, null si inconnu"""
-    
+
     sexe: Mapped[bool] = mapped_column(
-        Boolean, default=True, nullable=True) # True si femmelle
+        Boolean, default=True, nullable=True)  # True si femmelle
     """represente le sexe, True si femmelle, false si male et None sinon"""
-    
 
     cow_cares: Mapped[list[Traitement]] = mapped_column(
         MutableList.as_mutable(JSON),
@@ -195,7 +196,7 @@ class Cow(db.Model):
             sinon.
         """
         return bool(self.reproduction)
-    
+
     def has_reproduction_in_progress(self) -> bool:
         """Indique si la vache a une reproduction en cours.
 
@@ -509,7 +510,12 @@ class CowUtils:
             # Remplacement du soin dans la liste
             if care_index >= len(cow.cow_cares):
                 raise IndexError("index out of bounds")
-            cow.cow_cares[care_index] = new_care
+            care = cow.cow_cares[care_index]
+            care["date_traitement"] = new_care["date_traitement"]
+            care["medicaments"] = new_care["medicaments"]
+            care["annotation"] = new_care["annotation"]
+            # Indique à SQLAlchemy que cow_cares a été modifié
+            flag_modified(cow, "cow_cares")
             db.session.commit()
 
             lg.info(
@@ -563,7 +569,8 @@ class CowUtils:
             Traitement_signe(cow_id=cow.cow_id, traitement=care_dict)
             for cow in cows
             for care_dict in cow.cow_cares
-            if bool(cow.cow_cares) and bool(care_dict) #TODO verifier utilité de la propriété
+            # TODO verifier utilité de la propriété
+            if bool(cow.cow_cares) and bool(care_dict)
         ]
         # tri par date décroissante
         all_cares.sort(key=lambda x: x["traitement"]
@@ -680,8 +687,9 @@ class CowUtils:
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
             if cow.has_reproduction_in_progress():
-                CowUtils.add_second_isemination_on_current_reproduction(user_id, cow_id, insemination)
-            else :
+                CowUtils.add_second_isemination_on_current_reproduction(
+                    user_id, cow_id, insemination)
+            else:
                 cow.reproduction.append(
                     {
                         "insemination": [insemination],
@@ -714,7 +722,7 @@ class CowUtils:
             * user_id (int): Identifiant de l'utilisateur
             * cow_id (int): Identifiant de la vache
             * insemination (str): Date de la seconde insémination
-            
+
         Lance:
             * ValueError si la vache spécifiée n'existe pas ou si la dernière reproduction a déjà été confirmée par échographie
         """
@@ -726,13 +734,15 @@ class CowUtils:
                 raise ValueError(
                     f"cow : {cow_id} : n'as pas d'insémination en cours ou la dernière insémination a déjà été confirmée par échographie, impossible d'ajouter une seconde insémination")
             reproduction = cow.reproduction[-1]
-            reproduction["insemination"] = reproduction["insemination"] + [insemination]
+            reproduction["insemination"] = reproduction["insemination"] + \
+                [insemination]
             cow.reproduction[-1] = reproduction
             db.session.commit()
             lg.info(f"second insemination on {insemination} add to {cow_id}")
         else:
             lg.error(f"Cow with {cow_id} not found.")
             raise ValueError(f"{cow_id} n'existe pas.")
+
     @staticmethod
     def validated_ultrasound(user_id: int, cow_id: int, ultrasound: bool, dry_time: int,  calving_preparation_time: int, date: str) -> None:
         """Valide ou invalide le résultat de l'échographie pour une vache.
@@ -766,7 +776,8 @@ class CowUtils:
 
             if ultrasound:
                 # a la validation de l'echographie on garde que la bonne date d'insémination
-                cow.reproduction[-1]["insemination"] = [item for item in cow.reproduction[-1]["insemination"] if item == date]
+                cow.reproduction[-1]["insemination"] = [
+                    item for item in cow.reproduction[-1]["insemination"] if item == date]
                 cow.reproduction[-1] = CowUtils.set_reproduction(
                     reproduction, dry_time, calving_preparation_time)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
@@ -796,7 +807,8 @@ class CowUtils:
             dates calculées
         """
         from web_app.fonction import substract_date_to_str, sum_date_to_str
-        calving_date: str = sum_date_to_str(reproduction["insemination"][0], 280)
+        calving_date: str = sum_date_to_str(
+            reproduction["insemination"][0], 280)
         reproduction["dry"] = substract_date_to_str(
             calving_date, dry_time)
         reproduction["calving_preparation"] = substract_date_to_str(
@@ -1032,7 +1044,6 @@ class CowUtils:
             reproduction["reproduction_details"] = new_repro["reproduction_details"]
             cow.reproduction[repro_index] = reproduction
             db.session.commit()
-            print(cow.reproduction[repro_index])
             lg.info(f"{cow_id} : reproduction updated in database")
         else:
             lg.error(f"{cow_id} : not in database")

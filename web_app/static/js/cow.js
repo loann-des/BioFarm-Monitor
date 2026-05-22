@@ -11,8 +11,6 @@ window.addEventListener("load", () => {
 
   cowId = parseInt(removeButton.getAttribute("cow"));
 
-  const addMedicationButton = document.querySelector("button#extend-medication");
-  const removeMedicationButton = document.querySelector("button#remove-medication");
 
 
   const changePopup = document.querySelector("div.popup#change-cow-div");
@@ -93,6 +91,8 @@ window.addEventListener("load", () => {
   });
 
 
+  const addMedicationButton = document.querySelector("div#btn-ext-treatment button#extend-medication");
+  const removeMedicationButton = document.querySelector("div#btn-ext-treatment button#remove-medication");
 
   const medicationTemplate = document.querySelector("#medication-template");
   const container = document.querySelector("#medication-extend");
@@ -106,6 +106,24 @@ window.addEventListener("load", () => {
       container.removeChild(container.lastElementChild);
     }
   });
+
+  const addChangeMedicationButton = document.querySelector("div#btn-ext-change-care button#extend-medication");
+  const removeChangeMedicationButton = document.querySelector("div#btn-ext-change-care button#remove-medication");
+
+  const medicationChangeTemplate = document.querySelector("div#change-care-popup #medication-template");
+  const changeContainer = document.querySelector("div#change-care-popup #medication-extend");
+
+  addChangeMedicationButton.addEventListener("click", () => {
+    const card = medicationChangeTemplate.content.children[0].cloneNode(true);
+    changeContainer.appendChild(card);
+  });
+
+  removeChangeMedicationButton.addEventListener("click", () => {
+    if (changeContainer.children.length > 1) {
+      changeContainer.removeChild(changeContainer.lastElementChild);
+    }
+  });
+
 
   removeButton.addEventListener("click", async () => {
     if (!confirm('Are you sure?')) {
@@ -142,6 +160,19 @@ window.addEventListener("load", () => {
     overlay.style.display = "none";
     document.querySelector("div.popup#change-reproduction-popup").style.display = "none";
   });
+
+  const changeCareClose = document.querySelector("div.popup#change-care-popup div.popup-header button");
+
+  changeReproductionClose.addEventListener("click", () => {
+    overlay.style.display = "none";
+    document.querySelector("div.popup#change-reproduction-popup").style.display = "none";
+  });
+
+  changeCareClose.addEventListener("click", () => {
+    overlay.style.display = "none";
+    document.querySelector("div.popup#change-care-popup").style.display = "none";
+  });
+
 
 
   updateCow();
@@ -237,6 +268,9 @@ async function updateCowReproductions() {
         if (!confirm('Are you sure?')) {
           return;
         }
+
+        const index = e.currentTarget.getAttribute("index");
+
         let reqData = new FormData();
         reqData.append("cow_id", cowId);
         reqData.append("index", index);
@@ -336,7 +370,8 @@ async function updateCowCares() {
     }
 
     const cares = result.message;
-    console.log(cares);
+
+    let index = 0;
 
     cares.forEach(care => {
 
@@ -381,7 +416,68 @@ async function updateCowCares() {
       card.querySelector(".title").textContent = `Soins du ${date}`;
       card.querySelector(".details-content").textContent = details;
 
+      card.querySelector("button#care-change-button").setAttribute("index", index);
+      card.querySelector("button#care-delete-button").setAttribute("index", index);
+
+      card.querySelector("button#care-delete-button").addEventListener("click", async (e) => {
+        if (!confirm('Are you sure?')) {
+          return;
+        }
+
+        const index = e.currentTarget.getAttribute("index");
+
+        let reqData = new FormData();
+        reqData.append("cow_id", cowId);
+        reqData.append("index", index);
+
+        const response = await fetch("/cow/remove_care", {
+          method: "POST",
+          body: reqData
+        });
+
+        const contentType = response.headers.get("Content-Type");
+
+        if (!contentType.includes("application/json")) {
+          console.error(`Unexpected response: expected application/json, got ${contentType}`);
+          return;
+        }
+
+        const result = await response.json();
+        sessionStorage.setItem(
+          "flashMessage",
+          JSON.stringify(result)
+        );
+
+        location.reload()
+      });
+
+      card.querySelector("button#care-change-button").addEventListener("click", async (e) => {
+        const changeCarePopup = document.querySelector("div.popup#change-care-popup");
+        changeCarePopup.querySelector(".popup-title").textContent = `Modifier les soins du ${date}`;
+        changeCarePopup.querySelector(".date").value =
+          new Date(care["date_traitement"]).toISOString().split("T")[0];
+        changeCarePopup.querySelector(".annotation").value = care["annotation"] || "";
+
+        const medicationContainer = changeCarePopup.querySelector("#medication-extend");
+        while (medicationContainer.children.length > 0) {
+          medicationContainer.removeChild(medicationContainer.lastElementChild);
+        }
+        const medicationTemplate = document.querySelector("#medication-template");
+        Object.entries(care["medicaments"] || {}).forEach(([medication, dose]) => {
+          const medCard = medicationTemplate.content.children[0].cloneNode(true);
+          medCard.querySelector(".medication").value = medication;
+
+          medCard.querySelector(".dose").value = dose;
+          medicationContainer.appendChild(medCard);
+        });
+
+        changeCarePopup.querySelector(".index").setAttribute("value", index);
+
+        changeCarePopup.style.display = "block";
+      });
+
       careList.appendChild(card);
+      index++;
     });
 
   } catch (error) {
@@ -450,4 +546,4 @@ async function loadMessages() {
 async function updateCow() {
   await updateCowReproductions();
   await updateCowCares();
-} 
+}

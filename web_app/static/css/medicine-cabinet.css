@@ -1,0 +1,35 @@
+button#new-medication {
+    width: 20%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  width: 100%;
+}
+
+.label {
+  text-align: left;
+  color: gray;
+}
+
+.value {
+  text-align: left;
+  font-weight: bold;
+}
+
+.care-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  background: white;
+}
+
+#prescription-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

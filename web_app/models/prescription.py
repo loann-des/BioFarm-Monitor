@@ -11,6 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column
 
+from web_app.fonction import my_strftime
 from web_app.models.type_dict import Prescription_export_format
 
 from .. import db
@@ -142,7 +143,8 @@ class PrescriptionUtils:
             présentes dans la base de données, par ordre décroissante de date.
         """
         all_cares: list[Prescription_export_format] = [
-            Prescription_export_format(date_prescription=prescription.date,
+            Prescription_export_format(id=prescription.id,
+                                       date_prescription=my_strftime(prescription.date),
                                        prescription=prescription.care,
                                        dlc_left=prescription.dlc_left)
             for prescription in (Prescription.query.filter_by(user_id=user_id).all())

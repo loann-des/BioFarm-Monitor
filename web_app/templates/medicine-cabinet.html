@@ -1,3 +1,226 @@
 {% extends 'base.html' %}
 
 {% block title %}Pharmacie | BioFarm Monitor{% endblock title %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/medicine-cabinet.css') }}">
+{% endblock head %}
+
+{% block content %}
+<h1>Gestion de la pharmacie</h1>
+
+<div><br><br></div>
+<section>
+
+    <div id="action-buttons-wrapper">
+        <button id="add-prescription-button">Entré Préscription</button>
+        <button id="add-dcl-left-button">Sortire pour DLC</button>
+        <button id="export-recap-cows-button">Récap traitement ⤓</button>
+        <button id="export-recap-pharmacy-button">Récape pharmacie ⤓</button>
+    </div>
+
+    <div id="message-div" class="message-div">
+        <span>test</span>
+    </div>
+
+</section>
+
+<section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;Stock</h2>
+
+    <div class="collapsible-content">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Médicament</th>
+                    <th>Dose</th>
+                </tr>
+            </thead>
+            <tbody id="stock-list">
+
+            </tbody>
+        </table>
+
+    </div>
+</section>
+
+<section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;Liste Prescriptions</h2>
+
+    <div class="collapsible-content">
+
+        <div id="prescription-list">
+        </div>
+
+    </div>
+</section>
+
+<section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;Liste Sorties DLC</h2>
+
+    <div class="collapsible-content">
+
+        <div id="reproduction-list">
+        </div>
+
+    </div>
+</section>
+
+<div id="overlay"></div>
+
+<div class="popup" id="add-prescription-popup">
+    <div class="popup-header">
+        <h3>Ajouter une prescription</h3>
+        <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('pharmacy.add_prescription') }}" method="POST">
+        <label for="date">Date de la prescription</label>
+        <input name="date" type="date" required>
+
+        <label for="medication">Médicament</label>
+        <div id="medication-extend-treatment" class="container">
+            <div class="medication-bloc">
+                <select name="medication" required>
+                    {% for medication,unit in current_user.medic_list.items() %}
+                    <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+                    {% endfor %}
+                </select>
+                <input name="dose" type="number" min="0" placeholder="Dose prescrite" required>
+            </div>
+        </div>
+        <div id="new-medication-container"></div>
+
+        <div class="btn-more-less" id="btn-ext-treatment">
+            <button type="button" id="extend-medication">+</button>
+            <button type="button" id="remove-medication">-</button>
+        </div>
+        <button type="button" id="new-medication">New +</button>
+
+        <button type="submit">Ajouter</button>
+    </form>
+    <template id="new-medication-template">
+        <div class="medication-bloc">
+            <input type="text" name="new_medication" placeholder="Nouveau médicament" required>
+            <select name="unit" id="unit" required>
+                <option value="ml">ml</option>
+                <option value="dose">dose</option>
+            </select>
+            <input name="dose" type="number" min="0" placeholder="Dose prescrite" required>
+        </div>
+    </template>
+</div>
+
+<div class="popup" id="add-dcl-left-popup">
+    <div class="popup-header">
+        <h3>Ajouter une sortie pour dlc</h3>
+        <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('pharmacy.add_dlc_left') }}" method="POST">
+        <label for="date">Date de la sortie</label>
+        <input name="date" type="date" required>
+
+        <label for="medication">Médicament</label>
+        <div id="medication-extend-dlc" class="container">
+            <div class="medication-bloc">
+                <select name="medication" required>
+                    {% for medication,unit in current_user.medic_list.items() %}
+                    <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+                    {% endfor %}
+                </select>
+                <input name="dose" type="number" min="0" placeholder="Dose sortie" required>
+            </div>
+        </div>
+
+        <div class="btn-more-less" id="btn-ext-dlc">
+            <button type="button" id="extend-medication">+</button>
+            <button type="button" id="remove-medication">-</button>
+        </div>
+
+        <button type="submit">Ajouter</button>
+
+    </form>
+</div>
+
+<div class="popup" id="change-prescription-popup">
+    <div class="popup-header">
+        <h3>Ajouter une sortie pour dlc</h3>
+        <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('pharmacy.add_dlc_left') }}" method="POST">
+        <label for="date">Date de la sortie</label>
+        <input name="date" type="date" required>
+
+        <label for="medication">Médicament</label>
+        <div id="medication-extend-dlc" class="container">
+            <div class="medication-bloc">
+                <select name="medication" required>
+                    {% for medication,unit in current_user.medic_list.items() %}
+                    <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+                    {% endfor %}
+                </select>
+                <input name="dose" type="number" min="0" placeholder="Dose sortie" required>
+            </div>
+        </div>
+
+        <div class="btn-more-less" id="btn-ext-dlc">
+            <button type="button" id="extend-medication">+</button>
+            <button type="button" id="remove-medication">-</button>
+        </div>
+
+        <button type="submit">Ajouter</button>
+
+    </form>
+</div>
+
+
+<template id="stock-row">
+    <tr>
+        <th class="value medication"></th>
+        <th class="value dose"></th>
+    </tr>
+</template>
+
+<template id="medication-template">
+
+    <div class="medication-bloc">
+        <select name="medication" required>
+            {% for medication,unit in current_user.medic_list.items() %}
+            <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+            {% endfor %}
+        </select>
+        <input name="dose" type="number" placeholder="Dose administrée" min="0" required>
+    </div>
+
+</template>
+
+<template id="prescription-dlc-template">
+    <article class="care-card">
+
+    <div class="care-header">
+      <h3 class="title"></h3>
+    </div>
+
+    <div class="medication-list"></div>
+    
+    <div id="action-buttons-wrapper">
+      <button id="prescription-change-button" prescription_id="">Modifier</button>
+      <button id="prescription-delete-button" prescription_id="" class="delete-button">Supprimer</button>
+    </div>
+
+    <template class="medication-template">
+      <div class="item">
+        <span class="label medication"></span>
+        <span class="value dose"></span>
+      </div>
+    </template>
+
+  </article>
+</template>
+{% endblock content %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/medicine-cabinet.js') }}"></script>
+{% endblock js %}

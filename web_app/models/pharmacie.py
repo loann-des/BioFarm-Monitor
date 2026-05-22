@@ -13,6 +13,8 @@ from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Any
 
+from web_app.fonction import addition_dict
+
 from .. import db
 
 class PharmacieAttr(Enum):
@@ -310,9 +312,9 @@ class PharmacieUtils:
         
     @staticmethod
     def validat_quantity(user_id: int, stock_delta: dict[str, int], year_to_verify: int) -> bool:
-        for year in range(year_to_verify,datetime.now().year):
+        for year in range(year_to_verify, datetime.now().year +1):
             pharmatcie: Pharmacie = PharmacieUtils.get_pharmacie_year(user_id=user_id, year=year)
-            new_remaining_stock : dict[str, int] =  dict(Counter(pharmatcie.remaining_stock) + Counter(stock_delta) )
+            new_remaining_stock : dict[str, int] =  addition_dict((pharmatcie.remaining_stock), (stock_delta))
             if any(x < 0 for x in new_remaining_stock.values()) :
                 return False
         return True

@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import TYPE_CHECKING
 
-from web_app.fonction import my_strftime
+from web_app.fonction import my_strftime, to_negativ_dict
 
 from datetime import date, datetime
 
@@ -53,10 +53,10 @@ class PrescriptionUtilsUser:
             * ValueError: Si le stock restant serait négatif après le retrait
             des traitements indiqués
         """
-        stock_delta = dict( - Counter(care_items))
+        stock_delta = to_negativ_dict(care_items)
         year = datetime.now().year
         if not PharmacieUtils.validat_quantity(user_id=self.user_id, year_to_verify=year, stock_delta=stock_delta) :
-            raise ValueError("Stock insuffisant pour retirer le traitement")
+            raise ValueError("Stock insuffisant pour retirer le medicament")
             
         PrescriptionUtils.add_dlc_left(user_id=self.user_id, date=date, care_items=care_items)
         

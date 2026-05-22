@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from datetime import date
 
-from web_app.fonction import parse_date
+from web_app.fonction import parse_date, to_negativ_dict
 from web_app.models.cow import Cow, CowUtils
 from web_app.models.pharmacie import PharmacieAttr, PharmacieUtils
 from web_app.models.type_dict import Note, Reproduction, Traitement, Traitement_signe
@@ -179,19 +179,22 @@ class CowUtilsUser:
         """
         year: int = parse_date(cow_care["date_traitement"]).year
 
-        stock_delta = dict(- Counter(cow_care["medicaments"]))
+        stock_delta = to_negativ_dict(cow_care["medicaments"])
+        print("--->add_cow_care:",stock_delta)
         # verifi le validité des stock apres traitement
         if PharmacieUtils.validat_quantity(user_id=self.user_id,
                                            stock_delta=stock_delta,
                                            year_to_verify=year):
+
             # MAJ les stock
             PharmacieUtils.modify_pharmacie_year(user_id=self.user_id,
                                                  year=year,
                                                  attr=PharmacieAttr.total_used,
                                                  care_delta=cow_care["medicaments"])
-        # ajout du traitement
-        return CowUtils.add_cow_care(user_id=self.user_id, cow_id=cow_id, cow_care=cow_care)
-
+            # ajout du traitement
+            return CowUtils.add_cow_care(user_id=self.user_id, cow_id=cow_id, cow_care=cow_care)
+        else:
+            raise ValueError("pas sufisament de madicament")
     def update_cow_care(
         self, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
@@ -209,10 +212,23 @@ class CowUtilsUser:
         Lance:
             * ValueError: Si la mise à jour du traitement conduirait à un stock de médicaments négatif
         """
-        if cow := self.get_cow(cow_id=cow_id):
-            old_care = cow.cow_cares[care_index]["medicaments"]
-            year = parse_date(new_care["date_traitement"]).year
-            care_delta = dict(Counter(new_care) - Counter(old_care))
+        
+        if cow := self.get_cow(cow_id=cow_id):            
+            old_care = cow.cow_cares[care_index]
+            old_year = parse_date(old_care["date_traitement"]).year
+            new_year = parse_date(new_care["date_traitement"]).year
+            if old_year != new_year:
+                # TODO update_cow_care : diff on year
+                # old(care) and new(new_care) care
+                # suppresion oldcare: update stock stock_delta = -old_care
+                # verifi le validité des stock new(care) : stock_delta = + new_care
+                # if valid : ajout new_care et : update stock : stock_delta = + new_care
+                # else : reset ops : ajout old(care) : update_cow_care : stock_delta = + old_care
+                raise ValueError("Not implemented yet: La date du traitement ne peut pas être modifiée pour garantir la cohérence des stocks annuels.")
+            
+            year = old_year
+            care_delta = dict(Counter(new_care["medicaments"]) - Counter(old_care["medicaments"]))
+
             stock_delta = dict(- Counter(care_delta))
             if PharmacieUtils.validat_quantity(user_id=self.user_id, stock_delta=stock_delta, year_to_verify=year):
                 if cow.is_calf_care(new_care):

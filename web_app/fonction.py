@@ -14,6 +14,7 @@ URI = os.path.join(basedir, "txt")
 
 T = TypeVar("T")
 
+
 def first(lst: list[T]) -> T | None:
     """Renvoie le premier élément d'une liste, ou None si la liste est vide."""
     return lst[0] if lst else None
@@ -24,13 +25,22 @@ def last(lst: list[T]) -> T | None:
     return lst[-1] if lst else None
 
 
+def addition_dict(d1: dict, d2: dict)-> dict:
+    return {cle: d1.get(cle, 0) + d2.get(cle, 0)
+            for cle in set(d1) | set(d2)}
+
+def to_negativ_dict(d1: dict)-> dict:
+    return {clef: -d1[clef] for clef in set(d1)}
+
+
 def my_strftime(date_obj: date | str) -> str:
     """Convertit une date (objet date ou chaîne de caractères) en une chaîne de
     caractères au format "AAAA-MM-JJ".
     """
     return (date_obj if isinstance(date_obj, date)
-                    else datetime.strptime(date_obj, "%Y-%m-%d").date()
+            else datetime.strptime(date_obj, "%Y-%m-%d").date()
             ).strftime('%Y-%m-%d')
+
 
 def parse_date(date_obj: date | str) -> date:
     """Convertit une chaîne de caractère représentant une date au format
@@ -40,7 +50,8 @@ def parse_date(date_obj: date | str) -> date:
             else datetime.strptime(date_obj, "%Y-%m-%d").date()
             )
 
-def date_to_str(date_obj : date | str | None) -> str:
+
+def date_to_str(date_obj: date | str | None) -> str:
     """Convertit  une date ou une chaîne de caractère représentant une date
     au format "AAAA-MM-JJ" en une chaîne de caractère au format "JJ Mois AAA"
     (avec Mois le nom du mois dans la langue du système).
@@ -50,14 +61,16 @@ def date_to_str(date_obj : date | str | None) -> str:
             else datetime.strptime(date_obj, "%Y-%m-%d").date()
             ).strftime('%d %B %Y') if date_obj else "Unknown"
 
+
 def sum_date_to_str(date_obj: date | str, delta_day: int) -> str:
     """Ajoute le nombre de jours passé en argument à la date passée en
     arguments et renvoie le résultat sous la forme d'une chaîne de caractères
     au format "AAAA-MM-JJ".
     """
     return my_strftime(
-                parse_date(date_obj) + timedelta(days=delta_day)
-            )
+        parse_date(date_obj) + timedelta(days=delta_day)
+    )
+
 
 def substract_date_to_str(date_obj: date | str, delta_day: int) -> str:
     """Soustrait le nombre de jours passé en argument à la date passée en
@@ -65,26 +78,30 @@ def substract_date_to_str(date_obj: date | str, delta_day: int) -> str:
     au format "AAAA-MM-JJ".
     """
     return my_strftime(
-                parse_date(date_obj) - timedelta(days=delta_day)
-            )
+        parse_date(date_obj) - timedelta(days=delta_day)
+    )
 
-def format_bool_fr(value: bool, true_str: str="Oui",
-        false_str: str="Non") -> str:
+
+def format_bool_fr(value: bool, true_str: str = "Oui",
+                   false_str: str = "Non") -> str:
     """Renvoie la transcription des booléens en termes français "Oui" et "Non".
     """
     return true_str if value else false_str
 
-def format_bool_sexe(value: bool | None)-> str:
+
+def format_bool_sexe(value: bool | None) -> str:
     """Renvoie la transcription des booléens en termes de sexe "Femelle" et "Mâle"."""
     if value is None:
         return "Unknown"
     return "Femelle" if value else "Mâle"
+
 
 def parse_bool(value: str | None) -> bool | None:
     """Convertit une chaîne de caractères en booléen"""
     if value is None or not value:
         return None
     return value.lower() in {"true", "1", "yes"}
+
 
 def day_delta(date: date) -> int:
     """Calcule le temps séparant la date d'il y a un an jour pour jour et la
@@ -106,6 +123,7 @@ def day_delta(date: date) -> int:
     one_year_ago = today - timedelta(days=365)
     return (date - one_year_ago).days
 
+
 def nb_cares_years_of_cow(cow: Cow) -> int:
     """Compte le nombre de traitements administrés à une vache au cours de
     l'année passée.
@@ -125,6 +143,7 @@ def nb_cares_years_of_cow(cow: Cow) -> int:
         day_delta(parse_date(care["date_traitement"])) >= 0 for care in cares
     )  # sum boolean if True 1 else 0
 
+
 def remaining_care_on_year(cow: Cow) -> int:
     """Calcule le nombre de traitements qu'il est possible d'administrer à la
     vache dans le courant de l'année roulante actuelle.
@@ -143,6 +162,7 @@ def remaining_care_on_year(cow: Cow) -> int:
     nb_care_year = nb_cares_years_of_cow(cow=cow)
     # traitement restant dans l'année glissante
     return 3 - nb_care_year
+
 
 def new_available_care(cow: Cow) -> date | None:
     """Calcule la prochaine date à partir de laquelle un nouveau traitement sera autorisé pour une vache.
@@ -164,7 +184,8 @@ def new_available_care(cow: Cow) -> date | None:
 
     if nb_care_year > 0 and len(cow.cow_cares) >= nb_care_year:
         # On prend la date du soin qui correspond à nb_care_year avant la fin de la liste
-        cares_dates = sorted(cow.cow_cares, key=lambda x: parse_date(x["date_traitement"]))
+        cares_dates = sorted(
+            cow.cow_cares, key=lambda x: parse_date(x["date_traitement"]))
         care_date = parse_date(cares_dates[-nb_care_year]["date_traitement"])
 
         return care_date + timedelta(days=365)
@@ -174,6 +195,7 @@ def new_available_care(cow: Cow) -> date | None:
     else:
         # Pas de soins, donc pas de date dispo
         return None
+
 
 def reload_reproduction_with(old: Reproduction, new: Reproduction, settings: Setting) -> Reproduction:
     """Recharge les données de reproduction d'une vache en tenant compte de
@@ -202,8 +224,10 @@ def reload_reproduction_with(old: Reproduction, new: Reproduction, settings: Set
     if len(new["insemination"]) > 1 and new["ultrasound"]:
         raise ValueError("Validation sur double insémination impossible.")
     if old["insemination"] != new["insemination"] and new["ultrasound"]:
-        print(old["insemination"], " -> ",new["insemination"])
+        print(old["insemination"], " -> ", new["insemination"])
         new["calving_date"] = sum_date_to_str(new["insemination"][0], 280)
-        new["dry"] = substract_date_to_str(new["calving_date"], settings["dry_time"])
-        new["calving_preparation"] = substract_date_to_str(new["calving_date"], settings["calving_preparation_time"])
+        new["dry"] = substract_date_to_str(
+            new["calving_date"], settings["dry_time"])
+        new["calving_preparation"] = substract_date_to_str(
+            new["calving_date"], settings["calving_preparation_time"])
     return new

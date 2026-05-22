@@ -121,6 +121,9 @@ class ConnectedUser(UserMixin):
         """
         return len(self.get_pharma_list())
 
+    def get_pharmacie_year(self, year : int) -> Pharmacie:
+        return PharmacieUtils.get_pharmacie_year(user_id=self.id, year=year)
+        
     def sum_pharmacie_in(self, year: int) -> dict[str, int]:
         """Sums the quantities of each medication prescribed in a given year.
 

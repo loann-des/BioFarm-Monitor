@@ -88,11 +88,13 @@ class Reproduction(TypedDict):
 
 class Prescription_export_format(TypedDict):
     """Représente une prescription avec une date associée.
-
+    
+    :var id: int, id propre a la prescription
     :var date_prescription: str, Date de la prescription au format 'YYYY-MM-DD'
     :var prescription: dict[str, int], Dictionnaire des médicaments et dosages prescrits
     :var dlc_left: bool, True si la date de consommation est atteinte, False sinon.
     """
+    id:int # id de la prescription
     date_prescription: str  # date au format 'YYYY-MM-DD'
     prescription: dict[str, int]  # [medicament,dosage]
     # True si la date de consommation est atteinte, False sinon.

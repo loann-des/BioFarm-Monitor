@@ -1,4 +1,3 @@
-import json
 import logging as lg
 
 from flask import (
@@ -16,7 +15,6 @@ from web_app.fonction import my_strftime, parse_date, reload_reproduction_with
 from web_app.models.type_dict import Reproduction, Traitement  # type: ignore
 
 from ..connnected_user_web.connected_user import ConnectedUser
-from web_app.models.cow import CowUtils
 
 cowbp = Blueprint("cow", __name__)
 
@@ -69,8 +67,8 @@ def change():
         if request.form["birthdate"]:
             current_user.cow_utils.update_cow(
                 cow_id=cow_id,
-                born_date=
-                parse_date(request.form["birthdate"])) # type: ignore
+                
+                born_date=parse_date(request.form["birthdate"]))# type: ignore
 
         return jsonify({
             "success": True,
@@ -88,7 +86,6 @@ def change():
 @login_required
 @cowbp.route("/cow/add-insemination", methods=["POST"])
 def add_insemination():
-    # TODO limiter a une reproduction en cours
     try:
         cow_id = int(request.form["cow_id"])
         inseminsation_date = my_strftime(request.form["date"])
@@ -132,8 +129,8 @@ def add_care():
 
         return jsonify({
             "success": True,
-            "message": f"Traitement ajouté à la vache "
-            #TODO ajouter les traitement restant dans le message
+            "message": "Traitement ajouté à la vache"
+            # TODO ajouter les traitement restant dans le message
             })
     except Exception as e:
         lg.error(f"Erreur lors de l'ajout du traitement: {e}")
@@ -150,7 +147,6 @@ def remove_reproduction():
     try:
         cow_id: int = int(request.form["cow_id"])
         index: int = int(request.form["index"])
-        print(index)
         current_user.cow_utils.delete_cow_reproduction(cow_id, index)
         return jsonify({
             "success": True,
@@ -178,10 +174,11 @@ def modify_reproduction():
                 "success": False,
                 "message": "Vache non trouvée"
             })
-        repro : Reproduction = cow.reproduction[index]
+        repro: Reproduction = cow.reproduction[index]
         new_repro = Reproduction(
             insemination=isneminaton,
-            ultrasound=bool(request.form["ultrasound"]) if request.form["ultrasound"] != "None" else None,
+            ultrasound=bool(
+                request.form["ultrasound"]) if request.form["ultrasound"] != "None" else None,
             dry=repro["dry"],
             dry_status=bool(request.form["dry"]),
             calving_preparation=repro["calving_preparation"],
@@ -191,8 +188,10 @@ def modify_reproduction():
             abortion=bool(request.form["abortion"]),
             reproduction_details=request.form["reproduction_details"]
         )
-        reproduction = reload_reproduction_with(repro, new_repro, current_user.setting)
-        current_user.cow_utils.update_cow_reproduction(cow_id, index, reproduction)
+        reproduction = reload_reproduction_with(
+            repro, new_repro, current_user.setting)
+        current_user.cow_utils.update_cow_reproduction(
+            cow_id, index, reproduction)
         return jsonify({
             "success": True,
             "message": "Reproduction modifiée"
@@ -208,21 +207,72 @@ def modify_reproduction():
 @login_required
 @cowbp.route("/cow/remove_care", methods=["POST"])
 def remove_care():
-    # TODO remove_care
-    return jsonify({
-        "success": False,
-        "message": "Not implemented yet"
-    })
+    try:
+        cow_id = request.form["cow_id"]
+        index = request.form["index"]
+        if not cow_id or not index:
+            return jsonify({
+                "success": False,
+                "message": "Argument cow_id or index is missing"
+            })
+        cow = current_user.cow_utils.get_cow(int(cow_id))  # check if cow exist
+        if not cow:
+            return jsonify({
+                "success": False,
+                "message": "Vache non trouvée"
+            })
+        # convert index from display order to storage order
+        index = len(cow.cow_cares) - int(index) - 1
+        current_user.cow_utils.delete_cow_care(int(cow_id), index)
+        return jsonify({
+            "success": True,
+            "message": "Soins supprimés"
+        })
+    except Exception as e:
+        lg.error(f"Erreur lors de la suppression des soins: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de la suppression des soins: {e}"
+        })
 
 
 @login_required
 @cowbp.route("/cow/modify_care", methods=["POST"])
 def modify_care():
-    # TODO: Implement care modification logic
-    return jsonify({
-        "success": False,
-        "message": "Not implemented yet"
-    })
+    try:
+        cow_id = request.form["cow_id"]
+        index = request.form["index"]
+        if not cow_id or not index:
+            return jsonify({
+                "success": False,
+                "message": "Argument cow_id or index is missing"
+            })
+        cow = current_user.cow_utils.get_cow(int(cow_id))  # check if cow exist
+        if not cow:
+            return jsonify({
+                "success": False,
+                "message": "Vache non trouvée"
+            })
+        # convert index from display order to storage order    return jsonify({
+        index = len(cow.cow_cares) - int(index) - 1
+        care_date = my_strftime(request.form["date"])
+        medicaments_list = request.form.getlist("medication")
+        quantites = [int(q) for q in request.form.getlist("dose")]
+        medicaments = dict(zip(medicaments_list, quantites))
+        note = request.form["note"]
+        traitement: Traitement = Traitement(
+            date_traitement=care_date, medicaments=medicaments, annotation=note, id=0) 
+        current_user.cow_utils.update_cow_care(int(cow_id), index, traitement)
+        return jsonify({
+            "success": True,
+            "message": "Soins modifiés"
+        })
+    except Exception as e:
+        lg.error(f"Erreur lors de la modification des soins: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de la modification des soins: {e}"
+        })
 
 
 @login_required

@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
+
 # Initialize SQLAlchemy instance (outside create_app for import access)
 db = SQLAlchemy()
 
@@ -45,6 +46,9 @@ def create_app():
 
     from .modules.herd import herd as herd_blueprint
     app.register_blueprint(herd_blueprint)
+    
+    from .modules.medicine_cabinet import pharmacybp as pharmacy_blueprint
+    app.register_blueprint(pharmacy_blueprint)
 
     from .modules.cow import cowbp as cow_blueprint
     app.register_blueprint(cow_blueprint)
@@ -53,13 +57,15 @@ def create_app():
     app.register_blueprint(settings_blueprint)
 
     # Jinja2 global functions
-    from .fonction import format_bool_fr, date_to_str, format_bool_sexe
+    from .fonction import format_bool_fr, date_to_str, format_bool_sexe, new_available_care, remaining_care_on_year
     from .models.cow import CowUtils
     app.jinja_env.globals.update(enumerate=enumerate)
     app.jinja_env.globals.update(get_all_cows=CowUtils.get_all_cows)
     app.jinja_env.globals.update(date_to_str=date_to_str)
     app.jinja_env.globals.update(format_bool_fr=format_bool_fr)
     app.jinja_env.globals.update(format_bool_sexe=format_bool_sexe)
+    app.jinja_env.globals.update(remaining_care_on_year=remaining_care_on_year)
+    app.jinja_env.globals.update(new_available_care=new_available_care)
 
     return app
 

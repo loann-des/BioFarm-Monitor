@@ -16,16 +16,15 @@
     <li>Veau&nbsp;: {{format_bool_fr(cow.is_calf) }}</li>
     <li>sexe&nbsp;: {{format_bool_sexe(cow.sexe) }}</li>
     <li>mère&nbsp;: {{ cow.mother_id if cow.mother_id else "Inconnue" }}</li>
-    <li>
-      <!-- TODO traitments restants -->
-    </li>
+    <li>traitemen&nbsp;: {{ remaining_care_on_year(cow) }} restants jusqu'au {{ date_to_str(new_available_care(cow)) }}</li>
+    <!-- <li>père&nbsp;: {{ cow.father_id if cow.father_id else "Inconnu" }}</li> -->
   </ul>
 
   <div id="action-buttons-wrapper">
     <button id="change-button">Modifier</button>
     <button id="insemination-button">Ajouter une insémination</button>
     <button id="treatment-button">Ajouter un traitement</button>
-    <button id="delete-button" cow="{{ cow.cow_id }}">Supprimer</button>
+    <button id="delete-button" cow="{{ cow.cow_id }}" class="delete-button">Supprimer</button>
   </div>
 
   <div id="message-div" class="message-div">
@@ -117,7 +116,7 @@
     <textarea name="note" placeholder="Informations supplémentaires sur le traitement..."></textarea>
 
     <input name="cow_id" type="hidden" value="{{ cow.cow_id }}">
-    <div class="btn-more-less">
+    <div class="btn-more-less" id="btn-ext-treatment">
       <button type="button" id="extend-medication">+</button>
       <button type="button" id="remove-medication">-</button>
     </div>
@@ -182,6 +181,48 @@
   </template>
 </div>
 
+<div class="popup" id="change-care-popup">
+  <div class="popup-header">
+    <h3 class="popup-title"></h3>
+    <button>&times;</button>
+  </div>
+
+  <form action="{{ url_for('cow.modify_care') }}" method="POST">
+
+    <label for="date">Date du traitement</label>
+    <input class="value date" name="date" type="date" required>
+
+    <label for="medication">Médicament</label>
+    <div id="medication-extend"></div>
+
+
+    <label for="note">Note</label>
+    <textarea class="annotation" name="note" placeholder="Informations supplémentaires sur le traitement..."></textarea>
+
+    <input type="hidden" name="cow_id" value="{{ cow.cow_id }}">
+    <input class="index" type="hidden" name="index" value="">
+    <input class="index" type="hidden" name="index" value="">
+
+    <div class="btn-more-less" id="btn-ext-change-care">
+      <button type="button" id="extend-medication">+</button>
+      <button type="button" id="remove-medication">-</button>
+    </div>
+
+    <button type="submit">Modifier</button>
+  </form>
+
+  <template id="medication-template">
+    <div class="medication-bloc">
+      <select name="medication" class="value medication" required>
+        {% for medication,unit in current_user.medic_list.items() %}
+        <option value="{{ medication }}" class="{{ medication }}">{{ medication }} ({{ unit }})</option>
+        {% endfor %}
+      </select>
+      <input name="dose" type="number" class="value dose" placeholder="Dose administrée" required>
+    </div>
+  </template>
+</div>
+
 <template id="medication-template">
 
   <div class="medication-bloc">
@@ -243,7 +284,7 @@
 
     <div id="action-buttons-wrapper">
       <button id="reproduction-change-button" cow="{{ cow.cow_id }}" index="">Modifier</button>
-      <button id="reproduction-delete-button" cow="{{ cow.cow_id }}" index="">Supprimer</button>
+      <button id="reproduction-delete-button" cow="{{ cow.cow_id }}" index="" class="delete-button">Supprimer</button>
     </div>
   </article>
 
@@ -261,6 +302,13 @@
     <div class="details">
       <strong>Notes :</strong>
       <p class="details-content"></p>
+    </div>
+
+    <input type="hidden" class="care-index" value="">
+
+    <div id="action-buttons-wrapper">
+      <button id="care-change-button" cow="{{ cow.cow_id }}" index="">Modifier</button>
+      <button id="care-delete-button" cow="{{ cow.cow_id }}" index="" class="delete-button">Supprimer</button>
     </div>
 
     <template class="medication-template">
