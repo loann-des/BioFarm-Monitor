@@ -3,6 +3,8 @@
 {% block title %}Pharmacie | BioFarm Monitor{% endblock title %}
 {% block head %}
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/medicine-cabinet.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/elements/popUp.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/elements/form.css') }}">
 {% endblock head %}
 
 {% block content %}
@@ -14,8 +16,8 @@
     <div id="action-buttons-wrapper">
         <button id="add-prescription-button">Entré Préscription</button>
         <button id="add-dcl-left-button">Sortire pour DLC</button>
-        <button id="export-recap-cows-button">Récap traitement ⤓</button>
-        <button id="export-recap-pharmacy-button">Récape pharmacie ⤓</button>
+        <button id="export-recap-cows-button" onclick="window.location=`{{ url_for('pharmacy.export_recap_cow') }}`">Récap traitement ⤓</button>
+        <button id="export-recap-pharmacy-button" onclick="window.location=`{{ url_for('pharmacy.export_recap_pharmacy') }}`">Récape pharmacie ⤓</button>
     </div>
 
     <div id="message-div" class="message-div">
@@ -60,7 +62,7 @@
 
     <div class="collapsible-content">
 
-        <div id="reproduction-list">
+        <div id="dlc-list">
         </div>
 
     </div>
@@ -204,9 +206,10 @@
     </div>
 
     <div class="medication-list"></div>
-    
+
     <div id="action-buttons-wrapper">
-      <button id="prescription-change-button" prescription_id="">Modifier</button>
+        <!-- TODO -->
+      <!-- <button id="prescription-change-button" prescription_id="">Modifier</button>-->
       <button id="prescription-delete-button" prescription_id="" class="delete-button">Supprimer</button>
     </div>
 

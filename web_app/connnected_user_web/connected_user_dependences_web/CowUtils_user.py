@@ -135,7 +135,9 @@ class CowUtilsUser:
 
     def add_calf(self, calf_id: int,
                  born_date: date | None = None,
-                 calf_name: str | None = None) -> None:
+                 calf_name: str | None = None,
+                 sexe: bool = True,
+                 mother_id: int | None = None) -> None:
         """Ajoute un nouveau veau pour l'utilisateur courant dans la base de données.
 
         Cette fonction enregistre un animal comme veau avec l'identifiant
@@ -147,10 +149,12 @@ class CowUtilsUser:
             * born_date (date | None): Date de naissance du veau si connue
             * calf_name (str | None): Nom du veau à enregistrer si fourni
         """
-        CowUtils.add_cow(
+        CowUtils.add_calf(
             user_id=self.user_id,
-            cow_id=calf_id,
+            calf_id=calf_id,
             born_date=born_date,
+            mother_id=mother_id,
+            sexe=sexe
         )
         if calf_name:
             CowUtils.set_cow_name(user_id=self.user_id,
@@ -195,6 +199,7 @@ class CowUtilsUser:
             return CowUtils.add_cow_care(user_id=self.user_id, cow_id=cow_id, cow_care=cow_care)
         else:
             raise ValueError("pas sufisament de madicament")
+    
     def update_cow_care(
         self, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
@@ -345,7 +350,6 @@ class CowUtilsUser:
             * cow_id (int): Identifiant de la vache à inséminer
             * insemination (str): Date d'insémination au format chaîne
         """
-        # TODO Gestion doublon add_reproduction
         CowUtils.add_insemination(
             user_id=self.user_id, cow_id=cow_id, insemination=insemination)
 
@@ -366,7 +370,7 @@ class CowUtilsUser:
         CowUtils.validated_ultrasound(user_id=self.user_id, cow_id=cow_id, ultrasound=ultrasound, date=date,
                                       dry_time=self.user.setting["dry_time"], calving_preparation_time=self.user.setting["calving_preparation_time"])
 
-    def get_reproduction(self, cow_id: int) -> Reproduction:
+    def get_reproduction(self, cow_id: int) -> Reproduction | None :
         """Récupère les informations de reproduction d'une vache pour l'utilisateur courant.
 
         Cette fonction délègue à `CowUtils` la récupération de la structure de
@@ -382,6 +386,14 @@ class CowUtilsUser:
         """
         return CowUtils.get_reproduction(user_id=self.user_id, cow_id=cow_id)
 
+    def get_waitting_reproduction(self, cow_id: int) -> Reproduction | None:
+ 
+        if reproduction := self.get_reproduction(cow_id=cow_id):
+            if reproduction["ultrasound"] is None:
+                return reproduction
+        return None
+
+        
     def reload_all_reproduction(self) -> None:
         """Recharge l'ensemble des informations de reproduction pour toutes les vaches de l'utilisateur.
 
@@ -408,7 +420,8 @@ class CowUtilsUser:
         """
         return CowUtils.get_valid_reproduction(user_id=self.user_id)
 
-    def validated_calving(self, cow_id: int, abortion: bool,
+    def validated_calving(self, cow_id: int, calf_id: int | None, calving_date: date | None,
+                          sexe : bool | None, abortion: bool,
                           info: str | None = None) -> None:
         """Valide un vêlage ou un avortement pour une vache de l'utilisateur courant.
 
@@ -424,6 +437,9 @@ class CowUtilsUser:
             * info (str | None): Informations complémentaires à propos de
             l'événement si nécessaire
         """
+        CowUtils.get_reproduction(user_id=self.user_id,cow_id=cow_id)#TODO pour recupere le pere 
+        if not abortion and calf_id and sexe is not None:
+            self.add_calf(calf_id=calf_id, born_date=calving_date, sexe=sexe, mother_id=cow_id)
         CowUtils.validated_calving(
             user_id=self.user_id, cow_id=cow_id, abortion=abortion, info=info)
 

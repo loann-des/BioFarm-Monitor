@@ -130,7 +130,6 @@ def add_care():
         return jsonify({
             "success": True,
             "message": "Traitement ajouté à la vache"
-            # TODO ajouter les traitement restant dans le message
             })
     except Exception as e:
         lg.error(f"Erreur lors de l'ajout du traitement: {e}")

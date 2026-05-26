@@ -1,3 +1,249 @@
 {% extends 'base.html' %}
 
 {% block title %}Reproduction | BioFarm Monitor{% endblock title %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/elements/popUp.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/elements/form.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/reproduction.css') }}">
+{% endblock head %}
+
+{% block content %}
+<h1>Gestion des Reproduction</h1>
+
+<div><br><br></div>
+<section>
+
+    <div id="action-buttons-wrapper">
+        <button id="ultrasound-button">Echographie</button>
+        <button id="calving-button">Ajouter vêlage</button>
+        <button id="export-calendar"
+            onclick="window.location=`{{ url_for('pharmacy.export_recap_pharmacy') }}`">Calendrier ⤓</button>
+    </div>
+
+    <div id="message-div" class="message-div">
+        <span>test</span>
+    </div>
+    
+</section>
+
+<!-- date de tarisement -->
+<section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;tarisement</h2>
+
+    <div class="collapsible-content">
+        <table>
+            <thead>
+                <tr>
+                    <th>N° Vache</th>
+                    <th>Date tarisement</th>
+                </tr>
+            </thead>
+            <tbody id="dry-list">
+
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- date de prepa vêlage -->
+<section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;prepa vêlage</h2>
+
+    <div class="collapsible-content">
+        <table>
+            <thead>
+                <tr>
+                    <th>N° Vache</th>
+                    <th>Date prepa vêlage</th>
+                </tr>
+            </thead>
+            <tbody id="calving-preparation-list">
+
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- date de vêlage -->
+<section class="collapsible" aria-expanded="false">
+    <h2>&nbsp;Velage</h2>
+    <!-- TODO path -->
+
+    <div class="collapsible-content">
+        <table>
+            <thead>
+                <tr>
+                    <th>N° Vache</th>
+                    <th>Date Velage</th>
+                </tr>
+            </thead>
+            <tbody id="calving-list">
+
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div id="overlay"></div>
+
+<!-- Echographie -->
+<div class="popup" id="add-ultrasound-popup">
+    <div class="popup-header">
+        <h3>Ajouter une Echographie</h3>
+        <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('reproduction.ultrasound') }}" method="post">
+        <div class="echo_form">
+
+            <div class="items">
+                <label for="cow_id">n° mère</label>
+                <input name="cow_id" type="number" id="echo_cow_id" min="0" required>
+            </div>
+
+            <div class="items">
+                <label for="date">Echographie :</label>
+                <select id="echo_select" name="echo_select">
+                    <option value="" selected disabled>choisir...</option>
+                </select>
+            </div>
+
+        </div>
+
+        <label for="saillie">saillie:</label>
+        <input type="date" id="saillie" name="saillie">
+
+        <button type="submit">Ajouter</button>
+    </form>
+</div>
+
+<div class="popup" id="add-calving-popup">
+    <div class="popup-header">
+        <h3>Ajouter Vêlage</h3>
+        <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('reproduction.calving') }}" method="post">
+        <div class="calving_form">
+
+            <div class="items">
+                <label for="moter_id">n° mère</label>
+                <input name="moter_id" type="number" required>
+            </div>
+
+            <div class="items">
+                <label for="calf_id">n° veau</label>
+                <input name="calf_id" type="number" required>
+            </div>
+        </div>
+        <div class="calving_form">
+
+            <div class="items">
+                <label for="calving_date">date du velage</label>
+                <input name="calving_date" type="date" required>
+            </div>
+
+            <div class="items">
+                <!-- TODO cas des jumeaux -->
+                <label for="calving_sexe">sexe :</label>
+                <select name="calving_sexe" id="calving_type" required>
+                    <option value="" selected disabled>sexe...</option>
+                    <option value="Male">Male</option>
+                    <option value="Femele">Femele</option>
+                </select>
+            </div>
+        </div>
+        <div class="calving_form">
+            <div class="items">
+                <label for="commentaire">Commentaire :</label>
+                <textarea id="commentaire" name="commentaire" rows="4"></textarea>
+            </div>
+        </div>
+
+        <button type="submit">Ajouter</button>
+    </form>
+</div>
+
+<div class="popup" id="change-prescription-popup">
+    <div class="popup-header">
+        <h3>Ajouter une sortie pour dlc</h3>
+        <button>&times;</button>
+    </div>
+
+    <form action="{{ url_for('pharmacy.add_dlc_left') }}" method="POST">
+        <label for="date">Date de la sortie</label>
+        <input name="date" type="date" required>
+
+        <label for="medication">Médicament</label>
+        <div id="medication-extend-dlc" class="container">
+            <div class="medication-bloc">
+                <select name="medication" required>
+                    {% for medication,unit in current_user.medic_list.items() %}
+                    <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+                    {% endfor %}
+                </select>
+                <input name="dose" type="number" min="0" placeholder="Dose sortie" required>
+            </div>
+        </div>
+
+        <div class="btn-more-less" id="btn-ext-dlc">
+            <button type="button" id="extend-medication">+</button>
+            <button type="button" id="remove-medication">-</button>
+        </div>
+
+        <button type="submit">Ajouter</button>
+
+    </form>
+</div>
+
+
+<template id="calving-row">
+    <tr>
+        <th class="value cow_id"></th>
+        <th class="value reproductions"></th>
+    </tr>
+</template>
+
+<template id="medication-template">
+
+    <div class="medication-bloc">
+        <select name="medication" required>
+            {% for medication,unit in current_user.medic_list.items() %}
+            <option value="{{ medication }}">{{ medication }} ({{ unit }})</option>
+            {% endfor %}
+        </select>
+        <input name="dose" type="number" placeholder="Dose administrée" min="0" required>
+    </div>
+
+</template>
+
+<template id="prescription-dlc-template">
+    <article class="care-card">
+
+        <div class="care-header">
+            <h3 class="title"></h3>
+        </div>
+
+        <div class="medication-list"></div>
+
+        <div id="action-buttons-wrapper">
+            <!-- TODO -->
+            <!-- <button id="prescription-change-button" prescription_id="">Modifier</button>-->
+            <button id="prescription-delete-button" prescription_id="" class="delete-button">Supprimer</button>
+        </div>
+
+        <template class="medication-template">
+            <div class="item">
+                <span class="label medication"></span>
+                <span class="value dose"></span>
+            </div>
+        </template>
+
+    </article>
+</template>
+{% endblock content %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/reproduction.js') }}"></script>
+{% endblock js %}

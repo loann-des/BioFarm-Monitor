@@ -1,0 +1,25 @@
+.calving_form,
+div.echo_form {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+div.calving_form div.items,
+div.echo_form div.items {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.calving_form div.items input,
+.calving_form div.items select,
+div.echo_form div.items input,
+div.echo_form div.items select {
+    margin: 0;
+}

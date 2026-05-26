@@ -195,3 +195,22 @@ class PrescriptionUtils:
             (extract("year", Prescription.date) == year)
         ).all()
 
+    @staticmethod
+    def get_prescription_by_id(user_id: int, prescription_id : int) -> Prescription:
+        # TODO Doc get_prescription_by_id
+        if prescription := Prescription.query.filter_by(id=prescription_id,user_id=user_id).first():
+            return prescription
+        else:
+            raise ValueError("aucune prescription ne corespond a ce couple user_id, prescription_id")
+        
+    @staticmethod
+    def remove_prescription(user_id: int, prescription_id : int)->None:
+        # TODO Doc remove_prescription
+        if prescription := Prescription.query.get({"id": prescription_id}):
+            db.session.delete(prescription)
+            db.session.commit()
+            lg.info(f"(user :{user_id}, prescription: {prescription_id}) : delete in database")
+        else:
+            lg.error(f"(user :{user_id}, prescription: {prescription_id}) : not in database")
+            raise ValueError(
+                f"(user :{user_id}, prescription: {prescription_id}) : doesn't exist in database")

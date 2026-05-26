@@ -21,7 +21,6 @@ from web_app.models.user import UserUtils
 settings = Blueprint("settings", __name__)
 
 # TODO Metre en place les log
-# TODO Metre en place historique commande pour retour
 # TODO gestion de la reintroduction d'une vache
 
 
@@ -140,6 +139,7 @@ def upload_calfs():
 @login_required
 @settings.route("/init_stock", methods=["POST"])
 def init_stock():
+    # TODO gestion d l'initialisation saisonière
     file = request.files.get("file")
     if not file:
         return "Aucun fichier reçu", 400

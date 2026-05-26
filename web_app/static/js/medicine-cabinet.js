@@ -107,7 +107,9 @@ window.addEventListener("load", () => {
     });
 
     updateStock();
-    updateprescription();
+    updatePrescription();
+    updateDlc();
+
 });
 
 async function loadMessages() {
@@ -188,8 +190,6 @@ async function updateStock() {
 
         const medication = result.message;
 
-        let index = 0;
-
         const StockTemplate = document.querySelector(
             "#stock-row"
         );
@@ -203,142 +203,273 @@ async function updateStock() {
         });
 
     } catch (error) {
-
+        console.error(`AJAX request failed due to: ${error}`);
+        alert("Impossible de récupérer la liste des stock.");
     }
-
-
 }
 
-async function updateprescription() {
+
+async function updatePrescription() {
     const prescriptionList = document.querySelector("#prescription-list");
 
-  try {
-    const response = await fetch(`/pharmacy/get-prescription`);
-
-    const contentType = response.headers.get("Content-Type");
-    if (!(contentType.includes("application/json"))) {
-      console.error(`list: AJAX request failed: expected application/json response, got ${contentType}`);
-      console.log(await response.text());
-      return;
-    }
-
-    const result = await response.json();
-    if (!result.success) {
-      console.error(result.message);
-      return;
-    }
-
-    const prescriptions = result.message;
-
-    let index = 0;
-
-
-    prescriptions.forEach(prescription => {
-
-      const prescriptionTemplate = document.querySelector(
-        "#prescription-dlc-template"
-      );
-
-      const card = prescriptionTemplate.content.children[0].cloneNode(true);
-
-      const date = new Date(prescription["date_prescription"]).toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-      })
-
-      const medicationList =
-        card.querySelector(
-          ".medication-list"
-        );
-
-      const medicationTemplate =
-        card.querySelector(".medication-template");
-
-      Object.entries(prescription["prescription"] || {})
-        .forEach(([medication, dose]) => {
-
-          const medCard =
-            medicationTemplate.content.children[0].cloneNode(true);
-
-          medCard.querySelector(".medication").textContent =
-            medication + ":";
-
-          medCard.querySelector(".dose").textContent =
-            dose;
-
-          medicationList.appendChild(medCard);
-
-        });
-      medicationTemplate.remove();
-
-      card.querySelector(".title").textContent = `prescription du ${date}`;
-
-      card.querySelector("button#prescription-change-button").setAttribute("prescription_id", prescription["id"]);
-      card.querySelector("button#prescription-delete-button").setAttribute("prescription_id", prescription["id"]);
-
-      card.querySelector("button#prescription-delete-button").addEventListener("click", async (e) => {
-        if (!confirm('Are you sure?')) {
-          return;
-        }
-
-        const index = e.currentTarget.getAttribute("index");
-
-        let reqData = new FormData();
-        reqData.append("index", index);
-
-        const response = await fetch("/cow/remove_prescription", {
-          method: "POST",
-          body: reqData
-        });
+    try {
+        const response = await fetch(`/pharmacy/get-prescription`);
 
         const contentType = response.headers.get("Content-Type");
-
-        if (!contentType.includes("application/json")) {
-          console.error(`Unexpected response: expected application/json, got ${contentType}`);
-          return;
+        if (!(contentType.includes("application/json"))) {
+            console.error(`list: AJAX request failed: expected application/json response, got ${contentType}`);
+            console.log(await response.text());
+            return;
         }
 
         const result = await response.json();
-        sessionStorage.setItem(
-          "flashMessage",
-          JSON.stringify(result)
-        );
-
-        location.reload()
-      });
-
-      card.querySelector("button#prescription-change-button").addEventListener("click", async (e) => {
-        const changeprescriptionPopup = document.querySelector("div.popup#change-prescription-popup");
-        changeprescriptionPopup.querySelector(".popup-title").textContent = `Modifier les soins du ${date}`;
-        changeprescriptionPopup.querySelector(".date").value =
-          new Date(prescription["date_traitement"]).toISOString().split("T")[0];
-        changeprescriptionPopup.querySelector(".annotation").value = prescription["annotation"] || "";
-
-        const medicationContainer = changeprescriptionPopup.querySelector("#medication-extend");
-        while (medicationContainer.children.length > 0) {
-          medicationContainer.removeChild(medicationContainer.lastElementChild);
+        if (!result.success) {
+            console.error(result.message);
+            return;
         }
-        const medicationTemplate = document.querySelector("#medication-template");
-        Object.entries(prescription["medicaments"] || {}).forEach(([medication, dose]) => {
-          const medCard = medicationTemplate.content.children[0].cloneNode(true);
-          medCard.querySelector(".medication").value = medication;
 
-          medCard.querySelector(".dose").value = dose;
-          medicationContainer.appendChild(medCard);
+        const prescriptions = result.message;
+
+        let index = 0;
+
+
+        prescriptions.forEach(prescription => {
+
+            const prescriptionTemplate = document.querySelector(
+                "#prescription-dlc-template"
+            );
+
+            const card = prescriptionTemplate.content.children[0].cloneNode(true);
+
+            const date = new Date(prescription["date_prescription"]).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            })
+
+            const medicationList =
+                card.querySelector(
+                    ".medication-list"
+                );
+
+            const medicationTemplate =
+                card.querySelector(".medication-template");
+
+            Object.entries(prescription["prescription"] || {})
+                .forEach(([medication, dose]) => {
+
+                    const medCard =
+                        medicationTemplate.content.children[0].cloneNode(true);
+
+                    medCard.querySelector(".medication").textContent =
+                        medication + ":";
+
+                    medCard.querySelector(".dose").textContent =
+                        dose;
+
+                    medicationList.appendChild(medCard);
+
+                });
+            medicationTemplate.remove();
+
+            card.querySelector(".title").textContent = `prescription du ${date}`;
+            // TODO Change btn
+            // card.querySelector("button#prescription-change-button").setAttribute("prescription_id", prescription["id"]);
+            card.querySelector("button#prescription-delete-button").setAttribute("prescription_id", prescription["id"]);
+
+            card.querySelector("button#prescription-delete-button").addEventListener("click", async (e) => {
+                if (!confirm('Are you sure?')) {
+                    return;
+                }
+
+                const prescription_id = e.currentTarget.getAttribute("prescription_id");
+
+                let reqData = new FormData();
+                reqData.append("prescription_id", prescription_id);
+
+                const response = await fetch("/pharmacy/remove-prescription", {
+                    method: "POST",
+                    body: reqData
+                });
+
+                const contentType = response.headers.get("Content-Type");
+
+                if (!contentType.includes("application/json")) {
+                    console.error(`Unexpected response: expected application/json, got ${contentType}`);
+                    return;
+                }
+
+                const result = await response.json();
+                sessionStorage.setItem(
+                    "flashMessage",
+                    JSON.stringify(result)
+                );
+
+                location.reload()
+            });
+
+            // card.querySelector("button#prescription-change-button").addEventListener("click", async (e) => {
+            //     const changeprescriptionPopup = document.querySelector("div.popup#change-prescription-popup");
+            //     changeprescriptionPopup.querySelector(".popup-title").textContent = `Modifier les soins du ${date}`;
+            //     changeprescriptionPopup.querySelector(".date").value =
+            //         new Date(prescription["date_traitement"]).toISOString().split("T")[0];
+            //     changeprescriptionPopup.querySelector(".annotation").value = prescription["annotation"] || "";
+
+            //     const medicationContainer = changeprescriptionPopup.querySelector("#medication-extend");
+            //     while (medicationContainer.children.length > 0) {
+            //         medicationContainer.removeChild(medicationContainer.lastElementChild);
+            //     }
+            //     const medicationTemplate = document.querySelector("#medication-template");
+            //     Object.entries(prescription["medicaments"] || {}).forEach(([medication, dose]) => {
+            //         const medCard = medicationTemplate.content.children[0].cloneNode(true);
+            //         medCard.querySelector(".medication").value = medication;
+
+            //         medCard.querySelector(".dose").value = dose;
+            //         medicationContainer.appendChild(medCard);
+            //     });
+
+            //     changeprescriptionPopup.querySelector(".index").setAttribute("value", index);
+
+            //     changeprescriptionPopup.style.display = "block";
+            // });
+
+            prescriptionList.appendChild(card);
+            index++;
         });
 
-        changeprescriptionPopup.querySelector(".index").setAttribute("value", index);
+    } catch (error) {
+        console.error(`AJAX request failed due to: ${error}`);
+        alert("Impossible de récupérer la liste des soins.");
+    }
+}
 
-        changeprescriptionPopup.style.display = "block";
-      });
+async function updateDlc() {
+    const dlcList = document.querySelector("#dlc-list");
 
-      prescriptionList.appendChild(card);
-      index++;
-    });
+    try {
+        const response = await fetch(`/pharmacy/get-dlc-left`);
 
-  } catch (error) {
-    console.error(`AJAX request failed due to: ${error}`);
-    alert("Impossible de récupérer la liste des soins.");
-  }
+        const contentType = response.headers.get("Content-Type");
+        if (!(contentType.includes("application/json"))) {
+            console.error(`list: AJAX request failed: expected application/json response, got ${contentType}`);
+            console.log(await response.text());
+            return;
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+            console.error(result.message);
+            return;
+        }
+
+        const dlcs = result.message;
+
+        dlcs.forEach(dlc => {
+
+            const dlcTemplate = document.querySelector(
+                "#prescription-dlc-template"
+            );
+
+            const card = dlcTemplate.content.children[0].cloneNode(true);
+
+            const date = new Date(dlc["date_prescription"]).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            })
+
+            const medicationList =
+                card.querySelector(
+                    ".medication-list"
+                );
+
+            const medicationTemplate =
+                card.querySelector(".medication-template");
+
+            Object.entries(dlc["prescription"] || {})
+                .forEach(([medication, dose]) => {
+
+                    const medCard =
+                        medicationTemplate.content.children[0].cloneNode(true);
+
+                    medCard.querySelector(".medication").textContent =
+                        medication + ":";
+
+                    medCard.querySelector(".dose").textContent =
+                        dose;
+
+                    medicationList.appendChild(medCard);
+
+                });
+            medicationTemplate.remove();
+
+            card.querySelector(".title").textContent = `sortie pour dlc du ${date}`;
+            // TODO Change btn
+            // card.querySelector("button#prescription-change-button").setAttribute("prescription_id", dlc["id"]);
+            card.querySelector("button#prescription-delete-button").setAttribute("prescription_id", dlc["id"]);
+
+            card.querySelector("button#prescription-delete-button").addEventListener("click", async (e) => {
+                if (!confirm('Are you sure?')) {
+                    return;
+                }
+
+                const prescription_id = e.currentTarget.getAttribute("prescription_id");
+
+                let reqData = new FormData();
+                reqData.append("index", index);
+
+                const response = await fetch("/cow/remove_prescription", {
+                    method: "POST",
+                    body: reqData
+                });
+                // TODO
+
+                const contentType = response.headers.get("Content-Type");
+
+                if (!contentType.includes("application/json")) {
+                    console.error(`Unexpected response: expected application/json, got ${contentType}`);
+                    return;
+                }
+
+                const result = await response.json();
+                sessionStorage.setItem(
+                    "flashMessage",
+                    JSON.stringify(result)
+                );
+
+                location.reload()
+            });
+
+            // card.querySelector("button#prescription-change-button").addEventListener("click", async (e) => {
+            //     const changeprescriptionPopup = document.querySelector("div.popup#change-prescription-popup");
+            //     changeprescriptionPopup.querySelector(".popup-title").textContent = `Modifier les soins du ${date}`;
+            //     changeprescriptionPopup.querySelector(".date").value =
+            //         new Date(prescription["date_traitement"]).toISOString().split("T")[0];
+            //     changeprescriptionPopup.querySelector(".annotation").value = prescription["annotation"] || "";
+
+            //     const medicationContainer = changeprescriptionPopup.querySelector("#medication-extend");
+            //     while (medicationContainer.children.length > 0) {
+            //         medicationContainer.removeChild(medicationContainer.lastElementChild);
+            //     }
+            //     const medicationTemplate = document.querySelector("#medication-template");
+            //     Object.entries(prescription["medicaments"] || {}).forEach(([medication, dose]) => {
+            //         const medCard = medicationTemplate.content.children[0].cloneNode(true);
+            //         medCard.querySelector(".medication").value = medication;
+
+            //         medCard.querySelector(".dose").value = dose;
+            //         medicationContainer.appendChild(medCard);
+            //     });
+
+            //     changeprescriptionPopup.querySelector(".index").setAttribute("value", index);
+
+            //     changeprescriptionPopup.style.display = "block";
+            // });
+            // TODO Change btn
+            dlcList.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error(`AJAX request failed due to: ${error}`);
+        alert("Impossible de récupérer la liste des sortie pour dlc.");
+    }
 }

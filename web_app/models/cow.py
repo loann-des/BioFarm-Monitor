@@ -121,7 +121,9 @@ class Cow(db.Model):
         self,
         user_id: int,
         cow_id: int,
+        mother_id: int | None = None, 
         name: str | None = None,
+        sexe:bool = True,
         cow_cares: list[Traitement] | None = None,
         info: list[Note] | None = None,
         in_farm: bool = True,
@@ -139,7 +141,9 @@ class Cow(db.Model):
 
         self.user_id = user_id
         self.cow_id = cow_id
+        self.mother_id = mother_id
         self.name = name
+        self.sexe = sexe
         self.cow_cares = cow_cares
         self.info = info
         self.in_farm = in_farm
@@ -365,7 +369,9 @@ class CowUtils:
 
     @staticmethod
     def add_calf(user_id: int, calf_id: int,
-                 born_date: date | None = None) -> None:
+                 mother_id: int | None = None,
+                 born_date: date | None = None,
+                 sexe: bool = True) -> None:
         """Ajoute un veau à la base de données s'il n'existe pas déjà.
 
         S'il n'existe pas de veau associé à l'identifiant fourni, il est créé
@@ -384,7 +390,9 @@ class CowUtils:
             new_cow = Cow(
                 user_id=user_id,
                 cow_id=calf_id,
+                mother_id=mother_id,
                 born_date=born_date,
+                sexe=sexe,
                 is_calf=True
             )
             db.session.add(new_cow)
@@ -768,16 +776,14 @@ class CowUtils:
         if cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id}):
             if not cow.in_farm:
                 raise ValueError(f"cow : {cow_id} : est supprimer")
-            reproduction: Reproduction | None = last(
-                cow.reproduction)
+            reproduction: Reproduction | None = last(cow.reproduction)
             if not reproduction:
                 raise ValueError(f"cow : {cow_id} : n'as pas eté inseminé")
             reproduction["ultrasound"] = ultrasound
 
             if ultrasound:
                 # a la validation de l'echographie on garde que la bonne date d'insémination
-                cow.reproduction[-1]["insemination"] = [
-                    item for item in cow.reproduction[-1]["insemination"] if item == date]
+                reproduction["insemination"] = [date]
                 cow.reproduction[-1] = CowUtils.set_reproduction(
                     reproduction, dry_time, calving_preparation_time)
                 lg.info(f"insemination on {date} of {cow_id} confirm")
@@ -817,7 +823,7 @@ class CowUtils:
         return reproduction
 
     @staticmethod
-    def get_reproduction(user_id: int, cow_id: int) -> Reproduction:
+    def get_reproduction(user_id: int, cow_id: int) -> Reproduction | None:
         """Récupère la dernière reproduction de la vache spécifiée.
 
         Cette fonction renvoie l'entrée de reproduction la plus récente de la
@@ -834,13 +840,15 @@ class CowUtils:
 
         Lance:
             * ValueError si la vache spécifiée n'existe pas
+            * ValueError si la vache spécifiée est supprimer
+            * ValueError si la vache spécifiée n'as pas de reproduction
         """
         cow: Cow | None
         if not (cow := Cow.query.get({"user_id": user_id, "cow_id": cow_id})):
             raise ValueError(f"{cow_id} n'existe pas.")
         if not cow.in_farm:
             raise ValueError(f"cow : {cow_id} : est supprimer")
-        return cow.reproduction[-1]
+        return None if len(cow.reproduction) < 1 else cow.reproduction[-1]
 
     @staticmethod
     def reload_all_reproduction(user_id: int, dry_time: int, calving_preparation_time: int) -> None:

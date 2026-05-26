@@ -378,7 +378,7 @@ class ConnectedUser(UserMixin):
         print("CSV généré (pivoté + année précédente + prescriptions par date):\n", result)
         return result
 
-    def remaining_care_to_excel(self) -> bytes:
+    def remaining_care_to_excel(self) -> io.BytesIO:
         """Generates an Excel file summarizing the remaining care treatments for each cow.
 
         This function creates an Excel spreadsheet listing each cow's ID, the number of remaining treatments, and the next renewal date, with color-coded formatting for easy interpretation.
@@ -404,14 +404,10 @@ class ConnectedUser(UserMixin):
         cow: Cow
         for cow in CowUtils.get_all_cows(user_id=self.id):
             cow_id = cow.cow_id
-            print("cow_id ", cow.cow_id)
             nb_remaining = remaining_care_on_year(cow)
-            print(" "*3, "nb_remaining: ", nb_remaining)
             renewal_date = new_available_care(cow)
-            print(" "*3, "renewal_date: ", renewal_date)
             renewal_date_str = renewal_date.strftime(
                 "%d %b %Y") if renewal_date else "N/A"
-            print(" "*3, "renewal_date_str: ", renewal_date_str)
 
             ws.append([cow_id, nb_remaining, renewal_date_str])  # type: ignore
             cell = ws.cell(row=ws.max_row, column=2)  # type: ignore
@@ -427,7 +423,7 @@ class ConnectedUser(UserMixin):
         excel_io = io.BytesIO()
         wb.save(excel_io)
         excel_io.seek(0)
-        return excel_io  # type: ignore
+        return excel_io
 
     def get_all_dry_date(self) -> dict[int, date]:
         """Retrieves and sorts the dry dates for all cows with valid reproduction records.

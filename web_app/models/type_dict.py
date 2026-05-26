@@ -57,7 +57,7 @@ class Reproduction(TypedDict):
     insemination: list[str]
     """Date d'insémination au format 'YYYY-MM-DD'."""
 
-    ultrasound: bool | None
+    ultrasound: bool | None 
     """Résultats de l'échographie. True si la vache porte un veau, False
     sinon."""
 
@@ -72,7 +72,8 @@ class Reproduction(TypedDict):
     """Date de préparation au vêlage au format 'YYYY-MM-DD'."""
 
     calving_preparation_status: bool  # status de prepa vellage
-    """"""
+    """péparation au vêlage d'une vache. True si la vache est en péparation au vêlage, False
+    sinon."""
 
     calving_date: str | None
     """Date de vêlage au format 'YYYY-MM-DD'."""

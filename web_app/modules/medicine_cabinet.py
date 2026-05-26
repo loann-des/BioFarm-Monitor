@@ -1,4 +1,5 @@
 from datetime import datetime
+from io import BytesIO
 import logging as lg
 
 from flask import (
@@ -7,6 +8,7 @@ from flask import (
     redirect,
     request,
     render_template,
+    send_file,
     url_for
 )
 
@@ -67,21 +69,39 @@ def add_dlc_left():
 
 
 @login_required
-@pharmacybp.route("/pharmacy/export-recap-cows", methods=["POST"])
+@pharmacybp.route("/pharmacy/export-recap-cows", methods=["GET"])
 def export_recap_cow():
-    return jsonify({
-        "success": True,
-        "message": "not implemented yet"
-    })
+    try :
+        file_bytes = current_user.remaining_care_to_excel()
+        return send_file(
+            file_bytes,
+            as_attachment=True,
+            download_name="stock.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors du Telecargement: {e}"
+        })
 
 
 @login_required
-@pharmacybp.route("/pharmacy/export-recap-pharmacy", methods=["POST"])
+@pharmacybp.route("/pharmacy/export-recap-pharmacy", methods=["Get"])
 def export_recap_pharmacy():
-    return jsonify({
-        "success": True,
-        "message": "not implemented yet"
-    })
+    try :
+        file_bytes = current_user.pharmacie_to_csv(datetime.now().year)
+        return send_file(
+            file_bytes,
+            as_attachment=True,
+            download_name="Recap_pharmacie.csv",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors du Telecargement: {e}"
+        })
 
 
 @login_required
@@ -104,23 +124,63 @@ def get_stock():
 @login_required
 @pharmacybp.route("/pharmacy/get-prescription", methods=["GET"])
 def get_prescription():
-    try :
+    try:
         prescription = current_user.prescription_utils.get_all_prescriptions_cares()
         return jsonify({
             "success": True,
             "message": prescription
         })
-    except Exception as e :
+    except Exception as e:
         return jsonify({
             "success": False,
-            "message": "not implemented yet"
+            "message": f"Erreur lors de recuperation des prescriptions : {e}"
         })
 
 
 @login_required
-@pharmacybp.route("/pharmacy/get-dlc-left", methods=["POST"])
+@pharmacybp.route("/pharmacy/get-dlc-left", methods=["GET"])
 def get_dlc_left():
-    return jsonify({
-        "success": True,
-        "message": "not implemented yet"
-    })
+    try:
+        dlc = current_user.prescription_utils.get_all_dlc_cares()
+        return jsonify({
+            "success": True,
+            "message": dlc
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de recuperation des sorties pour dlc{e}"
+        })
+
+
+@login_required
+@pharmacybp.route("/pharmacy/remove-prescription", methods=["POST"])
+def remove_prescription():
+    try:
+        prescription_id = int(request.form["prescription_id"])
+        current_user.prescription_utils.remove_prescription(prescription_id)
+        return jsonify({
+            "success": True,
+            "message": "not impemented yet"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de recuperation des prescriptions : {e}"
+        })
+
+
+@login_required
+@pharmacybp.route("/pharmacy/change-prescription", methods=["POST"])
+def change_prescription():
+    try:
+        # TODO
+        return jsonify({
+            "success": True,
+            "message": "not impemented yet"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de recuperation des prescriptions : {e}"
+        })

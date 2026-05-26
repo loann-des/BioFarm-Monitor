@@ -68,9 +68,6 @@ class ConnectedUser(UserMixin):
     prescription_utils_client: "PrescriptionUtilsClient"
     """Classe utilitaire pour gérer les interactions avec les prescriptions"""
 
-    cmd_history: list[Command] = []
-    # cows : Cows  #TODO interface a iplementer plus tard pour L'api
-
     def __init__(self, user_id: int):
         self.id = user_id
         self.user_utils_client = UserUtilsClient(connected_user=self)

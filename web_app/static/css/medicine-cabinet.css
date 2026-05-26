@@ -28,7 +28,8 @@ button#new-medication {
   background: white;
 }
 
-#prescription-list {
+#prescription-list,
+#dlc-list {
   display: flex;
   flex-direction: column;
   gap: 20px;

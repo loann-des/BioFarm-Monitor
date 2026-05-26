@@ -15,7 +15,7 @@ class PrescriptionUtilsUser:
         from web_app.connnected_user_web.connected_user import ConnectedUser
 
     connected_user: "ConnectedUser"
-    user_id : int
+    user_id: int
 
     def __init__(self, connected_user: "ConnectedUser"):
         self.connected_user = connected_user
@@ -33,9 +33,25 @@ class PrescriptionUtilsUser:
             * care_items (dict[str, int]): Dictionnaire des traitements
             prescrits et de leurs quantités
         """
-        PrescriptionUtils.add_prescription(user_id=self.connected_user.id, date=date, care_items=care_items)
-        PharmacieUtils.modify_pharmacie_year(user_id=self.user_id, year=date.year, attr= PharmacieAttr.total_enter, care_delta=care_items )
-        
+        PrescriptionUtils.add_prescription(
+            user_id=self.connected_user.id, date=date, care_items=care_items)
+        PharmacieUtils.modify_pharmacie_year(
+            user_id=self.user_id, year=date.year, attr=PharmacieAttr.total_enter, care_delta=care_items)
+
+    def remove_prescription(self, prescription_id: int) -> None:
+        # TODO doc remove_prescription
+        prescription = PrescriptionUtils.get_prescription_by_id(user_id=self.user_id, prescription_id=prescription_id)
+        stock_delta = to_negativ_dict(prescription.care)
+        if PharmacieUtils.validat_quantity(user_id=self.user_id,stock_delta=stock_delta,year_to_verify=prescription.date.year):
+            PrescriptionUtils.remove_prescription(user_id=self.user_id,prescription_id=prescription_id)
+            if prescription.dlc_left :
+                PharmacieUtils.modify_pharmacie_year(user_id=self.user_id, year=prescription.date.year, attr=PharmacieAttr.total_out_dlc, care_delta=stock_delta)
+            else :
+                PharmacieUtils.modify_pharmacie_year(user_id=self.user_id, year=prescription.date.year, attr=PharmacieAttr.total_enter, care_delta=stock_delta)
+        else :
+            raise ValueError("suppretion impossible pour manque de stock")
+
+    
     def add_dlc_left(self, date: date, care_items: dict[str, int]) -> None:
         """Enregistre un retrait de traitements périmés et met à jour la pharmacie.
 
@@ -55,12 +71,14 @@ class PrescriptionUtilsUser:
         """
         stock_delta = to_negativ_dict(care_items)
         year = datetime.now().year
-        if not PharmacieUtils.validat_quantity(user_id=self.user_id, year_to_verify=year, stock_delta=stock_delta) :
+        if not PharmacieUtils.validat_quantity(user_id=self.user_id, year_to_verify=year, stock_delta=stock_delta):
             raise ValueError("Stock insuffisant pour retirer le medicament")
-            
-        PrescriptionUtils.add_dlc_left(user_id=self.user_id, date=date, care_items=care_items)
-        
-        PharmacieUtils.modify_pharmacie_year(user_id=self.user_id,year=year, attr=PharmacieAttr.total_out_dlc, care_delta=care_items)
+
+        PrescriptionUtils.add_dlc_left(
+            user_id=self.user_id, date=date, care_items=care_items)
+
+        PharmacieUtils.modify_pharmacie_year(
+            user_id=self.user_id, year=year, attr=PharmacieAttr.total_out_dlc, care_delta=care_items)
 
     def get_all_prescriptions(self) -> list[Prescription]:
         """Récupère toutes les prescriptions associées à l'utilisateur connecté.
@@ -86,7 +104,22 @@ class PrescriptionUtilsUser:
             * list[Prescription_export_format]: Liste des prescriptions de
             l'utilisateur dans un format dédié à l'export.
         """
-        return PrescriptionUtils.get_all_prescriptions_cares(user_id=self.user_id)
+        return [presciption for presciption in PrescriptionUtils.get_all_prescriptions_cares(user_id=self.user_id)
+                if not presciption["dlc_left"]]
+
+    def get_all_dlc_cares(self) -> list[Prescription_export_format]:
+        """Récupère toutes les sortie pour dlc au format d'export pour l'utilisateur connecté.
+
+        Cette fonction délègue à `PrescriptionUtils` la récupération de
+        l'ensemble des prescriptions de l'utilisateur, structurées dans un
+        format prêt à être exporté ou traité par des outils externes.
+
+        Renvoie:
+            * list[Prescription_export_format]: Liste des sortie pour dlc de
+            l'utilisateur dans un format dédié à l'export.
+        """
+        return [presciption for presciption in PrescriptionUtils.get_all_prescriptions_cares(user_id=self.user_id)
+                if presciption["dlc_left"]]
 
     def get_year_prescription(self, year: int) -> list[Prescription]:
         """Récupère toutes les prescriptions d'une année donnée pour l'utilisateur connecté.
@@ -102,9 +135,9 @@ class PrescriptionUtilsUser:
             * list[Prescription]: Liste des prescriptions enregistrées pour
             l'année demandée.
         """
-        return PrescriptionUtils.get_year_prescription(user_id=self.user_id,year=year)
+        return PrescriptionUtils.get_year_prescription(user_id=self.user_id, year=year)
 
-    def get_dlc_left_on_year(self ,year: int) -> list[Prescription]:
+    def get_dlc_left_on_year(self, year: int) -> list[Prescription]:
         """Récupère les retraits de traitements périmés pour une année donnée.
 
         Cette fonction délègue à `PrescriptionUtils` la récupération de toutes
@@ -118,6 +151,4 @@ class PrescriptionUtilsUser:
             * list[Prescription]: Liste des prescriptions correspondant aux
             retraits de traitements périmés sur l'année.
         """
-        return PrescriptionUtils.get_dlc_left_on_year(user_id=self.user_id,year=year)
-
-    
+        return PrescriptionUtils.get_dlc_left_on_year(user_id=self.user_id, year=year)

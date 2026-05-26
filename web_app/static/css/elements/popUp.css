@@ -86,6 +86,7 @@ div.popup form label {
 }
 
 div.popup form input,
+div.popup select,
 div.popup form textarea {
   padding: 5px;
   margin-bottom: 15px;
@@ -102,13 +103,6 @@ div.popup form button {
   font-weight: bold;
   font-size: 1em;
   cursor: pointer;
-}
-
-div.popup select {
-  padding: 5px;
-  margin-bottom: 15px;
-  border: 2px solid var(--theme-accent-color);
-  border-radius: 5px;
 }
 
 div.popup form button:hover {

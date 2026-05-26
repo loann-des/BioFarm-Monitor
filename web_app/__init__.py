@@ -5,9 +5,9 @@ from flask_login import LoginManager
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
-
 # Initialize SQLAlchemy instance (outside create_app for import access)
 db = SQLAlchemy()
+
 
 def create_app():
     app = Flask(__name__)
@@ -18,7 +18,7 @@ def create_app():
 
     # Configure Flask-Login
     login_manager = LoginManager()
-    login_manager.login_view = 'auth.login' # type: ignore
+    login_manager.login_view = 'auth.login'  # type: ignore
     login_manager.session_protection = "strong"
     login_manager.init_app(app)
 
@@ -27,15 +27,15 @@ def create_app():
     from web_app.connnected_user_web.connected_user import ConnectedUser
 
     @login_manager.user_loader
-    def load_user(user_id:int):
+    def load_user(user_id: int):
         return ConnectedUser(user=UserUtils.get_user(user_id=user_id))
 
     @app.before_request
     def before_request():
         session.permanent = True
-        app.permanent_session_lifetime = timedelta(minutes=60) #TODO lifetime session
+        app.permanent_session_lifetime = timedelta(
+            minutes=60)  # TODO lifetime session
         session.modified = True
-
 
     # Register blueprints
     from .modules.auth import auth as auth_blueprint
@@ -46,15 +46,18 @@ def create_app():
 
     from .modules.herd import herd as herd_blueprint
     app.register_blueprint(herd_blueprint)
-    
+
     from .modules.medicine_cabinet import pharmacybp as pharmacy_blueprint
     app.register_blueprint(pharmacy_blueprint)
 
     from .modules.cow import cowbp as cow_blueprint
     app.register_blueprint(cow_blueprint)
-    
+
     from .modules.settings import settings as settings_blueprint
     app.register_blueprint(settings_blueprint)
+
+    from .modules.reproduction import reproductionbp as reproduction_blueprint
+    app.register_blueprint(reproduction_blueprint)
 
     # Jinja2 global functions
     from .fonction import format_bool_fr, date_to_str, format_bool_sexe, new_available_care, remaining_care_on_year
@@ -70,15 +73,19 @@ def create_app():
     return app
 
 # Tell the app it is behind a reverse proxy (better for production)
+
+
 def create_proxy_app():
     app = create_app()
 
     app.wsgi_app = ProxyFix(
-            app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)
+        app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)
 
     return app
 
+
 app = create_app()
+
 
 @app.cli.command("init_db")
 def init_db():
