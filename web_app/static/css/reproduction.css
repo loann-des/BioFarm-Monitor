@@ -23,3 +23,45 @@ div.echo_form div.items input,
 div.echo_form div.items select {
     margin: 0;
 }
+
+div.id-filter-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+div.id-filter-box input{
+display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px;
+  border-radius: 5px;
+  border: 2px solid var(--theme-accent-color);
+}
+
+tbody button.cow_id{
+    background: none;
+    border: none;
+    padding: 0;
+
+    color: black;
+    text-decoration: underline;
+    cursor: pointer;
+
+    font: inherit;
+}
+
+tbody button.cow_id:hover{
+    background: none;
+    border: none;
+    padding: 0;
+
+    color: black;
+    text-decoration: underline;
+    cursor: pointer;
+
+    font: inherit;
+}

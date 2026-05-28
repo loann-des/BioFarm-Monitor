@@ -17,14 +17,13 @@
     <div id="action-buttons-wrapper">
         <button id="ultrasound-button">Echographie</button>
         <button id="calving-button">Ajouter vêlage</button>
-        <button id="export-calendar"
-            onclick="window.location=`{{ url_for('pharmacy.export_recap_pharmacy') }}`">Calendrier ⤓</button>
+        <button id="export-calendar"  onclick="window.location=`{{ url_for('reproduction.calendar') }}`">Calendrier</button>
     </div>
 
     <div id="message-div" class="message-div">
         <span>test</span>
     </div>
-    
+
 </section>
 
 <!-- date de tarisement -->
@@ -32,6 +31,9 @@
     <h2>&nbsp;tarisement</h2>
 
     <div class="collapsible-content">
+        <div id="id-filter-box-dry" class="id-filter-box">
+            <input type="text" placeholder="Filtrer par identifiant">
+        </div>
         <table>
             <thead>
                 <tr>
@@ -51,6 +53,9 @@
     <h2>&nbsp;prepa vêlage</h2>
 
     <div class="collapsible-content">
+        <div id="id-filter-box-calving-preparation" class="id-filter-box">
+            <input type="text" placeholder="Filtrer par identifiant">
+        </div>
         <table>
             <thead>
                 <tr>
@@ -68,9 +73,10 @@
 <!-- date de vêlage -->
 <section class="collapsible" aria-expanded="false">
     <h2>&nbsp;Velage</h2>
-    <!-- TODO path -->
-
     <div class="collapsible-content">
+        <div id="id-filter-box-calving" class="id-filter-box">
+            <input type="text" placeholder="Filtrer par identifiant">
+        </div>
         <table>
             <thead>
                 <tr>
@@ -201,6 +207,20 @@
 <template id="calving-row">
     <tr>
         <th class="value cow_id"></th>
+        <th class="value reproductions"></th>
+    </tr>
+</template>
+
+<template id="other-row">
+    <tr>
+        <th>
+            <form action="" method="POST">
+                <input type="hidden" name="id_cow" value="">
+                <button type="submit" class="value cow_id">
+                    123
+                </button>
+            </form>
+        </th>
         <th class="value reproductions"></th>
     </tr>
 </template>

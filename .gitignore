@@ -8,3 +8,4 @@ app.db-journal
 .~lock*
 
 *.old
+node_modules/

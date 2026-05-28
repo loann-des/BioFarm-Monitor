@@ -1,11 +1,16 @@
-from collections import Counter
+from collections import Counter, defaultdict
+from io import BytesIO
+import io
 import logging as lg
 
 from typing import TYPE_CHECKING, Any
 
 
-from datetime import date
+from datetime import date, datetime
 
+from icalendar import Calendar
+
+from web_app.calendar import create_calving_event, create_calving_preparation_event, create_drying_event, event_to_fullcalendar
 from web_app.fonction import parse_date, to_negativ_dict
 from web_app.models.cow import Cow, CowUtils
 from web_app.models.pharmacie import PharmacieAttr, PharmacieUtils
@@ -22,7 +27,6 @@ class CowUtilsUser:
 
     user_id: int
     """identifiant de l'utilisateur connecté'"""
-
 
     def __init__(self, user: "ConnectedUser") -> None:
         self.user_id = user.id
@@ -184,7 +188,7 @@ class CowUtilsUser:
         year: int = parse_date(cow_care["date_traitement"]).year
 
         stock_delta = to_negativ_dict(cow_care["medicaments"])
-        print("--->add_cow_care:",stock_delta)
+        print("--->add_cow_care:", stock_delta)
         # verifi le validité des stock apres traitement
         if PharmacieUtils.validat_quantity(user_id=self.user_id,
                                            stock_delta=stock_delta,
@@ -199,7 +203,7 @@ class CowUtilsUser:
             return CowUtils.add_cow_care(user_id=self.user_id, cow_id=cow_id, cow_care=cow_care)
         else:
             raise ValueError("pas sufisament de madicament")
-    
+
     def update_cow_care(
         self, cow_id: int, care_index: int, new_care: Traitement
     ) -> None:
@@ -217,8 +221,8 @@ class CowUtilsUser:
         Lance:
             * ValueError: Si la mise à jour du traitement conduirait à un stock de médicaments négatif
         """
-        
-        if cow := self.get_cow(cow_id=cow_id):            
+
+        if cow := self.get_cow(cow_id=cow_id):
             old_care = cow.cow_cares[care_index]
             old_year = parse_date(old_care["date_traitement"]).year
             new_year = parse_date(new_care["date_traitement"]).year
@@ -229,10 +233,12 @@ class CowUtilsUser:
                 # verifi le validité des stock new(care) : stock_delta = + new_care
                 # if valid : ajout new_care et : update stock : stock_delta = + new_care
                 # else : reset ops : ajout old(care) : update_cow_care : stock_delta = + old_care
-                raise ValueError("Not implemented yet: La date du traitement ne peut pas être modifiée pour garantir la cohérence des stocks annuels.")
-            
+                raise ValueError(
+                    "Not implemented yet: La date du traitement ne peut pas être modifiée pour garantir la cohérence des stocks annuels.")
+
             year = old_year
-            care_delta = dict(Counter(new_care["medicaments"]) - Counter(old_care["medicaments"]))
+            care_delta = dict(
+                Counter(new_care["medicaments"]) - Counter(old_care["medicaments"]))
 
             stock_delta = dict(- Counter(care_delta))
             if PharmacieUtils.validat_quantity(user_id=self.user_id, stock_delta=stock_delta, year_to_verify=year):
@@ -370,7 +376,7 @@ class CowUtilsUser:
         CowUtils.validated_ultrasound(user_id=self.user_id, cow_id=cow_id, ultrasound=ultrasound, date=date,
                                       dry_time=self.user.setting["dry_time"], calving_preparation_time=self.user.setting["calving_preparation_time"])
 
-    def get_reproduction(self, cow_id: int) -> Reproduction | None :
+    def get_reproduction(self, cow_id: int) -> Reproduction | None:
         """Récupère les informations de reproduction d'une vache pour l'utilisateur courant.
 
         Cette fonction délègue à `CowUtils` la récupération de la structure de
@@ -387,13 +393,12 @@ class CowUtilsUser:
         return CowUtils.get_reproduction(user_id=self.user_id, cow_id=cow_id)
 
     def get_waitting_reproduction(self, cow_id: int) -> Reproduction | None:
- 
+
         if reproduction := self.get_reproduction(cow_id=cow_id):
             if reproduction["ultrasound"] is None:
                 return reproduction
         return None
 
-        
     def reload_all_reproduction(self) -> None:
         """Recharge l'ensemble des informations de reproduction pour toutes les vaches de l'utilisateur.
 
@@ -421,7 +426,7 @@ class CowUtilsUser:
         return CowUtils.get_valid_reproduction(user_id=self.user_id)
 
     def validated_calving(self, cow_id: int, calf_id: int | None, calving_date: date | None,
-                          sexe : bool | None, abortion: bool,
+                          sexe: bool | None, abortion: bool,
                           info: str | None = None) -> None:
         """Valide un vêlage ou un avortement pour une vache de l'utilisateur courant.
 
@@ -437,9 +442,11 @@ class CowUtilsUser:
             * info (str | None): Informations complémentaires à propos de
             l'événement si nécessaire
         """
-        CowUtils.get_reproduction(user_id=self.user_id,cow_id=cow_id)#TODO pour recupere le pere 
+        CowUtils.get_reproduction(
+            user_id=self.user_id, cow_id=cow_id)  # TODO pour recupere le pere
         if not abortion and calf_id and sexe is not None:
-            self.add_calf(calf_id=calf_id, born_date=calving_date, sexe=sexe, mother_id=cow_id)
+            self.add_calf(calf_id=calf_id, born_date=calving_date,
+                          sexe=sexe, mother_id=cow_id)
         CowUtils.validated_calving(
             user_id=self.user_id, cow_id=cow_id, abortion=abortion, info=info)
 
@@ -499,6 +506,95 @@ class CowUtilsUser:
             * cow_id (int): Identifiant de la vache dont on supprime l'événement
             * repro_index (int): Indice de l'entrée de reproduction à supprimer
         """
-        CowUtils.delete_cow_reproduction(user_id=self.user_id, cow_id=cow_id, repro_index=repro_index)
+        CowUtils.delete_cow_reproduction(
+            user_id=self.user_id, cow_id=cow_id, repro_index=repro_index)
+
+    def get_calandar_list(self) -> dict[str, dict[datetime, list[int]]]:
+        dry_list = defaultdict(list)
+        prep_list = defaultdict(list)
+        calving_list = defaultdict(list)
+
+        reproductions = self.get_valid_reproduction()
+
+        for cows_id, reproduction in reproductions.items():
+
+            # TARISSEMENT
+            if not reproduction["dry_status"] and reproduction["dry"]:
+                date_obj = datetime.strptime(reproduction["dry"], "%Y-%m-%d")
+                dry_list[date_obj].append(cows_id)
+
+            # PRÉPARATION VÊLAGE
+            if not reproduction["calving_preparation_status"] and reproduction["calving_preparation"]:
+                date_obj = datetime.strptime(
+                    reproduction["calving_preparation"], "%Y-%m-%d")
+                prep_list[date_obj].append(cows_id)
+
+            # VÊLAGE
+            if not reproduction["calving"] and reproduction["calving_date"]:
+                date_obj = datetime.strptime(
+                    reproduction["calving_date"], "%Y-%m-%d")
+                calving_list[date_obj].append(cows_id)
+        return {
+            "dry_list": dry_list,
+            "prep_list": prep_list,
+            "calving_list": calving_list
+        }
+
+    def export_calandar(self) -> io.BytesIO:
+        cal = Calendar()
+        cal.add("prodid", "-//BioFarm Monitor//FR")
+        cal.add("version", "2.0")
+
+        event_list = self.get_calandar_list()
+
+        # TARISSEMENT
+        for date_obj, cows_ids in event_list["dry_list"].items():
+            event = create_drying_event(date_obj, cows_ids)
+            cal.add_component(event)
+
+        # PRÉPARATION VÊLAGE
+        for date_obj, cows_ids in event_list["prep_list"].items():
+            event = create_calving_preparation_event(date_obj, cows_ids)
+            cal.add_component(event)
+
+        # VÊLAGE
+        for date_obj, cows_ids in event_list["calving_list"].items():
+            event = create_calving_event(date_obj, cows_ids)
+            cal.add_component(event)
+
+        return io.BytesIO(cal.to_ical())
+
+    def reproduction_fullcalendar(self):
+
+        event_list = self.get_calandar_list()
+
+        events = []
+
+        for date_obj, cows_ids in event_list["dry_list"].items():
+            events.append(
+                event_to_fullcalendar(
+                    create_drying_event(date_obj, cows_ids),
+                    "#e53935"
+                )
+            )
+
+        # PRÉPARATION VÊLAGE
+        for date_obj, cows_ids in event_list["prep_list"].items():
+            events.append(
+                event_to_fullcalendar(
+                    create_calving_preparation_event(date_obj, cows_ids),
+                    "#1e88e5"
+                )
+            )
+
+        # VÊLAGE
+        for date_obj, cows_ids in event_list["calving_list"].items():
+            events.append(
+                event_to_fullcalendar(
+                    create_calving_event(date_obj, cows_ids),
+                    "#8e24aa"
+                )
+            )
+        return events
 
     # END reproduction functions ------------------------------------------------

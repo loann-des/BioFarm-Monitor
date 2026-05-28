@@ -3,6 +3,9 @@ window.addEventListener("load", () => {
 
     const overlay = document.querySelector("div#overlay");
 
+    // ------------------------------------------------------------------------------------------
+    // Boutton PopUp echographie
+    // ------------------------------------------------------------------------------------------
     const ultrasondButton = document.querySelector("button#ultrasound-button");
     const ultrasondPopup = document.querySelector("div.popup#add-ultrasound-popup");
     const ultrasondPopupCloseButton = document.querySelector("div.popup#add-ultrasound-popup div.popup-header button");
@@ -18,61 +21,9 @@ window.addEventListener("load", () => {
         wipeField();
     });
 
-    const calvingButton = document.querySelector("button#calving-button");
-    const calvingPopup = document.querySelector("div.popup#add-calving-popup");
-    const calvingPopupCloseButton = document.querySelector("div.popup#add-calving-popup div.popup-header button");
-
-    calvingButton.addEventListener("click", async () => {
-        overlay.style.display = "block";
-        calvingPopup.style.display = "block";
-    });
-
-    calvingPopupCloseButton.addEventListener("click", async () => {
-        overlay.style.display = "none";
-        calvingPopup.style.display = "none";
-        wipeField();
-    });
-
-    const popupForms = document.querySelectorAll("div.popup form");
-
-    for (const popupForm of popupForms) {
-        popupForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const action = e.target.getAttribute("action");
-            const method = e.target.getAttribute("method");
-            const data = new FormData(e.target);
-
-            try {
-                const response = await fetch(action, {
-                    method: method,
-                    body: data
-                });
-
-                const contentType = response.headers.get("Content-Type");
-
-                if (!contentType.includes("application/json")) {
-                    console.error(`Unexpected response: expected application/json, got ${contentType}`);
-                    // TODO: Proper error display on the user's side
-                    return;
-                }
-
-                const result = await response.json();
-                sessionStorage.setItem(
-                    "flashMessage",
-                    JSON.stringify(result)
-                );
-
-                popupForm.reset();
-
-            } catch (error) {
-                console.error(`AJAX request failed due to ${error}`);
-            }
-
-            location.reload()
-        });
-    }
-
+    // ------------------------------------------------------------------------------------------
+    // generation des option du select pour PopUp echographie
+    // ------------------------------------------------------------------------------------------
     const echoInput = document.querySelector("#echo_cow_id");
     const echoSelect = document.querySelector("#echo_select");
 
@@ -138,7 +89,38 @@ window.addEventListener("load", () => {
     }
     );
 
+    // ------------------------------------------------------------------------------------------
+    // Boutton PopUp vêlage
+    // ------------------------------------------------------------------------------------------
+    const calvingButton = document.querySelector("button#calving-button");
+    const calvingPopup = document.querySelector("div.popup#add-calving-popup");
+    const calvingPopupCloseButton = document.querySelector("div.popup#add-calving-popup div.popup-header button");
+
+    calvingButton.addEventListener("click", async () => {
+        overlay.style.display = "block";
+        calvingPopup.style.display = "block";
+    });
+
+    calvingPopupCloseButton.addEventListener("click", async () => {
+        overlay.style.display = "none";
+        calvingPopup.style.display = "none";
+        wipeField();
+    });
+
+    const dryFilterInput = document.querySelector("div#id-filter-box-dry input");
+    dryFilterInput.addEventListener("keyup", e => updateFiltered(e, updateDrying));
+
+    const calvingPreparationFilterInput = document.querySelector("div#id-filter-box-calving-preparation input");
+    calvingPreparationFilterInput.addEventListener("keyup", e => updateFiltered(e, updateCalvingPreparation));
+
+    const calvingFilterInput = document.querySelector("div#id-filter-box-calving input");
+    calvingFilterInput.addEventListener("keyup", e => updateFiltered(e, updateCalving));
+
     generalUpdate();
+    const popupForms = document.querySelectorAll("form");
+    for (const popupForm of popupForms) {
+        message_form(popupForm);
+    }
 });
 
 async function generalUpdate() {
@@ -171,6 +153,9 @@ async function generalUpdate() {
 async function updateCalving(reproductions) {
     const calvingList = document.querySelector("#calving-list");
 
+    while (calvingList.children.length > 0) {
+        calvingList.children[0].remove();
+    }
     try {
         const calvingTemplate = document.querySelector("#calving-row");
 
@@ -195,27 +180,35 @@ async function updateCalving(reproductions) {
     }
 }
 
-
 async function updateDrying(reproductions) {
-    const calvingList = document.querySelector("#dry-list");
+    const dryingList = document.querySelector("#dry-list");
+
+    while (dryingList.children.length > 0) {
+        dryingList.children[0].remove();
+    }
 
     try {
-        const calvingTemplate = document.querySelector("#calving-row");
+        const calvingTemplate = document.querySelector("#other-row");
 
         Object.entries(reproductions || {}).forEach(([cow_id, reproduction]) => {
             if (!reproduction["dry_status"]) {
                 const Card = calvingTemplate.content.children[0].cloneNode(true);
+                const form = Card.querySelector("form")
+                form.setAttribute("action", "/reproduction/drying")
+                message_form(form)
+                Card.querySelector("input").setAttribute("value", cow_id)
                 Card.querySelector(".cow_id").textContent = cow_id;
 
-                calvingDate = new Date(reproduction["dry"]).toLocaleDateString("fr-FR", {
+
+                dryingDate = new Date(reproduction["dry"]).toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric"
                 })
 
-                Card.querySelector(".reproductions").textContent = calvingDate;
+                Card.querySelector(".reproductions").textContent = dryingDate;
 
-                calvingList.appendChild(Card);
+                dryingList.appendChild(Card);
             }
         });
 
@@ -226,25 +219,32 @@ async function updateDrying(reproductions) {
 }
 
 async function updateCalvingPreparation(reproductions) {
-    const calvingList = document.querySelector("#calving-preparation-list");
-
+    const calvingPreparationList = document.querySelector("#calving-preparation-list");
+    while (calvingPreparationList.children.length > 0) {
+        calvingPreparationList.children[0].remove();
+    }
     try {
-        const calvingTemplate = document.querySelector("#calving-row");
+        const calvingPreparationTemplate = document.querySelector("#other-row");
 
         Object.entries(reproductions || {}).forEach(([cow_id, reproduction]) => {
             if (!reproduction["calving_preparation_status"]) {
-                const Card = calvingTemplate.content.children[0].cloneNode(true);
-                Card.querySelector(".cow_id").textContent = cow_id;
+                const Card = calvingPreparationTemplate.content.children[0].cloneNode(true);
+                const form = Card.querySelector("form")
+                form.setAttribute("action", "/reproduction/calving_preparation")
+                message_form(form)
 
-                calvingDate = new Date(reproduction["dry"]).toLocaleDateString("fr-FR", {
+                Card.querySelector("input").setAttribute("value", cow_id)
+                const cow = Card.querySelector(".cow_id").textContent = cow_id;
+
+                calvingPreparationDate = new Date(reproduction["calving_preparation"]).toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric"
                 })
 
-                Card.querySelector(".reproductions").textContent = calvingDate;
+                Card.querySelector(".reproductions").textContent = calvingPreparationDate;
 
-                calvingList.appendChild(Card);
+                calvingPreparationList.appendChild(Card);
             }
         });
 
@@ -252,6 +252,35 @@ async function updateCalvingPreparation(reproductions) {
         console.error(`AJAX request failed due to: ${error}`);
         alert("Impossible de récupérer la liste des calving.");
     }
+}
+
+async function updateFiltered(e, updateFunction) {
+    const filterInput = e.target;
+    const filterId = parseInt(filterInput.value);
+
+    const url = (filterId === undefined || isNaN(filterId))
+        ? "/reproduction/get-all-reproductions"
+        : "/reproduction/get-all-reproductions-filter?" +
+        new URLSearchParams({ id_filter: filterId });
+
+    const response = await fetch(url);
+
+    const contentType = response.headers.get("Content-Type");
+
+    if (!contentType.includes("application/json")) {
+        console.error(`Filter failed: wrong response type (expected application/json, got ${contentType}`);
+        console.log(response);
+        return;
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+        console.error(result.message);
+        return;
+    }
+
+    const reproductions = result.message;
+    updateFunction(reproductions);
 }
 
 async function loadMessages() {
@@ -318,4 +347,45 @@ async function wipeField() {
 
         popupForm.reset();
     }
+}
+
+async function message_form(elem) {
+    // ------------------------------------------------------------------------------------------
+    // gestion afficage message
+    // ------------------------------------------------------------------------------------------
+    elem.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const action = e.target.getAttribute("action");
+        const method = e.target.getAttribute("method");
+        const data = new FormData(e.target);
+
+        try {
+            const response = await fetch(action, {
+                method: method,
+                body: data
+            });
+
+            const contentType = response.headers.get("Content-Type");
+
+            if (!contentType.includes("application/json")) {
+                console.error(`Unexpected response: expected application/json, got ${contentType}`);
+                // TODO: Proper error display on the user's side
+                return;
+            }
+
+            const result = await response.json();
+            sessionStorage.setItem(
+                "flashMessage",
+                JSON.stringify(result)
+            );
+
+            elem.reset();
+
+        } catch (error) {
+            console.error(`AJAX request failed due to ${error}`);
+        }
+
+        location.reload()
+    });
 }

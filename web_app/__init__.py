@@ -58,7 +58,10 @@ def create_app():
 
     from .modules.reproduction import reproductionbp as reproduction_blueprint
     app.register_blueprint(reproduction_blueprint)
-
+    
+    from .modules.calandar import calandarbp as calandar_blueprint
+    app.register_blueprint(calandar_blueprint)
+    
     # Jinja2 global functions
     from .fonction import format_bool_fr, date_to_str, format_bool_sexe, new_available_care, remaining_care_on_year
     from .models.cow import CowUtils

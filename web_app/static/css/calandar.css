@@ -1,0 +1,11 @@
+#calendar {
+    max-width: 1100px;
+    margin: 40px auto;
+    height: 90vh;
+}
+
+div.fc-event-title {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}

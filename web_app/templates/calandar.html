@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendier{% endblock title %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/calandar.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/elements/popUp.css') }}">
+{% endblock head %}
+
+{% block content %}
+<h1>Calendrier des Reproductions</h1>
+
+<div><br><br></div>
+<section>
+    <div id="action-buttons-wrapper">
+        <button id="export-calendar"
+            onclick="window.location=`{{ url_for('calandar.export_calendar') }}`">Calendrier ⤓</button>
+    </div>
+<div id="calendar"></div>
+{% endblock content %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/calandar.js') }}"></script>
+<script src="{{ url_for(
+    'static',
+    filename='js/fullcalendar/index.global.min.js'
+) }}"></script>
+{% endblock js %}

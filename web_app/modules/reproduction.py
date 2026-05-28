@@ -4,6 +4,7 @@ import logging as lg
 
 from flask import (
     Blueprint,
+    Response,
     jsonify,
     redirect,
     request,
@@ -24,23 +25,11 @@ reproductionbp = Blueprint("reproduction", __name__)
 current_user: ConnectedUser
 
 
+
 @login_required
-@reproductionbp.route("/reproduction/export-calendar", methods=["GET"])
-def export_calendar():
-    # TODO export_calendar
-    try:
-        file_bytes = current_user.remaining_care_to_excel()
-        return send_file(
-            file_bytes,
-            as_attachment=True,
-            download_name="stock.xlsx",
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Erreur lors du Telecargement: {e}"
-        })
+@reproductionbp.route("/reproduction/calendar", methods=["GET"])
+def calendar():
+    return render_template("calandar.html")
 
 
 @login_required
@@ -77,7 +66,30 @@ def get_calving():
     except Exception as e:
         return jsonify({
             "success": False,
-            "message": f"Erreur lors de recuperation des prescriptions : {e}"
+            "message": f"Erreur lors de recuperation des reproductions : {e}"
+        })
+
+
+@login_required
+@reproductionbp.route("/reproduction/get-all-reproductions-filter", methods=["GET"])
+def get_all_reproductions_filter():
+    try:
+        idsearch = str(request.args.get("id_filter"))
+
+        reproductions = {
+            key: value
+            for key, value in current_user.cow_utils.get_valid_reproduction().items()
+            if idsearch in str(key)
+        }
+        
+        return jsonify({
+            "success": True,
+            "message": reproductions
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erreur lors de recuperation des reproductions filtré : {e}"
         })
 
 
@@ -93,7 +105,8 @@ def ultrasound():
 
         elif echo == "saillie":
             date = my_strftime(request.form["saillie"])
-            current_user.cow_utils.add_insemination(cow_id=cow_id,insemination=date)
+            current_user.cow_utils.add_insemination(
+                cow_id=cow_id, insemination=date)
             current_user.cow_utils.validated_ultrasound(
                 cow_id=cow_id, ultrasound=True, date=date)
 
@@ -136,51 +149,38 @@ def calving():
             "message": f"Erreur lors de la mise a jour de l'echographie: {e}"
         })
 
-
 @login_required
-@reproductionbp.route("/reproduction/get-dlc-left", methods=["GET"])
-def get_dlc_left():
+@reproductionbp.route("/reproduction/drying", methods=["POST"])
+def drying():
     try:
-        dlc = current_user.prescription_utils.get_all_dlc_cares()
+        cow_id = request.form["id_cow"]
+        current_user.cow_utils.validated_dry(int(cow_id))
+
         return jsonify({
             "success": True,
-            "message": dlc
+            "message": f"{cow_id}: trarissement mise a jour avec succes"
         })
+        # TODO ms
     except Exception as e:
         return jsonify({
             "success": False,
-            "message": f"Erreur lors de recuperation des sorties pour dlc{e}"
+            "message": f"Erreur lors de la mise a jour du trarissement: {e}"
         })
-
 
 @login_required
-@reproductionbp.route("/reproduction/remove-prescription", methods=["POST"])
-def remove_prescription():
+@reproductionbp.route("/reproduction/calving_preparation", methods=["POST"])
+def calving_preparation():
     try:
-        prescription_id = int(request.form["prescription_id"])
-        current_user.prescription_utils.remove_prescription(prescription_id)
+        cow_id = request.form["id_cow"]
+        current_user.cow_utils.validated_calving_preparation(int(cow_id))
+
         return jsonify({
             "success": True,
-            "message": "not impemented yet"
+            "message": f"{cow_id}: prépa vêlage mise a jour avec succes"
         })
+        # TODO ms
     except Exception as e:
         return jsonify({
             "success": False,
-            "message": f"Erreur lors de recuperation des prescriptions : {e}"
-        })
-
-
-@login_required
-@reproductionbp.route("/reproduction/change-prescription", methods=["POST"])
-def change_prescription():
-    try:
-        # TODO
-        return jsonify({
-            "success": True,
-            "message": "not impemented yet"
-        })
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": f"Erreur lors de recuperation des prescriptions : {e}"
+            "message": f"Erreur lors de la mise a jour de la prépa vêlage: {e}"
         })
